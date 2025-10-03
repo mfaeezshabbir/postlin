@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Postli
 
-## Getting Started
+AI-powered LinkedIn assistant (starter scaffold)
 
-First, run the development server:
+This repository contains a Next.js + TypeScript app with Prisma (MongoDB), BullMQ workers (Redis), and modular folders for auth, drafts, notifications, publishing, users, and analytics.
+
+## What’s included
+
+- Next.js 15 (App Router) + TypeScript
+- Prisma configured for MongoDB (`prisma/schema.prisma`)
+- Generated Prisma client: `./app/generated/prisma` (created by `npx prisma generate`)
+- Modular folder layout under `modules/*` (auth, drafts, notifications, publisher, users, analytics)
+- Shared utilities in `lib/` (Prisma wrapper, logger, Redis helper)
+- Worker stubs in `workers/` for BullMQ job processing
+- `docker-compose.yml` with MongoDB and Redis for local development
+- `.env.example` with recommended environment variables
+
+## Quickstart (local)
+
+1. Copy `.env.example` to `.env` and edit secrets:
+
+```bash
+cp .env.example .env
+# edit .env to add any API keys or NEXTAUTH_SECRET
+```
+
+2. Start local services (MongoDB + Redis) with Docker (optional):
+
+```bash
+docker compose up -d
+```
+
+If you have a system `mongod` or Redis already running on the same ports, either stop those services or update `docker-compose.yml` to use different host ports.
+
+3. Install dependencies (if not already):
+
+```bash
+npm install
+```
+
+4. Generate Prisma client and push schema to the DB:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+The repository already includes a Prisma schema for MongoDB and a generated client location `./app/generated/prisma`.
+
+5. Run the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Useful commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Start Docker services: `docker compose up -d`
+- Stop Docker services: `docker compose down`
+- Generate Prisma client: `npx prisma generate`
+- Push Prisma schema to DB: `npx prisma db push`
+- Typecheck: `npx tsc --noEmit` (or `./node_modules/.bin/tsc --noEmit`)
+- Run dev server: `npm run dev`
 
-## Learn More
+## Folder layout
 
-To learn more about Next.js, take a look at the following resources:
+- `app/` — Next.js app (routes/pages)
+- `prisma/schema.prisma` — Prisma schema (MongoDB models)
+- `app/generated/prisma` — generated Prisma client (output by `prisma generate`)
+- `modules/auth` — NextAuth config and LinkedIn helpers
+- `modules/drafts` — draft creation/update logic
+- `modules/notifications` — Resend email helpers
+- `modules/publisher` — LinkedIn publishing helpers
+- `modules/users` — user and preference helpers
+- `modules/analytics` — engagement tracking helpers
+- `lib/` — shared utilities (logger, prisma wrapper, redis helper)
+- `workers/` — BullMQ worker stubs
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes & next steps
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- NextAuth: `modules/auth/getNextAuthOptions()` is a stub — wire it into `pages/api/auth/[...nextauth].ts` (or the App Router equivalent) and configure the LinkedIn provider using `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`.
 
-## Deploy on Vercel
+- Redis: `lib/redis.ts` will try to use `ioredis` when `REDIS_URL` is present; otherwise it provides an in-memory fallback for local dev. Install `ioredis` if you want a real Redis client.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Workers: `workers/index.ts` contains queue name constants and a `startWorkers()` stub — implement BullMQ `Worker` instances and job processors using `bullmq` and your Redis instance.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Publishing & notifications: the LinkedIn and Resend stubs are placeholders. Add real API integration and error handling before using in production.
+
+- Docker port conflicts: if `docker compose up` fails due to ports already in use (common for `27017` or `6379`), either stop the local services or adjust host port mappings in `docker-compose.yml`.
+
+## Troubleshooting
+
+- `prisma db push` fails with connection errors: verify `DATABASE_URL` in `.env` and ensure MongoDB is reachable.
+- Type errors: run `npx tsc --noEmit` to see compiler errors. I fixed the `lib/prisma.ts` global declaration earlier to satisfy the compiler.
+
+## License
+
+MIT

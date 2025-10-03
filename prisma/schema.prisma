@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+// Use MongoDB as the datasource for this project
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for post status
+enum PostStatus {
+  DRAFT
+  APPROVED
+  PUBLISHED
+  DISCARDED
+}
+
+model User {
+  id          String    @id @map("_id") @default(auto()) @db.ObjectId
+  email       String    @unique
+  name        String?
+  linkedInId  String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  posts       Post[]
+  preferences Preference?
+  activities  Activity[]
+}
+
+model Post {
+  id           String     @id @map("_id") @default(auto()) @db.ObjectId
+  userId       String     @db.ObjectId
+  user         User       @relation(fields: [userId], references: [id])
+  draftText    String
+  finalText    String?
+  status       PostStatus @default(DRAFT)
+  linkedInPostId String?
+  createdAt    DateTime   @default(now())
+  publishedAt  DateTime?
+
+  analytics    Analytics?
+}
+
+model Preference {
+  id             String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId         String   @db.ObjectId @unique
+  user           User     @relation(fields: [userId], references: [id])
+  tone           String?
+  length         String?
+  postingWindows String[]
+  blockedTopics  String[]
+  createdAt      DateTime @default(now())
+}
+
+model Activity {
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  source    String
+  snippet   String
+  timestamp DateTime
+}
+
+model Analytics {
+  id         String   @id @map("_id") @default(auto()) @db.ObjectId
+  postId     String   @db.ObjectId @unique
+  post       Post     @relation(fields: [postId], references: [id])
+  impressions Int     @default(0)
+  likes       Int     @default(0)
+  comments    Int     @default(0)
+  shares      Int     @default(0)
+  fetchedAt   DateTime @default(now())
+}
