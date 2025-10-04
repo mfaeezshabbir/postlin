@@ -9,6 +9,24 @@ export function getAuthOptions(): NextAuthOptions {
       LinkedInProvider({
         clientId: process.env.LINKEDIN_CLIENT_ID || '',
         clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
+        wellKnown: 'https://www.linkedin.com/oauth/.well-known/openid-configuration',
+        authorization: {
+          params: {
+            scope: 'openid profile email',
+          },
+        },
+        checks: ['state'],
+        client: {
+          token_endpoint_auth_method: 'client_secret_post',
+        },
+        profile(profile) {
+          return {
+            id: profile.sub,
+            name: profile.name,
+            email: profile.email,
+            image: profile.picture,
+          };
+        },
       }),
     ],
     session: { strategy: 'jwt' },
@@ -16,8 +34,16 @@ export function getAuthOptions(): NextAuthOptions {
       // Ensure a Prisma-backed user record exists on sign in
       async signIn({ user, account, profile }) {
         try {
-          const linkedInId = (profile as any)?.id || account?.providerAccountId;
+          // For LinkedIn OIDC, the user ID is in 'sub' field
+          const linkedInId = (profile as any)?.sub || (profile as any)?.id || account?.providerAccountId;
           const email = user.email as string | undefined;
+
+          log.info('signIn callback', { linkedInId, email, userId: user.id });
+
+          if (!email) {
+            log.error('No email provided by LinkedIn');
+            return false;
+          }
 
           // Try to find existing user by linkedInId or email
           let dbUser = null as any;
@@ -35,17 +61,24 @@ export function getAuthOptions(): NextAuthOptions {
             if (email) updateData.email = email;
             if (linkedInId) updateData.linkedInId = linkedInId as string;
             if (Object.keys(updateData).length > 0) {
-              await prisma.user.update({ where: { id: dbUser.id }, data: updateData }).catch(() => null);
+              await prisma.user.update({ where: { id: dbUser.id }, data: updateData }).catch((e) => {
+                log.error('update user failed', e);
+              });
             }
+            log.info('User updated', { userId: dbUser.id });
           } else {
             // Create new user
             const createData: any = {};
             if (user.name) createData.name = user.name;
             if (email) createData.email = email;
             if (linkedInId) createData.linkedInId = linkedInId as string;
-            await prisma.user.create({ data: createData }).catch((e) => {
+            const newUser = await prisma.user.create({ data: createData }).catch((e) => {
               log.error('create user failed', e);
+              return null;
             });
+            if (newUser) {
+              log.info('User created', { userId: newUser.id });
+            }
           }
 
           return true;
@@ -74,10 +107,19 @@ export function getAuthOptions(): NextAuthOptions {
         }
       },
       // After sign in redirect to /dashboard
-      async redirect() {
-        return '/dashboard';
+      async redirect({ url, baseUrl }) {
+        // Allows relative callback URLs
+        if (url.startsWith('/')) return `${baseUrl}${url}`;
+        // Allows callback URLs on the same origin
+        else if (new URL(url).origin === baseUrl) return url;
+        return `${baseUrl}/dashboard`;
       },
     },
+    pages: {
+      signIn: '/login',
+      error: '/login',
+    },
+    debug: process.env.NODE_ENV === 'development',
   };
 }
 
