@@ -106,13 +106,13 @@ export function getAuthOptions(): NextAuthOptions {
           return session;
         }
       },
-      // After sign in redirect to /dashboard
+      // After sign in redirect to /dashboard/drafts
       async redirect({ url, baseUrl }) {
         // Allows relative callback URLs
         if (url.startsWith('/')) return `${baseUrl}${url}`;
         // Allows callback URLs on the same origin
         else if (new URL(url).origin === baseUrl) return url;
-        return `${baseUrl}/dashboard`;
+        return `${baseUrl}/dashboard/drafts`;
       },
     },
     pages: {
