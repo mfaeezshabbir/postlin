@@ -1,8 +1,14 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import getCurrentUser from "../lib/auth";
 
 export default async function Home() {
   const user = await getCurrentUser();
+
+  // Redirect logged-in users to dashboard
+  if (user) {
+    redirect('/dashboard/drafts');
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">

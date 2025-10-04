@@ -1,0 +1,18 @@
+<!-- Updated: /home/mfaeezshabbir/pp/postli/public/logo.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+    <title id="title">Postli logo</title>
+    <desc id="desc">stylized paper plane</desc>
+
+    <!-- Stylized paper plane (LinkedIn blue) -->
+    <g transform="translate(0,0)" aria-hidden="true">
+        <!-- main body -->
+        <path d="M30 74 L62 45 L92 58 L64 69 L54 92 L45 74 L30 74 Z"
+              fill="#0A66C2" stroke="#0A66C2" stroke-opacity="0.95" stroke-width="0.7" />
+
+        <!-- folded wing accent -->
+        <path d="M62 45 L70 64 L64 69 Z" fill="#2B8CE6" opacity="1" />
+
+        <!-- paper plane tail shadow -->
+        <path d="M54 92 L60 73 L64 69 L54 92 Z" fill="#063B75" opacity="0.08"/>
+    </g>
+</svg>

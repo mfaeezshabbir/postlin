@@ -5,10 +5,17 @@ import { getToken } from 'next-auth/jwt';
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   const { pathname } = url;
+  
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
+  // Redirect logged-in users away from login page
+  if (pathname === '/login' && token) {
+    url.pathname = '/dashboard/drafts';
+    return NextResponse.redirect(url);
+  }
 
   // Protect /dashboard and any subpaths
   if (pathname.startsWith('/dashboard')) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     if (!token) {
       url.pathname = '/login';
       return NextResponse.redirect(url);
@@ -19,5 +26,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/login'],
 };
