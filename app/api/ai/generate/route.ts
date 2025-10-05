@@ -196,36 +196,64 @@ function buildSystemPrompt(tone: string, length: string): string {
     long: 'Write a comprehensive post (250-400 words). Provide depth and thorough explanation.',
   };
 
-  return `You are an expert LinkedIn content creator. Create engaging LinkedIn posts that drive engagement and provide value.
+  return `You are an expert LinkedIn content creator specializing in human-like, authentic writing that avoids AI detection.
 
 TONE: ${toneInstructions[tone] || toneInstructions.professional}
 
 LENGTH: ${lengthInstructions[length] || lengthInstructions.medium}
 
-GUIDELINES:
+# WRITING STYLE - HUMANIZE YOUR OUTPUT:
+
+SHOULD use clear, simple language.
+SHOULD be spartan and informative.
+SHOULD use short, impactful sentences.
+SHOULD use active voice, avoid passive voice.
+SHOULD focus on practical, actionable insights.
+SHOULD use bullet point lists for readability (use • symbol, not - or *).
+SHOULD use data and examples when possible.
+SHOULD use "you" and "your" to directly address the reader.
+SHOULD write in a conversational yet professional manner.
+SHOULD sound natural and authentic.
+
+AVOID em dashes (—) anywhere. Use commas, periods, or semicolons instead.
+AVOID constructions like "not just this, but also this".
+AVOID metaphors and clichés.
+AVOID generalizations.
+AVOID setup language like "in conclusion", "in closing", etc.
+AVOID unnecessary adjectives and adverbs.
+AVOID hashtags in the content (provide separately).
+AVOID semicolons.
+AVOID markdown formatting (no **, *, __, etc.).
+AVOID asterisks for any purpose.
+AVOID these AI-sounding words: "can, may, just, that, very, really, literally, actually, certainly, probably, basically, could, maybe, delve, embark, enlightening, esteemed, shed light, craft, crafting, imagine, realm, game-changer, unlock, discover, skyrocket, abyss, not alone, in a world where, revolutionize, disruptive, utilize, utilizing, dive deep, tapestry, illuminate, unveil, pivotal, intricate, elucidate, hence, furthermore, however, harness, exciting, groundbreaking, cutting-edge, remarkable, remains to be seen, glimpse into, navigating, landscape, stark, testament, in summary, in conclusion, moreover, boost, skyrocketing, opened up, powerful, inquiries, ever-evolving"
+
+CONTENT GUIDELINES:
 - Start with a compelling hook that grabs attention
 - Use short paragraphs and line breaks for readability (use \\n for line breaks in JSON)
-- Include relevant emojis sparingly (1-3 maximum)
+- Include relevant emojis sparingly (1-2 maximum, only if natural)
 - End with a call-to-action or thought-provoking question
 - Generate 3-5 relevant hashtags separately (without # symbol)
 - Focus on providing value, insights, or entertainment
 - Make it authentic and relatable
-- Use active voice and strong verbs
+- Write like a real human would speak
 
 JSON OUTPUT REQUIREMENTS:
 - Return ONLY valid JSON, no other text
-- "content" field: The complete post text (do NOT include hashtags in content)
+- "content" field: The complete post text in PLAIN TEXT (NO markdown, NO hashtags)
 - "hashtags" field: Array of hashtag strings without # symbol
 - "summary" field: One sentence describing the post
 - "wordCount" field: Actual word count of the content
-- Use proper JSON escaping for special characters and newlines`;
+- Use proper JSON escaping for special characters and newlines
+
+IMPORTANT: Review your response to ensure no markdown formatting, no em dashes, and natural human-like writing!`;
 }
 
 /**
  * Generate an image for the post using Google's Imagen 3
  */
-async function generatePostImage(prompt: string, postContent: string): Promise<{ url: string | null; base64: string; prompt: string }> {
-  let imagePrompt = '';
+async function generatePostImage(prompt: string, postContent: string): Promise<{ url: string | null; base64: string; prompt: any }> {
+  let imagePromptObject: any = null;
+  let imagePromptText = '';
   
   try {
     // Extract the main topic from the post for better image generation using JSON mode
@@ -237,33 +265,40 @@ async function generatePostImage(prompt: string, postContent: string): Promise<{
     });
     
     const imagePromptResult = await model.generateContent(`
-Based on this LinkedIn post, create a DETAILED image generation prompt that would create a professional, 
+Based on this LinkedIn post, create a DETAILED, STRUCTURED image generation prompt that would create a professional, 
 visually appealing image suitable for LinkedIn. The image should be relevant, eye-catching, and enhance the post.
 
 Post content: ${postContent}
 
 Requirements for the image prompt:
 - Professional and suitable for LinkedIn
-- Clear, specific visual description
+- Clear, specific visual description with detailed elements
 - Modern and clean aesthetic
 - Business/professional context
-- Include relevant objects, colors, and composition
+- Include specific objects, colors, lighting, and composition details
 - No text or words in the image
 - Highly relevant to the post topic
+- Photo-realistic or high-quality illustration style
+- Proper aspect ratio mention (1:1 for LinkedIn)
 
-Respond with valid JSON in this format:
+Respond with valid JSON in this EXACT format:
 {
-  "imagePrompt": "Detailed image generation prompt here",
-  "style": "professional/modern/creative/etc",
-  "suggestedColors": ["color1", "color2"],
-  "keyElements": ["element1", "element2", "element3"]
-}`);
+  "imagePrompt": "A detailed, comprehensive image generation prompt with specific visual elements, composition, lighting, colors, and style - minimum 50 words",
+  "style": "professional/modern/creative/minimalist/corporate/etc",
+  "suggestedColors": ["color1", "color2", "color3"],
+  "keyElements": ["specific element1", "specific element2", "specific element3", "specific element4"],
+  "composition": "Description of layout and framing",
+  "lighting": "Description of lighting style",
+  "mood": "The emotional tone and atmosphere of the image"
+}
+
+Make the imagePrompt field extremely detailed and comprehensive for best AI image generation results.`);
 
     const imagePromptJson = (await imagePromptResult.response).text();
-    const parsedImagePrompt = JSON.parse(imagePromptJson);
-    imagePrompt = parsedImagePrompt.imagePrompt;
+    imagePromptObject = JSON.parse(imagePromptJson);
+    imagePromptText = imagePromptObject.imagePrompt;
     
-    log.info('Generated image prompt:', imagePrompt);
+    log.info('Generated structured image prompt:', imagePromptObject);
     log.info('🎨 Attempting to generate image with Gemini 2.5 Flash Image...');
     log.info(`📌 Using ${process.env.GEMINI_IMAGE_API_KEY ? 'separate' : 'shared'} API key for images`);
     
@@ -274,8 +309,8 @@ Respond with valid JSON in this format:
       model: 'gemini-2.5-flash-image'
     });
     
-    // Generate image with simple text prompt
-    const imageResult = await imageModel.generateContent(imagePrompt);
+    // Generate image with the detailed text prompt
+    const imageResult = await imageModel.generateContent(imagePromptText);
 
     const response = imageResult.response;
     
@@ -295,7 +330,7 @@ Respond with valid JSON in this format:
           return {
             url: null, // Returns base64, not URL
             base64: `data:${mimeType};base64,${base64Data}`,
-            prompt: imagePrompt, // Return the prompt too
+            prompt: imagePromptObject, // Return the full structured prompt object
           };
         }
       }
@@ -303,13 +338,13 @@ Respond with valid JSON in this format:
     
     // If we reach here, image wasn't generated but we have the prompt
     const error: any = new Error('Gemini image generation did not return image data. Please ensure your GEMINI_API_KEY has image generation enabled and is in a supported region.');
-    error.prompt = imagePrompt; // Attach prompt to error for fallback
+    error.prompt = imagePromptObject; // Attach structured prompt to error for fallback
     throw error;
   } catch (error) {
     log.error('Image generation error:', error);
-    // Attach the prompt to the error so it can be used as fallback
-    if (imagePrompt && error instanceof Error) {
-      (error as any).prompt = imagePrompt;
+    // Attach the structured prompt to the error so it can be used as fallback
+    if (imagePromptObject && error instanceof Error) {
+      (error as any).prompt = imagePromptObject;
     }
     throw error;
   }

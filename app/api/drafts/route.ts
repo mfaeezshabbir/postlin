@@ -69,14 +69,19 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    log.info('📥 POST /api/drafts - Received draft creation request');
+    
     const session = await getServerSession(getAuthOptions());
 
     if (!session?.user?.email) {
+      log.warn('⚠️ Unauthorized draft creation attempt');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+
+    log.info(`🔐 Authenticated user: ${session.user.email}`);
 
     // Get user from database
     const user = await prisma.user.findUnique({
@@ -84,16 +89,28 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
+      log.error(`❌ User not found in database: ${session.user.email}`);
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
+    log.info(`✅ Found user: ${user.id}`);
+
     const body = await request.json();
     const { content, imageUrl, imagePrompt, hashtags, isAIGenerated } = body;
 
+    log.info('📝 Draft data received:', {
+      contentLength: content?.length || 0,
+      hasImageUrl: !!imageUrl,
+      hasImagePrompt: !!imagePrompt,
+      hashtagsCount: hashtags?.length || 0,
+      isAIGenerated: isAIGenerated || false,
+    });
+
     if (!content || content.trim().length === 0) {
+      log.warn('⚠️ Draft creation failed: Content is required');
       return NextResponse.json(
         { error: 'Content is required' },
         { status: 400 }
@@ -101,6 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create draft
+    log.info('💾 Creating draft in database...');
     const draft = await prisma.post.create({
       data: {
         userId: user.id,
@@ -113,16 +131,27 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    log.info(`Draft created: ${draft.id} for user: ${user.email}${imageUrl ? ' (with image)' : ''}${imagePrompt ? ' (with image prompt)' : ''}`);
+    log.info(`✅ Draft created: ${draft.id} for user: ${user.email}${imageUrl ? ' (with image)' : ''}${imagePrompt ? ' (with image prompt)' : ''}`);
 
     return NextResponse.json({
       success: true,
       draft,
     }, { status: 201 });
   } catch (error) {
-    log.error('Error creating draft:', error);
+    log.error('❌ Error creating draft:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    log.error('Error details:', {
+      message: errorMessage,
+      stack: errorStack,
+    });
+    
     return NextResponse.json(
-      { error: 'Failed to create draft' },
+      { 
+        error: 'Failed to create draft',
+        details: errorMessage // Include error details for debugging
+      },
       { status: 500 }
     );
   }

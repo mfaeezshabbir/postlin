@@ -100,6 +100,28 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
     }
   };
 
+  // Strip markdown formatting from text
+  const stripMarkdown = (text: string): string => {
+    return text
+      // Remove bold/italic markdown (**text**, __text__, *text*, _text_)
+      .replace(/(\*\*|__)(.*?)\1/g, '$2')
+      .replace(/(\*|_)(.*?)\1/g, '$2')
+      // Remove inline code (`code`)
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove headers (# Header)
+      .replace(/^#{1,6}\s+/gm, '')
+      // Remove bullet points markdown (-, *, +)
+      .replace(/^[\s]*[-*+]\s+/gm, '• ')
+      // Remove numbered lists (1. item)
+      .replace(/^[\s]*\d+\.\s+/gm, '• ')
+      // Remove links [text](url)
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+      // Remove em dashes
+      .replace(/—/g, ',')
+      // Clean up any remaining asterisks
+      .replace(/\*/g, '');
+  };
+
   const resetModal = () => {
     setCreationMode('choose');
     setContent('');
@@ -111,6 +133,8 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
     setHashtagInput('');
     setLoading(false);
     setIsAIGenerated(false);
+    setImagePromptText('');
+    setStoredImagePrompt(null);
   };
 
   const handleClose = () => {
@@ -214,8 +238,12 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
       }
 
       const data = await response.json();
-      setGeneratedContent(data.content);
-      setContent(data.content);
+      
+      // Strip any markdown formatting that might have slipped through
+      const cleanContent = stripMarkdown(data.content);
+      
+      setGeneratedContent(cleanContent);
+      setContent(cleanContent);
       
       // Mark as AI-generated
       setIsAIGenerated(true);
@@ -225,7 +253,7 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
         setHashtags(data.hashtags);
       } else {
         // Fallback: Extract hashtags from content if not provided in structured format
-        const hashtagMatches = data.content.match(/#[\w]+/g);
+        const hashtagMatches = cleanContent.match(/#[\w]+/g);
         if (hashtagMatches) {
           const extractedHashtags = hashtagMatches.map((tag: string) => tag.replace('#', ''));
           setHashtags(extractedHashtags);
@@ -237,10 +265,19 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
         setImagePreview(data.image.base64);
         // Note: selectedImage will be null since it's AI-generated, not user-uploaded
         // We'll handle this in the save function
-      } else if (data.imagePrompt) {
-        // If image generation failed but we have the prompt, show it to the user
-        setImagePromptText(data.imagePrompt);
-        setShowImagePromptDialog(true);
+      }
+      
+      // Store image prompt (as JSON string if it's an object, or as-is if string)
+      if (data.imagePrompt) {
+        const promptToStore = typeof data.imagePrompt === 'object' 
+          ? JSON.stringify(data.imagePrompt, null, 2) 
+          : data.imagePrompt;
+        setImagePromptText(promptToStore);
+        
+        // Show dialog if image generation failed
+        if (!data.image?.base64) {
+          setShowImagePromptDialog(true);
+        }
       }
     } catch (error) {
       console.error('Error generating content:', error);
@@ -285,43 +322,51 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
 
       let response;
       
+      const draftData = { 
+        content: finalContent,
+        imageUrl: uploadedImageUrl,
+        imagePrompt: imagePromptText || storedImagePrompt, // Save image prompt
+        hashtags: hashtags,
+        isAIGenerated: isAIGenerated, // Track if it was AI-generated
+      };
+      
+      console.log('📤 Saving draft with data:', {
+        contentLength: finalContent.length,
+        hasImage: !!uploadedImageUrl,
+        hasImagePrompt: !!(imagePromptText || storedImagePrompt),
+        hashtagsCount: hashtags.length,
+        isAIGenerated,
+      });
+      
       if (mode === 'edit' && draftId) {
         // Update existing draft
         response = await fetch(`/api/drafts/${draftId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            content: finalContent,
-            imageUrl: uploadedImageUrl,
-            imagePrompt: imagePromptText || storedImagePrompt, // Save image prompt
-            hashtags: hashtags,
-            isAIGenerated: isAIGenerated, // Track if it was AI-generated
-          }),
+          body: JSON.stringify(draftData),
         });
       } else {
         // Create new draft
         response = await fetch('/api/drafts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            content: finalContent,
-            imageUrl: uploadedImageUrl,
-            imagePrompt: imagePromptText || storedImagePrompt, // Save image prompt
-            hashtags: hashtags,
-            isAIGenerated: isAIGenerated, // Track if it was AI-generated
-          }),
+          body: JSON.stringify(draftData),
         });
       }
 
       if (!response.ok) {
-        throw new Error(`Failed to ${mode === 'edit' ? 'update' : 'create'} draft`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorDetails = errorData.details || errorData.error || 'Unknown error';
+        console.error('❌ Draft API error:', errorData);
+        throw new Error(`Failed to ${mode === 'edit' ? 'update' : 'create'} draft: ${errorDetails}`);
       }
 
       onDraftSaved();
       handleClose();
     } catch (error) {
       console.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} draft:`, error);
-      alert(`Failed to ${mode === 'edit' ? 'update' : 'create'} draft. Please try again.`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to ${mode === 'edit' ? 'update' : 'create'} draft.\n\nError: ${errorMessage}\n\nPlease try again.`);
     } finally {
       setLoading(false);
     }
