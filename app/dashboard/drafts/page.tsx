@@ -11,8 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { NewDraftModal } from '../components/NewDraftModal';
-import { EditDraftModal } from '../components/EditDraftModal';
+import { DraftModal } from '../components/DraftModal';
 
 interface Draft {
   id: string;
@@ -33,8 +32,8 @@ interface DraftsData {
 export default function DraftsPage() {
   const [draftsData, setDraftsData] = useState<DraftsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showNewDraftModal, setShowNewDraftModal] = useState(false);
-  const [showEditDraftModal, setShowEditDraftModal] = useState(false);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [draftModalMode, setDraftModalMode] = useState<'create' | 'edit'>('create');
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
@@ -57,9 +56,16 @@ export default function DraftsPage() {
     fetchDrafts();
   }, []);
 
+  const handleCreateDraft = () => {
+    setDraftModalMode('create');
+    setEditingDraftId(null);
+    setShowDraftModal(true);
+  };
+
   const handleEdit = (draftId: string) => {
+    setDraftModalMode('edit');
     setEditingDraftId(draftId);
-    setShowEditDraftModal(true);
+    setShowDraftModal(true);
   };
 
   const handleDelete = async (draftId: string) => {
@@ -129,7 +135,7 @@ export default function DraftsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Drafts</h1>
           <p className="text-gray-600 mt-1">Manage your LinkedIn post drafts</p>
         </div>
-        <Button onClick={() => setShowNewDraftModal(true)}>
+        <Button onClick={handleCreateDraft}>
           <Plus className="w-4 h-4 mr-2" />
           New Draft
         </Button>
@@ -192,7 +198,7 @@ export default function DraftsPage() {
               <p className="text-gray-600 mb-6 max-w-sm mx-auto">
                 You don't have any drafts yet. Create your first draft to get started with AI-powered LinkedIn content.
               </p>
-              <Button onClick={() => setShowNewDraftModal(true)}>
+              <Button onClick={handleCreateDraft}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Draft
               </Button>
@@ -278,18 +284,12 @@ export default function DraftsPage() {
         </CardContent>
       </Card>
 
-      {/* New Draft Modal */}
-      <NewDraftModal
-        open={showNewDraftModal}
-        onOpenChange={setShowNewDraftModal}
-        onDraftCreated={fetchDrafts}
-      />
-
-      {/* Edit Draft Modal */}
-      <EditDraftModal
-        open={showEditDraftModal}
-        onOpenChange={setShowEditDraftModal}
-        onDraftUpdated={fetchDrafts}
+      {/* Unified Draft Modal */}
+      <DraftModal
+        open={showDraftModal}
+        onOpenChange={setShowDraftModal}
+        onDraftSaved={fetchDrafts}
+        mode={draftModalMode}
         draftId={editingDraftId}
       />
     </div>
