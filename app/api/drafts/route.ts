@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { content } = body;
+    const { content, imageUrl, imagePrompt, hashtags, isAIGenerated } = body;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -106,10 +106,14 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         draftText: content,
         status: 'DRAFT',
+        imageUrl: imageUrl || null,
+        imagePrompt: imagePrompt || null, // Store the image prompt
+        hashtags: hashtags || [],
+        isAIGenerated: isAIGenerated || false,
       },
     });
 
-    log.info(`Draft created: ${draft.id} for user: ${user.email}`);
+    log.info(`Draft created: ${draft.id} for user: ${user.email}${imageUrl ? ' (with image)' : ''}${imagePrompt ? ' (with image prompt)' : ''}`);
 
     return NextResponse.json({
       success: true,

@@ -37,17 +37,21 @@ model User {
 }
 
 model Post {
-  id           String     @id @map("_id") @default(auto()) @db.ObjectId
-  userId       String     @db.ObjectId
-  user         User       @relation(fields: [userId], references: [id])
-  draftText    String
-  finalText    String?
-  status       PostStatus @default(DRAFT)
+  id             String     @id @map("_id") @default(auto()) @db.ObjectId
+  userId         String     @db.ObjectId
+  user           User       @relation(fields: [userId], references: [id])
+  draftText      String
+  finalText      String?
+  status         PostStatus @default(DRAFT)
   linkedInPostId String?
-  createdAt    DateTime   @default(now())
-  publishedAt  DateTime?
+  imageUrl       String?    // URL to stored image (Cloudinary, S3, or local)
+  imagePrompt    String?    // AI-generated image prompt for regeneration
+  hashtags       String[]   @default([]) // Array of hashtags
+  isAIGenerated  Boolean    @default(false) // Track if post was AI-generated
+  createdAt      DateTime   @default(now())
+  publishedAt    DateTime?
 
-  analytics    Analytics?
+  analytics      Analytics?
 }
 
 model Preference {

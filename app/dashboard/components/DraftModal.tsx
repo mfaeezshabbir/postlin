@@ -43,6 +43,16 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
   const [hashtagInput, setHashtagInput] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
 
+  // Track if current content was AI-generated
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
+
+  // Image prompt fallback states
+  const [showImagePromptDialog, setShowImagePromptDialog] = useState(false);
+  const [imagePromptText, setImagePromptText] = useState('');
+  
+  // Stored image prompt from draft (for reuse)
+  const [storedImagePrompt, setStoredImagePrompt] = useState<string | null>(null);
+
   // Fetch draft if in edit mode
   useEffect(() => {
     if (open && mode === 'edit' && draftId) {
@@ -63,6 +73,16 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
       
       const data = await response.json();
       setContent(data.draft.draftText);
+      
+      // Load image if exists
+      if (data.draft.imageUrl) {
+        setImagePreview(data.draft.imageUrl);
+      }
+      
+      // Load stored image prompt if exists
+      if (data.draft.imagePrompt) {
+        setStoredImagePrompt(data.draft.imagePrompt);
+      }
       
       // Extract hashtags from content
       const hashtagRegex = /#[\w]+/g;
@@ -90,6 +110,7 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
     setHashtags([]);
     setHashtagInput('');
     setLoading(false);
+    setIsAIGenerated(false);
   };
 
   const handleClose = () => {
@@ -153,12 +174,18 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
 
   // Insert hashtags into content
   const insertHashtagsIntoContent = (text: string) => {
-    if (hashtags.length === 0) return text;
+    // If content already has hashtags (from AI generation), just return it
+    // Otherwise, add the hashtags from the chip manager
+    const hasHashtags = /#[\w]+/.test(text);
     
-    // Check if content already has hashtags at the end
+    if (hasHashtags || hashtags.length === 0) {
+      return text;
+    }
+    
+    // Add hashtags from chip manager
     const hashtagString = '\n\n' + hashtags.map(tag => `#${tag}`).join(' ');
     
-    // Remove existing hashtags from the end if present
+    // Remove any existing hashtags at the end if present
     const contentWithoutHashtags = text.replace(/\n\n#[\w\s]+$/, '').trim();
     
     return contentWithoutHashtags + hashtagString;
@@ -177,6 +204,7 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
           prompt: aiPrompt,
           tone,
           length,
+          generateImage: true, // Request AI to generate image
         }),
       });
 
@@ -188,6 +216,32 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
       const data = await response.json();
       setGeneratedContent(data.content);
       setContent(data.content);
+      
+      // Mark as AI-generated
+      setIsAIGenerated(true);
+      
+      // Use structured hashtags from JSON response (already parsed as array)
+      if (data.hashtags && Array.isArray(data.hashtags)) {
+        setHashtags(data.hashtags);
+      } else {
+        // Fallback: Extract hashtags from content if not provided in structured format
+        const hashtagMatches = data.content.match(/#[\w]+/g);
+        if (hashtagMatches) {
+          const extractedHashtags = hashtagMatches.map((tag: string) => tag.replace('#', ''));
+          setHashtags(extractedHashtags);
+        }
+      }
+      
+      // Set AI-generated image if available
+      if (data.image?.base64) {
+        setImagePreview(data.image.base64);
+        // Note: selectedImage will be null since it's AI-generated, not user-uploaded
+        // We'll handle this in the save function
+      } else if (data.imagePrompt) {
+        // If image generation failed but we have the prompt, show it to the user
+        setImagePromptText(data.imagePrompt);
+        setShowImagePromptDialog(true);
+      }
     } catch (error) {
       console.error('Error generating content:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate content. Please try again.';
@@ -209,6 +263,26 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
 
     setLoading(true);
     try {
+      let uploadedImageUrl = null;
+
+      // Upload image if present
+      if (imagePreview) {
+        console.log('📤 Uploading image...');
+        const uploadResponse = await fetch('/api/upload/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imagePreview }),
+        });
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          uploadedImageUrl = uploadData.imageUrl;
+          console.log(`✅ Image uploaded: ${uploadedImageUrl}`);
+        } else {
+          console.error('⚠️ Image upload failed, continuing without image');
+        }
+      }
+
       let response;
       
       if (mode === 'edit' && draftId) {
@@ -216,14 +290,26 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
         response = await fetch(`/api/drafts/${draftId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: finalContent }),
+          body: JSON.stringify({ 
+            content: finalContent,
+            imageUrl: uploadedImageUrl,
+            imagePrompt: imagePromptText || storedImagePrompt, // Save image prompt
+            hashtags: hashtags,
+            isAIGenerated: isAIGenerated, // Track if it was AI-generated
+          }),
         });
       } else {
         // Create new draft
         response = await fetch('/api/drafts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: finalContent }),
+          body: JSON.stringify({ 
+            content: finalContent,
+            imageUrl: uploadedImageUrl,
+            imagePrompt: imagePromptText || storedImagePrompt, // Save image prompt
+            hashtags: hashtags,
+            isAIGenerated: isAIGenerated, // Track if it was AI-generated
+          }),
         });
       }
 
@@ -544,10 +630,25 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
 
                   {/* Image Upload Section */}
                   <div className="border-t pt-4">
-                    <label className="text-sm font-medium mb-2 block">
-                      <ImageIcon className="w-4 h-4 inline mr-2" />
-                      Add Image (Optional)
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium block">
+                        <ImageIcon className="w-4 h-4 inline mr-2" />
+                        Add Image (Optional)
+                      </label>
+                      {storedImagePrompt && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setImagePromptText(storedImagePrompt);
+                            setShowImagePromptDialog(true);
+                          }}
+                        >
+                          <ImageIcon className="w-4 h-4 mr-2" />
+                          View Image Prompt
+                        </Button>
+                      )}
+                    </div>
                     {!imagePreview ? (
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
                         <input
@@ -646,6 +747,113 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
           </>
         )}
       </DialogContent>
+
+      {/* Image Prompt Fallback Dialog */}
+      <Dialog open={showImagePromptDialog} onOpenChange={setShowImagePromptDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-blue-500" />
+              Image Generation Unavailable
+            </DialogTitle>
+            <DialogDescription>
+              We couldn't generate an image due to API rate limits, but we've created a perfect prompt for you! 
+              Copy this and use it in any image generation tool like DALL-E, Midjourney, or Leonardo AI.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Image Prompt Box */}
+            <div className="relative">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-[200px] overflow-y-auto">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{imagePromptText}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(imagePromptText);
+                  // Simple visual feedback
+                  const btn = document.activeElement as HTMLButtonElement;
+                  const originalText = btn.textContent;
+                  btn.textContent = '✓ Copied!';
+                  setTimeout(() => {
+                    if (btn) btn.textContent = originalText;
+                  }, 2000);
+                }}
+              >
+                📋 Copy
+              </Button>
+            </div>
+
+            {/* Suggested Tools */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-sm text-blue-900 mb-2">💡 Suggested Image Generation Tools:</h4>
+              <ul className="space-y-1 text-sm text-blue-800">
+                <li>
+                  • <a 
+                    href="https://aistudio.google.com/app/prompts/new_freeform" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-600"
+                  >
+                    Google AI Studio
+                  </a> (Free - use your Gemini API key)
+                </li>
+                <li>
+                  • <a 
+                    href="https://www.bing.com/images/create" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-600"
+                  >
+                    Bing Image Creator
+                  </a> (Free with Microsoft account)
+                </li>
+                <li>
+                  • <a 
+                    href="https://leonardo.ai" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-600"
+                  >
+                    Leonardo AI
+                  </a> (Free tier available)
+                </li>
+                <li>
+                  • <a 
+                    href="https://www.craiyon.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-600"
+                  >
+                    Craiyon
+                  </a> (Completely free)
+                </li>
+              </ul>
+            </div>
+
+            {/* Instructions */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="font-semibold text-sm text-amber-900 mb-2">📝 How to Use:</h4>
+              <ol className="space-y-1 text-sm text-amber-800 list-decimal list-inside">
+                <li>Click "Copy" above to copy the prompt</li>
+                <li>Open one of the suggested tools (or any AI image generator)</li>
+                <li>Paste the prompt and generate your image</li>
+                <li>Download the image</li>
+                <li>Come back here and upload it using the "Upload Image" button</li>
+              </ol>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowImagePromptDialog(false)}>
+              Got it, thanks!
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

@@ -105,7 +105,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { content } = body;
+    const { content, imageUrl, imagePrompt, hashtags, isAIGenerated } = body;
 
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
@@ -114,15 +114,32 @@ export async function PUT(
       );
     }
 
+    // Prepare update data
+    const updateData: any = {
+      draftText: content,
+    };
+
+    // Only update fields if they are provided
+    if (imageUrl !== undefined) {
+      updateData.imageUrl = imageUrl;
+    }
+    if (imagePrompt !== undefined) {
+      updateData.imagePrompt = imagePrompt; // Store or update the image prompt
+    }
+    if (hashtags !== undefined) {
+      updateData.hashtags = hashtags;
+    }
+    if (isAIGenerated !== undefined) {
+      updateData.isAIGenerated = isAIGenerated;
+    }
+
     // Update draft
     const updatedDraft = await prisma.post.update({
       where: { id: params.id },
-      data: {
-        draftText: content,
-      },
+      data: updateData,
     });
 
-    log.info(`Draft updated: ${params.id}`);
+    log.info(`Draft updated: ${params.id}${imageUrl ? ' (with image)' : ''}${imagePrompt ? ' (with image prompt)' : ''}`);
 
     return NextResponse.json({
       success: true,
