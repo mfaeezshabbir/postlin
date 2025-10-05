@@ -1,147 +1,196 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { History, TrendingUp, Eye, Heart, MessageCircle, Share2, ExternalLink } from 'lucide-react';
+import { History, TrendingUp, Eye, Heart, MessageCircle, Share2, ExternalLink, Loader2 } from 'lucide-react';
+
+interface PublishedPost {
+  id: string;
+  finalText: string;
+  publishedAt: string;
+  linkedInPostId: string | null;
+}
+
+interface PublishedPostsData {
+  posts: PublishedPost[];
+  stats: {
+    total: number;
+    thisMonth: number;
+  };
+}
 
 export default function HistoryPage() {
-  // Placeholder - will fetch from database later
-  const publishedPosts: any[] = [];
+  const [postsData, setPostsData] = useState<PublishedPostsData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPublishedPosts = async () => {
+    try {
+      const response = await fetch('/api/posts/published');
+      if (!response.ok) throw new Error('Failed to fetch published posts');
+      
+      const data = await response.json();
+      setPostsData(data);
+    } catch (error) {
+      console.error('Error fetching published posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPublishedPosts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  const posts = postsData?.posts || [];
+  const stats = postsData?.stats || { total: 0, thisMonth: 0 };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">History</h1>
-        <p className="text-gray-600 mt-1">Your published LinkedIn posts and their performance</p>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">History</h1>
+          <p className="text-gray-600 mt-1">View your published LinkedIn posts</p>
+        </div>
       </div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Posts</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Total Posts
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{publishedPosts.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Published to LinkedIn</p>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-gray-500 mt-1">All time</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Impressions</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">
+              This Month
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              +0% this month
-            </p>
+            <div className="text-2xl font-bold">{stats.thisMonth}</div>
+            <p className="text-xs text-gray-500 mt-1">Published this month</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Engagement Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Analytics
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0%</div>
-            <p className="text-xs text-gray-500 mt-1">Avg. engagement</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Best Post</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">—</div>
-            <p className="text-xs text-gray-500 mt-1">Most impressions</p>
+            <div className="text-2xl font-bold">Coming Soon</div>
+            <p className="text-xs text-gray-500 mt-1">Engagement metrics</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Published posts list */}
+      {/* Published Posts List */}
       <Card>
         <CardHeader>
           <CardTitle>Published Posts</CardTitle>
           <CardDescription>
-            Track the performance of your LinkedIn posts
+            All your posts that have been published to LinkedIn
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {publishedPosts.length === 0 ? (
+          {posts.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                 <History className="h-8 w-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No published posts yet</h3>
               <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                Nothing published yet. Once you publish your first post, you'll see it here with performance metrics.
+                Once you publish drafts to LinkedIn, they'll appear here with engagement metrics.
               </p>
-              <Button>
-                Create Your First Post
-              </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              {publishedPosts.map((post) => (
-                <PublishedPostCard key={post.id} post={post} />
+              {posts.map((post) => (
+                <div 
+                  key={post.id} 
+                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                          Published
+                        </Badge>
+                        <span className="text-xs text-gray-500">
+                          {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3 mb-3">
+                        {post.finalText}
+                      </p>
+
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>{post.finalText.split(/\s+/).filter(Boolean).length} words</span>
+                        {/* Placeholder for analytics - will be fetched from LinkedIn API later */}
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          -
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Heart className="w-3 h-3" />
+                          -
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3" />
+                          -
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-4">
+                      {post.linkedInPostId && (
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            // LinkedIn post URL format
+                            const postUrl = `https://www.linkedin.com/feed/update/${post.linkedInPostId}`;
+                            window.open(postUrl, '_blank');
+                          }}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          View on LinkedIn
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function PublishedPostCard({ post }: { post: any }) {
-  return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-semibold text-gray-900 line-clamp-1">
-              {post.title || 'Untitled Post'}
-            </h3>
-            <Badge variant="outline" className="text-green-600 border-green-300">
-              Published
-            </Badge>
-          </div>
-          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-            {post.content}
-          </p>
-          <div className="flex items-center gap-6 text-xs text-gray-500 mb-3">
-            <span>Published {new Date(post.publishedAt).toLocaleDateString()}</span>
-          </div>
-          
-          {/* Analytics */}
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1 text-gray-600">
-              <Eye className="h-4 w-4" />
-              <span>{post.impressions || 0}</span>
-            </div>
-            <div className="flex items-center gap-1 text-gray-600">
-              <Heart className="h-4 w-4" />
-              <span>{post.likes || 0}</span>
-            </div>
-            <div className="flex items-center gap-1 text-gray-600">
-              <MessageCircle className="h-4 w-4" />
-              <span>{post.comments || 0}</span>
-            </div>
-            <div className="flex items-center gap-1 text-gray-600">
-              <Share2 className="h-4 w-4" />
-              <span>{post.shares || 0}</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <a href={post.linkedInUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View on LinkedIn
-            </a>
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

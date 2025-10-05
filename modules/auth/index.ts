@@ -12,7 +12,8 @@ export function getAuthOptions(): NextAuthOptions {
         wellKnown: 'https://www.linkedin.com/oauth/.well-known/openid-configuration',
         authorization: {
           params: {
-            scope: 'openid profile email',
+            // Add w_member_social scope for posting to LinkedIn
+            scope: 'openid profile email w_member_social',
           },
         },
         checks: ['state'],
@@ -31,6 +32,15 @@ export function getAuthOptions(): NextAuthOptions {
     ],
     session: { strategy: 'jwt' },
     callbacks: {
+      // Store access token in JWT
+      async jwt({ token, account, profile }) {
+        // Persist the OAuth access_token to the token right after signin
+        if (account) {
+          token.accessToken = account.access_token;
+          token.refreshToken = account.refresh_token;
+        }
+        return token;
+      },
       // Ensure a Prisma-backed user record exists on sign in
       async signIn({ user, account, profile }) {
         try {
@@ -87,8 +97,8 @@ export function getAuthOptions(): NextAuthOptions {
           return false;
         }
       },
-      // Attach database id and linkedInId to the session object
-      async session({ session }) {
+      // Attach database id, linkedInId, and access token to the session object
+      async session({ session, token }) {
         try {
           const email = session.user && session.user.email ? session.user.email : null;
           if (!email) return session;
@@ -100,6 +110,8 @@ export function getAuthOptions(): NextAuthOptions {
             email: dbUser.email || (session.user ? session.user.email : undefined),
             linkedInId: dbUser.linkedInId || null,
           } as any;
+          // Add access token to session
+          (session as any).accessToken = token.accessToken;
           return session;
         } catch (e) {
           log.error('session callback error', e);

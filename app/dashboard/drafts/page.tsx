@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Loader2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { FileText, Plus, Loader2, MoreVertical, Pencil, Trash2, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NewDraftModal } from '../components/NewDraftModal';
+import { EditDraftModal } from '../components/EditDraftModal';
 
 interface Draft {
   id: string;
@@ -33,7 +34,10 @@ export default function DraftsPage() {
   const [draftsData, setDraftsData] = useState<DraftsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showNewDraftModal, setShowNewDraftModal] = useState(false);
+  const [showEditDraftModal, setShowEditDraftModal] = useState(false);
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const fetchDrafts = async () => {
     try {
@@ -53,6 +57,11 @@ export default function DraftsPage() {
     fetchDrafts();
   }, []);
 
+  const handleEdit = (draftId: string) => {
+    setEditingDraftId(draftId);
+    setShowEditDraftModal(true);
+  };
+
   const handleDelete = async (draftId: string) => {
     if (!confirm('Are you sure you want to delete this draft?')) return;
 
@@ -70,6 +79,34 @@ export default function DraftsPage() {
       alert('Failed to delete draft. Please try again.');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handlePublish = async (draftId: string) => {
+    if (!confirm('Are you sure you want to publish this post to LinkedIn?')) return;
+
+    setPublishingId(draftId);
+    try {
+      const response = await fetch('/api/publish/linkedin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Failed to publish');
+      }
+
+      alert('✅ Successfully published to LinkedIn!');
+      await fetchDrafts(); // Refresh the list
+    } catch (error) {
+      console.error('Error publishing to LinkedIn:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to publish. Please try again.';
+      alert(`❌ Publishing Error: ${errorMessage}\n\nPlease make sure you have granted posting permissions to the app.`);
+    } finally {
+      setPublishingId(null);
     }
   };
 
@@ -190,9 +227,27 @@ export default function DraftsPage() {
                     </div>
 
                     <div className="flex items-center gap-2 ml-4">
+                      <Button 
+                        size="sm"
+                        onClick={() => handlePublish(draft.id)}
+                        disabled={publishingId === draft.id || deletingId === draft.id}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {publishingId === draft.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            Publishing...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-1" />
+                            Publish
+                          </>
+                        )}
+                      </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" disabled={deletingId === draft.id}>
+                          <Button variant="ghost" size="sm" disabled={deletingId === draft.id || publishingId === draft.id}>
                             {deletingId === draft.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
@@ -201,7 +256,7 @@ export default function DraftsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(draft.id)}>
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
@@ -228,6 +283,14 @@ export default function DraftsPage() {
         open={showNewDraftModal}
         onOpenChange={setShowNewDraftModal}
         onDraftCreated={fetchDrafts}
+      />
+
+      {/* Edit Draft Modal */}
+      <EditDraftModal
+        open={showEditDraftModal}
+        onOpenChange={setShowEditDraftModal}
+        onDraftUpdated={fetchDrafts}
+        draftId={editingDraftId}
       />
     </div>
   );
