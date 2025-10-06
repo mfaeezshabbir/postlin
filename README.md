@@ -1,6 +1,6 @@
 # Postlin
 
-AI-powered LinkedIn assistant (starter scaffold)
+AI-powered LinkedIn assistant
 
 This repository contains a Next.js + TypeScript app with Prisma (MongoDB), BullMQ workers (Redis), and modular folders for auth, drafts, notifications, publishing, users, and analytics.
 
@@ -14,6 +14,13 @@ This repository contains a Next.js + TypeScript app with Prisma (MongoDB), BullM
 - Worker stubs in `workers/` for BullMQ job processing
 - `docker-compose.yml` with MongoDB and Redis for local development
 - `.env.example` with recommended environment variables
+
+## Key features
+
+- AI-assisted content generation (Gemini / OpenAI) via `/api/ai/generate`
+- Scheduling and worker-based publishing (BullMQ + Redis)
+- LinkedIn OAuth and publishing scaffolding (Prisma fields for tokens & post id)
+- Modular architecture: `modules/*` and `lib/*` for easy extensions
 
 ## Quickstart (local)
 
@@ -78,6 +85,16 @@ Open http://localhost:3000
 - `lib/` — shared utilities (logger, prisma wrapper, redis helper)
 - `workers/` — BullMQ worker stubs
 
+## Roadmap & features
+
+This project tracks planned features and short-term roadmap items in `docs/features.md`.
+
+Notable planned feature (inspired by shnai0/linkedin-post-generator):
+
+- LinkedIn Post Optimization — an AI-driven "Optimize for LinkedIn" flow which accepts a draft/idea and returns an optimized post. Features include per-"vibe" prompt templates (Story, Crisp, List, Case Study, etc.), streaming generation to the UI, and a rule-based ranking/validation function that scores posts according to LinkedIn heuristics. See `docs/features.md` for the full spec and TODO list.
+
+You can add more roadmap items to `docs/features.md` as the project evolves.
+
 ## Notes & next steps
 
 - NextAuth: `modules/auth/getNextAuthOptions()` is a stub — wire it into `pages/api/auth/[...nextauth].ts` (or the App Router equivalent) and configure the LinkedIn provider using `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`.
@@ -97,4 +114,4 @@ Open http://localhost:3000
 
 ## License
 
-MIT
+This project is licensed under the Apache License 2.0. See the `LICENSE` file for details.
