@@ -35,7 +35,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Postli</h1>
+                <h1 className="text-xl font-bold text-gray-900">Postlin</h1>
                 <p className="text-xs text-gray-500">AI Content Assistant</p>
               </div>
             </div>

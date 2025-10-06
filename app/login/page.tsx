@@ -28,7 +28,7 @@ function LoginContent() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Postli</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Postlin</h1>
           <p className="text-gray-600">Your AI-powered LinkedIn content assistant</p>
         </div>
 
@@ -111,7 +111,7 @@ function LoginContent() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-500 mt-6 px-4">
-          By continuing, you agree to allow Postli to access your LinkedIn profile and publish content on your behalf. 
+          By continuing, you agree to allow Postlin to access your LinkedIn profile and publish content on your behalf. 
           We respect your privacy and will never post without your approval.
         </p>
       </div>

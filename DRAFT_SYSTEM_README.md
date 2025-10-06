@@ -1,4 +1,4 @@
-# 🚀 Postli - Draft Management & AI Generation Implementation
+# 🚀 Postlin - Draft Management & AI Generation Implementation
 
 ## ✅ What's Been Completed
 

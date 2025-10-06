@@ -1,4 +1,4 @@
-# Postli Login System - Complete Setup
+# Postlin Login System - Complete Setup
 
 ## ✅ What Has Been Created
 
@@ -64,7 +64,7 @@ The server is already running on **http://localhost:3000**
 1. **Visit the landing page**: http://localhost:3000
 2. **Click "Sign In"** or **"Get Started Free"**
 3. **Click "Continue with LinkedIn"** on the login page
-4. **Authorize Postli** on LinkedIn
+4. **Authorize Postlin** on LinkedIn
 5. **Get redirected to dashboard** with your profile info
 
 ## 🔑 Environment Variables (Already Configured)

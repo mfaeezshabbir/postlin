@@ -54,7 +54,7 @@ export default function RootLayout({ children }) {
 ### ✅ Bonus: Updated Metadata
 ```tsx
 export const metadata: Metadata = {
-  title: "Postli - AI-Powered LinkedIn Content Assistant",
+  title: "Postlin - AI-Powered LinkedIn Content Assistant",
   description: "Create, schedule, and publish LinkedIn posts with AI-powered content generation.",
 };
 ```
@@ -100,7 +100,7 @@ Root Layout (Server Component)
 2. ✅ **Updated** `/app/layout.tsx`
    - Added AuthProvider import
    - Wrapped children in AuthProvider
-   - Updated metadata for Postli
+   - Updated metadata for Postlin
 
 ## Benefits
 

@@ -1,4 +1,4 @@
-# Postli Deployment Guide
+# Postlin Deployment Guide
 
 Complete guide for deploying the LinkedIn Post Scheduling Application to production.
 
@@ -35,8 +35,8 @@ Complete guide for deploying the LinkedIn Post Scheduling Application to product
 ### 1. Clone and Install Dependencies
 
 ```bash
-git clone https://github.com/mfaeezshabbir/postli.git
-cd postli
+git clone https://github.com/mfaeezshabbir/postlin.git
+cd postlin
 npm install
 ```
 
@@ -123,7 +123,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
    - Choose "Connect your application"
    - Copy the connection string
    - Replace `<password>` with your database user password
-   - Replace `<database>` with your database name (e.g., `postli`)
+   - Replace `<database>` with your database name (e.g., `postlin`)
 
 ### 2. Initialize Database Schema
 
@@ -316,7 +316,7 @@ volumes:
 
 ```bash
 # Build the image
-docker build -t postli:latest .
+docker build -t postlin:latest .
 
 # Run with docker-compose
 docker-compose up -d
@@ -368,8 +368,8 @@ sudo apt install nginx
 1. **Clone and setup**:
 ```bash
 cd /var/www
-git clone https://github.com/mfaeezshabbir/postli.git
-cd postli
+git clone https://github.com/mfaeezshabbir/postlin.git
+cd postlin
 npm install
 ```
 
@@ -399,10 +399,10 @@ Add the following configuration:
 ```javascript
 module.exports = {
   apps: [{
-    name: 'postli',
+    name: 'postlin',
     script: 'npm',
     args: 'start',
-    cwd: '/var/www/postli',
+    cwd: '/var/www/postlin',
     instances: 1,
     autorestart: true,
     watch: false,
@@ -426,7 +426,7 @@ pm2 startup
 
 1. **Create Nginx configuration**:
 ```bash
-sudo nano /etc/nginx/sites-available/postli
+sudo nano /etc/nginx/sites-available/postlin
 ```
 
 Add the following:
@@ -452,7 +452,7 @@ server {
 
 2. **Enable the site**:
 ```bash
-sudo ln -s /etc/nginx/sites-available/postli /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/postlin /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 ```
@@ -534,7 +534,7 @@ Sentry.init({
 2. **PM2 Monitoring** (VPS deployments):
 ```bash
 pm2 monit
-pm2 logs postli
+pm2 logs postlin
 pm2 status
 ```
 
@@ -566,10 +566,10 @@ npx prisma db push
 2. **Manual Backup**:
 ```bash
 # Export database
-mongodump --uri="mongodb+srv://username:password@cluster.mongodb.net/postli"
+mongodump --uri="mongodb+srv://username:password@cluster.mongodb.net/postlin"
 
 # Import database
-mongorestore --uri="mongodb+srv://username:password@cluster.mongodb.net/postli" dump/
+mongorestore --uri="mongodb+srv://username:password@cluster.mongodb.net/postlin" dump/
 ```
 
 ### Log Management
@@ -577,7 +577,7 @@ mongorestore --uri="mongodb+srv://username:password@cluster.mongodb.net/postli" 
 1. **Application Logs**:
 ```bash
 # PM2 logs
-pm2 logs postli --lines 100
+pm2 logs postlin --lines 100
 
 # Vercel logs
 vercel logs
@@ -667,7 +667,7 @@ Enable debug logging:
 ```bash
 # .env.local or .env
 DEBUG=* # Enable all debug logs
-DEBUG=postli:* # Enable app-specific logs
+DEBUG=postlin:* # Enable app-specific logs
 NODE_ENV=development # More verbose logging
 ```
 

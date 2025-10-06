@@ -22,7 +22,7 @@ export default async function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-gray-900">Postli</span>
+              <span className="text-xl font-bold text-gray-900">Postlin</span>
             </div>
             <div>
               {user ? (
@@ -108,7 +108,7 @@ export default async function Home() {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">Smart Scheduling</h3>
             <p className="text-gray-600">
-              Schedule your posts at optimal times and let Postli automatically publish them to LinkedIn.
+              Schedule your posts at optimal times and let Postlin automatically publish them to LinkedIn.
             </p>
           </div>
 
@@ -155,7 +155,7 @@ export default async function Home() {
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-12 text-center text-white shadow-2xl">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to Transform Your LinkedIn Presence?</h2>
-          <p className="text-xl mb-8 opacity-90">Join Postli today and start creating engaging content effortlessly.</p>
+          <p className="text-xl mb-8 opacity-90">Join Postlin today and start creating engaging content effortlessly.</p>
           <Link
             href="/login"
             className="inline-flex items-center gap-2 px-8 py-4 bg-white hover:bg-gray-100 text-blue-600 rounded-xl transition-all font-semibold text-lg shadow-lg hover:shadow-xl"
@@ -178,13 +178,13 @@ export default async function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                 </svg>
               </div>
-              <span className="font-bold text-gray-900">Postli</span>
+              <span className="font-bold text-gray-900">Postlin</span>
             </div>
             <p className="text-sm text-gray-600 mb-4">
               Your AI-powered LinkedIn content assistant
             </p>
             <p className="text-xs text-gray-500">
-              © 2025 Postli. All rights reserved.
+              © 2025 Postlin. All rights reserved.
             </p>
           </div>
         </div>

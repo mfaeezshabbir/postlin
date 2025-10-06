@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Postli - AI-Powered LinkedIn Content Assistant",
-  description: "Create, schedule, and publish LinkedIn posts with AI-powered content generation. Automate your LinkedIn presence with Postli.",
+  title: "Postlin - AI-Powered LinkedIn Content Assistant",
+  description: "Create, schedule, and publish LinkedIn posts with AI-powered content generation. Automate your LinkedIn presence with Postlin.",
 };
 
 export default function RootLayout({

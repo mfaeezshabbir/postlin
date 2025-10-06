@@ -3,14 +3,14 @@ version: '3.9'
 services:
   mongo:
     image: mongo:6.0
-    container_name: postli-mongo
+    container_name: postlin-mongo
     restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
     environment:
-      MONGO_INITDB_DATABASE: postli
+      MONGO_INITDB_DATABASE: postlin
     command: ["--replSet", "rs0", "--bind_ip_all"]
     healthcheck:
       test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}) }" | mongosh --quiet
@@ -21,7 +21,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: postli-redis
+    container_name: postlin-redis
     restart: unless-stopped
     ports:
       - "6380:6379"

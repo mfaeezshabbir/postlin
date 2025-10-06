@@ -1,4 +1,4 @@
-# 🎨 Postli Dashboard - Complete Implementation
+# 🎨 Postlin Dashboard - Complete Implementation
 
 ## ✅ What's Been Built
 
@@ -105,7 +105,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ [Mobile Menu Button] Postli                    [Avatar]│ ← Topbar (sticky)
+│ [Mobile Menu Button] Postlin                    [Avatar]│ ← Topbar (sticky)
 ├─────────────────────────────────────────────────────────┤
 │         │                                               │
 │  Logo   │  Welcome back, Muhammad!      [New Draft] 👤 │

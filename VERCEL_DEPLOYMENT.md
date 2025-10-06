@@ -1,6 +1,6 @@
 # Quick Deployment Guide - Vercel + MongoDB Atlas (Free Tier)
 
-**Deploy Postli to production in under 15 minutes - completely free!**
+**Deploy Postlin to production in under 15 minutes - completely free!**
 
 **🎯 What You Get**:
 - ✅ Free hosting on Vercel
@@ -37,7 +37,7 @@ This guide will help you deploy your LinkedIn post scheduling application using:
 
 ```bash
 # Make sure you're in the project directory
-cd /home/mfaeezshabbir/pp/postli
+cd /home/mfaeezshabbir/pp/postlin
 
 # Check git status
 git status
@@ -105,7 +105,7 @@ echo -e "\n# Environment files\n.env\n.env.local\n.env*.local" >> .gitignore
 
 1. **Choose Cloud Provider**: AWS, Google Cloud, or Azure (any is fine)
 2. **Select Region**: Choose the closest region to your users
-3. **Cluster Name**: `postli-cluster` (or any name you prefer)
+3. **Cluster Name**: `postlin-cluster` (or any name you prefer)
 4. Click **Create Cluster** (takes 3-5 minutes)
 
 ### 2.3 Setup Database Access
@@ -141,7 +141,7 @@ echo -e "\n# Environment files\n.env\n.env.local\n.env*.local" >> .gitignore
 
 It will look like:
 ```
-mongodb+srv://postli_user:<password>@postli-cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
+mongodb+srv://postli_user:<password>@postlin-cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
 ```
 
 ### 2.6 Format Your Connection String
@@ -149,12 +149,12 @@ mongodb+srv://postli_user:<password>@postli-cluster.xxxxx.mongodb.net/?retryWrit
 Replace `<password>` with your actual password and add database name:
 
 ```
-mongodb+srv://postli_user:YOUR_ACTUAL_PASSWORD@postli-cluster.xxxxx.mongodb.net/postli?retryWrites=true&w=majority
+mongodb+srv://postli_user:YOUR_ACTUAL_PASSWORD@postlin-cluster.xxxxx.mongodb.net/postlin?retryWrites=true&w=majority
 ```
 
 **⚠️ Important Changes**:
 - Replace `<password>` with your actual password
-- Add `/postli` before the `?` (this is your database name)
+- Add `/postlin` before the `?` (this is your database name)
 
 ---
 
@@ -165,7 +165,7 @@ mongodb+srv://postli_user:YOUR_ACTUAL_PASSWORD@postli-cluster.xxxxx.mongodb.net/
 1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/apps)
 2. Click **Create app**
 3. Fill in:
-   - **App name**: Postli
+   - **App name**: Postlin
    - **LinkedIn Page**: Select or create a LinkedIn page
    - **App logo**: Upload your logo (optional)
    - **Legal agreement**: Check the box
@@ -247,7 +247,7 @@ git push origin scheduling
 2. Click **Sign Up** (use GitHub account)
 3. Click **Add New Project**
 4. **Import Git Repository**:
-   - Find your repository: `mfaeezshabbir/postli`
+   - Find your repository: `mfaeezshabbir/postlin`
    - Click **Import**
 
 5. **Configure Project**:
@@ -262,7 +262,7 @@ git push origin scheduling
 
    ```bash
    # Database
-   DATABASE_URL=mongodb+srv://postli_user:YOUR_PASSWORD@postli-cluster.xxxxx.mongodb.net/postli?retryWrites=true&w=majority
+   DATABASE_URL=mongodb+srv://postli_user:YOUR_PASSWORD@postlin-cluster.xxxxx.mongodb.net/postlin?retryWrites=true&w=majority
 
    # NextAuth (temporary - we'll update after deployment)
    NEXTAUTH_URL=https://your-app.vercel.app
@@ -289,7 +289,7 @@ git push origin scheduling
 
 - Vercel will build and deploy your app (takes 2-5 minutes)
 - You'll see build logs in real-time
-- Once complete, you'll get a deployment URL like: `https://postli-xyz123.vercel.app`
+- Once complete, you'll get a deployment URL like: `https://postlin-xyz123.vercel.app`
 
 ---
 
@@ -303,7 +303,7 @@ git push origin scheduling
 4. Click **Edit**
 5. Update the value to your actual Vercel URL:
    ```
-   https://postli-xyz123.vercel.app
+   https://postlin-xyz123.vercel.app
    ```
 6. Click **Save**
 7. Go to **Deployments** tab
@@ -318,7 +318,7 @@ git push origin scheduling
 4. Scroll to **OAuth 2.0 settings** → **Redirect URLs**
 5. Add your Vercel URL:
    ```
-   https://postli-xyz123.vercel.app/api/auth/callback/linkedin
+   https://postlin-xyz123.vercel.app/api/auth/callback/linkedin
    ```
 6. Keep the localhost URL for local development
 7. Click **Update**
@@ -349,7 +349,7 @@ npx prisma db push
 
 1. Go to MongoDB Atlas Dashboard
 2. Click **Browse Collections**
-3. You should see your `postli` database with collections:
+3. You should see your `postlin` database with collections:
    - `User`
    - `Post`
    - `Preference`
@@ -384,7 +384,7 @@ npx prisma db push
 
 ### 9.1 Access Your App
 
-1. Open your Vercel URL in browser: `https://postli-xyz123.vercel.app`
+1. Open your Vercel URL in browser: `https://postlin-xyz123.vercel.app`
 2. You should see your app's homepage
 
 ### 9.2 Test Core Features
@@ -414,17 +414,17 @@ If something doesn't work:
 ### 10.1 Add Custom Domain in Vercel
 
 1. In Vercel Dashboard, go to **Settings** → **Domains**
-2. Enter your domain: `postli.yourdomain.com`
+2. Enter your domain: `postlin.yourdomain.com`
 3. Click **Add**
 
 ### 10.2 Update DNS Records
 
 Vercel will show you DNS records to add:
 
-For **subdomain** (e.g., `postli.yourdomain.com`):
+For **subdomain** (e.g., `postlin.yourdomain.com`):
 ```
 Type: CNAME
-Name: postli
+Name: postlin
 Value: cname.vercel-dns.com
 ```
 
@@ -472,7 +472,7 @@ After domain is verified:
 **Solution**:
 1. Verify DATABASE_URL format is correct
 2. Check password doesn't contain special characters (URL encode if needed)
-3. Ensure `/postli` database name is included
+3. Ensure `/postlin` database name is included
 4. Verify MongoDB Atlas network access allows `0.0.0.0/0`
 
 ### Issue: Scheduled Posts Not Publishing

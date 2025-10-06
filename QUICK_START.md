@@ -1,4 +1,4 @@
-# 🚀 Postli - Quick Start Guide
+# 🚀 Postlin - Quick Start Guide
 
 ## Prerequisites
 - ✅ MongoDB running (replica set on port 27017)
@@ -207,8 +207,8 @@ npm run dev
 
 ### ✅ Checklist:
 
-- [ ] MongoDB is running: `docker ps` shows `postli-mongo`
-- [ ] Redis is running: `docker ps` shows `postli-redis`
+- [ ] MongoDB is running: `docker ps` shows `postlin-mongo`
+- [ ] Redis is running: `docker ps` shows `postlin-redis`
 - [ ] Dev server started: `npm run dev` running on port 3000
 - [ ] Can access: http://localhost:3000
 - [ ] Can login with LinkedIn
@@ -288,7 +288,7 @@ This will generate professional LinkedIn content ready to edit and publish!
 
 ## 🎉 You're All Set!
 
-Your Postli dashboard is ready to use. Create drafts, generate AI content, and get ready for the next phase: **scheduling and publishing to LinkedIn!**
+Your Postlin dashboard is ready to use. Create drafts, generate AI content, and get ready for the next phase: **scheduling and publishing to LinkedIn!**
 
 **Happy drafting!** ✍️
 

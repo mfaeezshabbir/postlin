@@ -1,4 +1,4 @@
-# Postli
+# Postlin
 
 AI-powered LinkedIn assistant (starter scaffold)
 

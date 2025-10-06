@@ -116,7 +116,7 @@ Before testing login, verify:
    │   with       │             │  Login       │       │  [Your Name] │
    │   LinkedIn]  │             │              │       │              │
    │              │             │  [Authorize  │       │  Dashboard   │
-   │              │             │   Postli]    │──OK──>│  Stats &     │
+   │              │             │   Postlin]    │──OK──>│  Stats &     │
    │              │             │              │       │  Features    │
    └──────────────┘             └──────────────┘       └──────────────┘
 ```
@@ -129,7 +129,7 @@ Before testing login, verify:
    → Browser shows LinkedIn authorization page
 
 2. Enter LinkedIn credentials
-   → LinkedIn asks "Allow Postli to access your profile?"
+   → LinkedIn asks "Allow Postlin to access your profile?"
    
 3. Click "Allow"
    → Redirected back to localhost:3000/api/auth/callback/linkedin
@@ -160,7 +160,7 @@ When user clicks "Continue with LinkedIn", they'll see:
 ┌─────────────────────────────────────────────────────────────┐
 │                          LinkedIn                             │
 │                                                               │
-│  Postli would like to:                                        │
+│  Postlin would like to:                                        │
 │                                                               │
 │  ✓ Access your basic profile information                     │
 │  ✓ Access your email address                                 │
