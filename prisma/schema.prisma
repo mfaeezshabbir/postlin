@@ -18,22 +18,25 @@ datasource db {
 // Enum for post status
 enum PostStatus {
   DRAFT
+  SCHEDULED  // Post is scheduled to be published at a specific time
   APPROVED
   PUBLISHED
   DISCARDED
 }
 
 model User {
-  id          String    @id @map("_id") @default(auto()) @db.ObjectId
-  email       String    @unique
-  name        String?
-  linkedInId  String?   @unique
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @map("_id") @default(auto()) @db.ObjectId
+  email        String    @unique
+  name         String?
+  linkedInId   String?   @unique
+  accessToken  String?   // LinkedIn OAuth access token
+  refreshToken String?   // LinkedIn OAuth refresh token
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  posts       Post[]
-  preferences Preference?
-  activities  Activity[]
+  posts        Post[]
+  preferences  Preference?
+  activities   Activity[]
 }
 
 model Post {
@@ -48,6 +51,7 @@ model Post {
   imagePrompt    String?    // AI-generated image prompt for regeneration
   hashtags       String[]   @default([]) // Array of hashtags
   isAIGenerated  Boolean    @default(false) // Track if post was AI-generated
+  scheduledAt    DateTime?  // When the post is scheduled to be published
   createdAt      DateTime   @default(now())
   publishedAt    DateTime?
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Loader2, MoreVertical, Pencil, Trash2, Send } from 'lucide-react';
+import { FileText, Plus, Loader2, MoreVertical, Pencil, Trash2, Send, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { DraftModal } from '../components/DraftModal';
 
 interface Draft {
@@ -37,6 +45,13 @@ export default function DraftsPage() {
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  
+  // Scheduling states
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [schedulingDraftId, setSchedulingDraftId] = useState<string | null>(null);
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [scheduling, setScheduling] = useState(false);
 
   const fetchDrafts = async () => {
     try {
@@ -113,6 +128,62 @@ export default function DraftsPage() {
       alert(`❌ Publishing Error: ${errorMessage}\n\nPlease make sure you have granted posting permissions to the app.`);
     } finally {
       setPublishingId(null);
+    }
+  };
+
+  const handleOpenScheduleDialog = (draftId: string) => {
+    setSchedulingDraftId(draftId);
+    setScheduledDate('');
+    setScheduledTime('');
+    setShowScheduleDialog(true);
+  };
+
+  const handleSchedule = async () => {
+    if (!scheduledDate || !scheduledTime) {
+      alert('Please select both date and time');
+      return;
+    }
+
+    if (!schedulingDraftId) {
+      alert('No draft selected');
+      return;
+    }
+
+    // Combine date and time
+    const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+    const now = new Date();
+
+    if (scheduledDateTime <= now) {
+      alert('Scheduled time must be in the future');
+      return;
+    }
+
+    setScheduling(true);
+    try {
+      const response = await fetch('/api/posts/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: schedulingDraftId,
+          scheduledAt: scheduledDateTime.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to schedule post');
+      }
+
+      const data = await response.json();
+      alert(data.message || 'Post scheduled successfully!');
+      setShowScheduleDialog(false);
+      await fetchDrafts(); // Refresh to remove scheduled post from drafts
+    } catch (error) {
+      console.error('Error scheduling post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to schedule post.\n\nError: ${errorMessage}`);
+    } finally {
+      setScheduling(false);
     }
   };
 
@@ -262,6 +333,10 @@ export default function DraftsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleOpenScheduleDialog(draft.id)}>
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Schedule
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(draft.id)}>
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit
@@ -292,6 +367,87 @@ export default function DraftsPage() {
         mode={draftModalMode}
         draftId={editingDraftId}
       />
+
+      {/* Schedule Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule Post</DialogTitle>
+            <DialogDescription>
+              Choose when you want this post to be published to LinkedIn
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Date</label>
+              <input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 border rounded-md"
+                disabled={scheduling}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Time</label>
+              <input
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+                disabled={scheduling}
+              />
+            </div>
+
+            {scheduledDate && scheduledTime && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Post will be published on:</strong>
+                  <br />
+                  {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowScheduleDialog(false)}
+              disabled={scheduling}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSchedule}
+              disabled={scheduling || !scheduledDate || !scheduledTime}
+            >
+              {scheduling ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Scheduling...
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Schedule Post
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

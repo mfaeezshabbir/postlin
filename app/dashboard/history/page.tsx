@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { History, TrendingUp, Eye, Heart, MessageCircle, Share2, ExternalLink, Loader2 } from 'lucide-react';
+import { History, TrendingUp, Eye, Heart, MessageCircle, Share2, ExternalLink, Loader2, RotateCcw } from 'lucide-react';
 
 interface PublishedPost {
   id: string;
@@ -24,6 +24,7 @@ interface PublishedPostsData {
 export default function HistoryPage() {
   const [postsData, setPostsData] = useState<PublishedPostsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [revertingPostId, setRevertingPostId] = useState<string | null>(null);
 
   const fetchPublishedPosts = async () => {
     try {
@@ -36,6 +37,41 @@ export default function HistoryPage() {
       console.error('Error fetching published posts:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRevertToDraft = async (postId: string) => {
+    if (!confirm('Are you sure you want to revert this post to draft? This will clear the LinkedIn post link.')) {
+      return;
+    }
+
+    setRevertingPostId(postId);
+
+    try {
+      const response = await fetch('/api/posts/revert-to-draft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ postId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to revert post to draft');
+      }
+
+      const data = await response.json();
+
+      // Show success message
+      alert(data.message || 'Post reverted to draft successfully!');
+
+      // Refresh the published posts list
+      await fetchPublishedPosts();
+    } catch (error) {
+      console.error('Error reverting post:', error);
+      alert('Failed to revert post to draft. Please try again.');
+    } finally {
+      setRevertingPostId(null);
     }
   };
 
@@ -183,6 +219,25 @@ export default function HistoryPage() {
                           View on LinkedIn
                         </Button>
                       )}
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRevertToDraft(post.id)}
+                        disabled={revertingPostId === post.id}
+                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      >
+                        {revertingPostId === post.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            Reverting...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="w-4 h-4 mr-1" />
+                            Revert to Draft
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>

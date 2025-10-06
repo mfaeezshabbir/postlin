@@ -1,0 +1,19 @@
+# Ignore generated Prisma client and wasm/runtime bundles
+app/generated/**
+app/generated/prisma/**
+app/generated/**/runtime/**
+app/generated/**/wasm*.js
+app/generated/**/wasm-*.mjs
+
+# Node/Next build artifacts
+.next/
+node_modules/
+out/
+build/
+
+# Scripts and helpers
+scripts/
+
+# Allow local env
+.env
+.env.local

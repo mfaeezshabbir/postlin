@@ -91,7 +91,7 @@ export async function uploadImage(base64Image: string): Promise<UploadResult> {
  * Delete image from storage
  * For base64 storage, images are deleted automatically with the database record
  */
-export async function deleteImage(imageUrl: string): Promise<void> {
+export async function deleteImage(_imageUrl: string): Promise<void> {
   // Base64 images don't need separate deletion
   // They're removed when the database record is deleted
   console.log('ℹ️  Base64 image will be removed with database record');

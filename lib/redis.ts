@@ -10,14 +10,14 @@ type RedisLike = {
 const map = new Map<string, string>();
 
 const inMemoryRedis: RedisLike = {
-  async get(key: string) {
-    return map.has(key) ? map.get(key)! : null;
+  async get(_key: string) {
+    return map.has(_key) ? map.get(_key)! : null;
   },
-  async set(key: string, value: string) {
-    map.set(key, value);
+  async set(_key: string, _value: string) {
+    map.set(_key, _value);
   },
-  async del(key: string) {
-    return map.delete(key) ? 1 : 0;
+  async del(_key: string) {
+    return map.delete(_key) ? 1 : 0;
   },
 };
 
@@ -29,7 +29,7 @@ export function getRedisClient(): RedisLike {
   if (url) {
     try {
       // Try to load ioredis dynamically if available
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const IORedis = require('ioredis');
       const real = new IORedis(url);
       client = {
@@ -38,7 +38,7 @@ export function getRedisClient(): RedisLike {
         del: (k: string) => real.del(k),
       } as RedisLike;
       return client;
-    } catch (e) {
+    } catch (_e) {
       // fall through to in-memory
       console.warn('ioredis not installed, using in-memory redis fallback');
     }
