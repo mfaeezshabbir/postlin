@@ -83,9 +83,47 @@ export async function POST(request: NextRequest) {
       draftId 
     });
 
+    // Get LinkedIn Person URN from userinfo endpoint
+    const userProfileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!userProfileResponse.ok) {
+      const errorText = await userProfileResponse.text();
+      log.error('Failed to fetch LinkedIn user profile:', {
+        status: userProfileResponse.status,
+        error: errorText
+      });
+      return NextResponse.json(
+        { 
+          error: 'Failed to fetch LinkedIn user profile',
+          details: `Status: ${userProfileResponse.status}`,
+        },
+        { status: userProfileResponse.status }
+      );
+    }
+
+    const userProfile = await userProfileResponse.json();
+    log.info('LinkedIn user profile:', userProfile);
+    
+    // The 'sub' field contains the Person URN (e.g., "8675309" part of "urn:li:person:8675309")
+    const personId = userProfile.sub;
+    
+    if (!personId) {
+      return NextResponse.json(
+        { 
+          error: 'LinkedIn Person ID not found',
+          details: 'Unable to retrieve Person ID from LinkedIn profile',
+        },
+        { status: 500 }
+      );
+    }
+
     // Prepare the request body according to LinkedIn Share API
     const requestBody = {
-      author: `urn:li:person:${user.linkedInId}`,
+      author: `urn:li:person:${personId}`,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {

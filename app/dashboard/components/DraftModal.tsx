@@ -48,10 +48,19 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
 
   // Image prompt fallback states
   const [showImagePromptDialog, setShowImagePromptDialog] = useState(false);
+  
+  // Scheduling states
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [scheduling, setScheduling] = useState(false);
   const [imagePromptText, setImagePromptText] = useState('');
   
   // Stored image prompt from draft (for reuse)
   const [storedImagePrompt, setStoredImagePrompt] = useState<string | null>(null);
+  
+  // Track the current draft ID (can change when saving a new draft)
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
 
   // Fetch draft if in edit mode
   useEffect(() => {
@@ -289,10 +298,10 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
   };
 
   // Save Draft
-  const handleSaveDraft = async () => {
+  const handleSaveDraft = async (): Promise<string | null> => {
     if (!content.trim()) {
       alert('Please enter some content');
-      return;
+      return null;
     }
 
     // Add hashtags to content
@@ -361,14 +370,84 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
         throw new Error(`Failed to ${mode === 'edit' ? 'update' : 'create'} draft: ${errorDetails}`);
       }
 
-      onDraftSaved();
-      handleClose();
+      const result = await response.json();
+      const savedDraftId = result.draft?.id || draftId;
+      
+      console.log('✅ Draft saved successfully with ID:', savedDraftId);
+      
+      return savedDraftId;
     } catch (error) {
       console.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} draft:`, error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       alert(`Failed to ${mode === 'edit' ? 'update' : 'create'} draft.\n\nError: ${errorMessage}\n\nPlease try again.`);
+      return null;
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle Schedule
+  const handleSchedule = async () => {
+    if (!scheduledDate || !scheduledTime) {
+      alert('Please select both date and time');
+      return;
+    }
+
+    // Combine date and time
+    const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+    const now = new Date();
+
+    if (scheduledDateTime <= now) {
+      alert('Scheduled time must be in the future');
+      return;
+    }
+
+    setScheduling(true);
+    try {
+      let postIdToSchedule = currentDraftId || draftId;
+      
+      // First, save the draft if not already saved
+      if (!postIdToSchedule) {
+        console.log('📝 No draft ID found, saving draft first...');
+        const savedId = await handleSaveDraft();
+        
+        if (!savedId) {
+          throw new Error('Failed to save draft before scheduling');
+        }
+        
+        postIdToSchedule = savedId;
+        setCurrentDraftId(savedId);
+        console.log('✅ Draft saved with ID:', savedId);
+      }
+
+      console.log('📅 Scheduling post with ID:', postIdToSchedule);
+      
+      // Then schedule it
+      const response = await fetch('/api/posts/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: postIdToSchedule,
+          scheduledAt: scheduledDateTime.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to schedule post');
+      }
+
+      const data = await response.json();
+      alert(data.message || 'Post scheduled successfully!');
+      setShowScheduleDialog(false);
+      onDraftSaved();
+      handleClose();
+    } catch (error) {
+      console.error('Error scheduling post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to schedule post.\n\nError: ${errorMessage}`);
+    } finally {
+      setScheduling(false);
     }
   };
 
@@ -625,16 +704,34 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
                       )}
                     </Button>
                   ) : (
-                    <Button onClick={handleSaveDraft} disabled={loading || !content.trim()}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        'Save Draft'
-                      )}
-                    </Button>
+                    <>
+                      <Button 
+                        variant="outline"
+                        onClick={() => setShowScheduleDialog(true)} 
+                        disabled={loading || !content.trim()}
+                      >
+                        📅 Schedule
+                      </Button>
+                      <Button 
+                        onClick={async () => {
+                          const savedId = await handleSaveDraft();
+                          if (savedId) {
+                            onDraftSaved();
+                            handleClose();
+                          }
+                        }} 
+                        disabled={loading || !content.trim()}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          'Save Draft'
+                        )}
+                      </Button>
+                    </>
                   )}
                 </DialogFooter>
               </>
@@ -776,7 +873,23 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
                   <Button variant="outline" onClick={handleClose} disabled={loading}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveDraft} disabled={loading || !content.trim()}>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowScheduleDialog(true)} 
+                    disabled={loading || !content.trim()}
+                  >
+                    📅 Schedule
+                  </Button>
+                  <Button 
+                    onClick={async () => {
+                      const savedId = await handleSaveDraft();
+                      if (savedId) {
+                        onDraftSaved();
+                        handleClose();
+                      }
+                    }} 
+                    disabled={loading || !content.trim()}
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -895,6 +1008,81 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
           <DialogFooter>
             <Button onClick={() => setShowImagePromptDialog(false)}>
               Got it, thanks!
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Schedule Post</DialogTitle>
+            <DialogDescription>
+              Choose when you want this post to be automatically published to LinkedIn
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date</label>
+              <input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Time</label>
+              <input
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+            </div>
+
+            {scheduledDate && scheduledTime && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">Post will be published on:</span>
+                  <br />
+                  {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowScheduleDialog(false)}
+              disabled={scheduling}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSchedule}
+              disabled={scheduling || !scheduledDate || !scheduledTime}
+            >
+              {scheduling ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Scheduling...
+                </>
+              ) : (
+                'Schedule Post'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -10,7 +10,7 @@ import { log } from '@/lib/logger';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(getAuthOptions());
@@ -33,9 +33,11 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     const draft = await prisma.post.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -66,7 +68,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(getAuthOptions());
@@ -89,10 +91,12 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
+
     // Check if draft exists and belongs to user
     const existingDraft = await prisma.post.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -135,11 +139,11 @@ export async function PUT(
 
     // Update draft
     const updatedDraft = await prisma.post.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
     });
 
-    log.info(`Draft updated: ${params.id}${imageUrl ? ' (with image)' : ''}${imagePrompt ? ' (with image prompt)' : ''}`);
+    log.info(`Draft updated: ${id}${imageUrl ? ' (with image)' : ''}${imagePrompt ? ' (with image prompt)' : ''}`);
 
     return NextResponse.json({
       success: true,
@@ -160,7 +164,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(getAuthOptions());
@@ -183,10 +187,12 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     // Check if draft exists and belongs to user
     const existingDraft = await prisma.post.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
@@ -200,10 +206,10 @@ export async function DELETE(
 
     // Delete draft
     await prisma.post.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
-    log.info(`Draft deleted: ${params.id}`);
+    log.info(`Draft deleted: ${id}`);
 
     return NextResponse.json({
       success: true,
