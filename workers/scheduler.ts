@@ -75,21 +75,29 @@ export class ScheduledPostWorker {
 
       const now = new Date();
 
-      // Find the next scheduled post
+      // First, check and publish any posts that are already due
+      const publishedCount = await this.checkAndPublishScheduledPosts();
+
+      // If we published any posts, immediately check again for more due posts
+      if (publishedCount > 0) {
+        log.info('🔄 Published posts, checking immediately for more...');
+        // Use setImmediate to avoid stack overflow, but run immediately
+        setImmediate(() => this.scheduleNextCheck());
+        return;
+      }
+
+      // Find the next scheduled post (future posts only)
       const nextPost = await prisma.post.findFirst({
         where: {
           status: 'SCHEDULED',
           scheduledAt: {
-            gte: now, // Greater than or equal to current time (future posts)
+            gt: now, // Greater than current time (future posts only)
           },
         },
         orderBy: {
           scheduledAt: 'asc', // Get the earliest one
         },
       });
-
-      // Check for posts that are already due (past their scheduled time)
-      await this.checkAndPublishScheduledPosts();
 
       // If there's a next post, schedule a timer for it
       if (nextPost && nextPost.scheduledAt) {
@@ -124,8 +132,9 @@ export class ScheduledPostWorker {
 
   /**
    * Check for posts that need to be published and publish them
+   * @returns The number of posts that were published
    */
-  private async checkAndPublishScheduledPosts() {
+  private async checkAndPublishScheduledPosts(): Promise<number> {
     try {
       const now = new Date();
       
@@ -146,26 +155,33 @@ export class ScheduledPostWorker {
 
       if (postsToPublish.length === 0) {
         log.info('📭 No posts to publish at this time');
-        return;
+        return 0;
       }
 
       log.info(`📬 Found ${postsToPublish.length} post(s) to publish`);
 
       // Publish each post
+      let publishedCount = 0;
       for (const post of postsToPublish) {
-        await this.publishPost(post);
+        const success = await this.publishPost(post);
+        if (success) {
+          publishedCount++;
+        }
       }
 
-      log.info(`✅ Finished processing scheduled posts`);
+      log.info(`✅ Finished processing scheduled posts (${publishedCount} published)`);
+      return publishedCount;
     } catch (error) {
       log.error('❌ Error checking scheduled posts:', error);
+      return 0;
     }
   }
 
   /**
    * Publish a single post to LinkedIn
+   * @returns true if published successfully, false otherwise
    */
-  private async publishPost(post: any) {
+  private async publishPost(post: any): Promise<boolean> {
     try {
       log.info(`📤 Publishing post ${post.id} scheduled for ${post.scheduledAt}`);
       log.info(`👤 User: ${post.user.email}, Has access token: ${!!post.user.accessToken}`);
@@ -182,7 +198,7 @@ export class ScheduledPostWorker {
           },
         });
         
-        return;
+        return false;
       }
 
       // Publish to LinkedIn
@@ -199,10 +215,15 @@ export class ScheduledPostWorker {
           data: {
             status: 'PUBLISHED',
             publishedAt: new Date(),
+            linkedInPostId: response.linkedInPostId || 'unknown',
+            finalText: post.draftText, // Save the published text
           },
         });
 
-        log.info(`✅ Successfully published post ${post.id} to LinkedIn`);
+        log.info(`✅ Successfully published post ${post.id} to LinkedIn`, {
+          linkedInPostId: response.linkedInPostId
+        });
+        return true;
       } else {
         throw new Error(response.error || 'Failed to publish to LinkedIn');
       }
@@ -216,6 +237,8 @@ export class ScheduledPostWorker {
           status: 'DRAFT', // Revert to draft so user can retry
         },
       });
+      
+      return false;
     }
   }
 
@@ -226,7 +249,7 @@ export class ScheduledPostWorker {
     accessToken: string,
     text: string,
     imageUrl?: string | null
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<{ success: boolean; error?: string; linkedInPostId?: string }> {
     try {
       // Get LinkedIn Person URN from userinfo endpoint
       const userProfileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
@@ -313,7 +336,18 @@ export class ScheduledPostWorker {
         throw new Error(errorData.message || `LinkedIn API error: ${publishResponse.status}`);
       }
 
-      return { success: true };
+      // Get the LinkedIn post ID from response header
+      const linkedInPostId = publishResponse.headers.get('X-RestLi-Id') || 
+                             publishResponse.headers.get('x-restli-id');
+
+      if (!linkedInPostId) {
+        log.warn('⚠️ LinkedIn post created but no post ID in response header');
+      }
+
+      return { 
+        success: true, 
+        linkedInPostId: linkedInPostId || undefined 
+      };
     } catch (error) {
       log.error('❌ LinkedIn API error:', error);
       return {
@@ -332,7 +366,9 @@ export class ScheduledPostWorker {
     imageUrl: string
   ): Promise<{ success: boolean; assetId?: string }> {
     try {
-      // Register upload
+      log.info('📸 Step 1: Registering image upload with LinkedIn...');
+      
+      // Step 1: Register upload
       const registerResponse = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
         method: 'POST',
         headers: {
@@ -354,33 +390,58 @@ export class ScheduledPostWorker {
       });
 
       if (!registerResponse.ok) {
-        throw new Error('Failed to register image upload');
+        const errorText = await registerResponse.text();
+        log.error('❌ Failed to register image upload:', {
+          status: registerResponse.status,
+          error: errorText
+        });
+        throw new Error(`Failed to register image upload: ${registerResponse.status}`);
       }
 
       const registerData = await registerResponse.json();
+      log.info('✅ Image registration successful');
+      log.info('📦 Upload URL and Asset:', {
+        hasUploadUrl: !!registerData.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl,
+        asset: registerData.value?.asset
+      });
+
       const uploadUrl = registerData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
       const asset = registerData.value.asset;
 
-      // Download image
+      if (!uploadUrl || !asset) {
+        throw new Error('Upload URL or asset ID not found in registration response');
+      }
+
+      // Step 2: Download image from our storage
+      log.info('📥 Step 2: Downloading image from storage...');
       const imageResponse = await fetch(imageUrl);
       if (!imageResponse.ok) {
-        throw new Error('Failed to download image');
+        throw new Error(`Failed to download image: ${imageResponse.status}`);
       }
       const imageBuffer = await imageResponse.arrayBuffer();
+      log.info(`✅ Image downloaded (${imageBuffer.byteLength} bytes)`);
 
-      // Upload image
+      // Step 3: Upload image binary to LinkedIn
+      log.info('📤 Step 3: Uploading image binary to LinkedIn...');
       const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/octet-stream',
         },
         body: imageBuffer,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image to LinkedIn');
+        const errorText = await uploadResponse.text();
+        log.error('❌ Failed to upload image to LinkedIn:', {
+          status: uploadResponse.status,
+          error: errorText
+        });
+        throw new Error(`Failed to upload image to LinkedIn: ${uploadResponse.status}`);
       }
 
+      log.info('✅ Image uploaded successfully to LinkedIn');
       return { success: true, assetId: asset };
     } catch (error) {
       log.error('❌ Image upload error:', error);

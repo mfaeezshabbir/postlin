@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare the request body according to LinkedIn Share API
-    const requestBody = {
+    const requestBody: any = {
       author: `urn:li:person:${personId}`,
       lifecycleState: 'PUBLISHED',
       specificContent: {
@@ -130,13 +130,41 @@ export async function POST(request: NextRequest) {
           shareCommentary: {
             text: draft.draftText,
           },
-          shareMediaCategory: 'NONE',
+          shareMediaCategory: draft.imageUrl ? 'IMAGE' : 'NONE',
         },
       },
       visibility: {
         'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
       },
     };
+
+    // If there's an image, upload it first
+    if (draft.imageUrl) {
+      log.info('📸 Post has an image, uploading to LinkedIn...');
+      const imageUploadResult = await uploadImageToLinkedIn(
+        accessToken,
+        personId,
+        draft.imageUrl
+      );
+
+      if (imageUploadResult.success && imageUploadResult.assetId) {
+        requestBody.specificContent['com.linkedin.ugc.ShareContent'].media = [
+          {
+            status: 'READY',
+            description: {
+              text: 'Post image',
+            },
+            media: imageUploadResult.assetId,
+            title: {
+              text: 'Image',
+            },
+          },
+        ];
+        log.info('✅ Image uploaded and attached to post');
+      } else {
+        log.warn('⚠️ Image upload failed, posting without image');
+      }
+    }
 
     log.info('LinkedIn request body:', JSON.stringify(requestBody, null, 2));
 
@@ -243,5 +271,93 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Upload image to LinkedIn
+ */
+async function uploadImageToLinkedIn(
+  accessToken: string,
+  personId: string,
+  imageUrl: string
+): Promise<{ success: boolean; assetId?: string }> {
+  try {
+    log.info('📸 Step 1: Registering image upload with LinkedIn...');
+    
+    // Step 1: Register upload
+    const registerResponse = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        registerUploadRequest: {
+          recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+          owner: `urn:li:person:${personId}`,
+          serviceRelationships: [
+            {
+              relationshipType: 'OWNER',
+              identifier: 'urn:li:userGeneratedContent',
+            },
+          ],
+        },
+      }),
+    });
+
+    if (!registerResponse.ok) {
+      const errorText = await registerResponse.text();
+      log.error('❌ Failed to register image upload:', {
+        status: registerResponse.status,
+        error: errorText
+      });
+      throw new Error(`Failed to register image upload: ${registerResponse.status}`);
+    }
+
+    const registerData = await registerResponse.json();
+    log.info('✅ Image registration successful');
+
+    const uploadUrl = registerData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+    const asset = registerData.value.asset;
+
+    if (!uploadUrl || !asset) {
+      throw new Error('Upload URL or asset ID not found in registration response');
+    }
+
+    // Step 2: Download image from our storage
+    log.info('📥 Step 2: Downloading image from storage...');
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to download image: ${imageResponse.status}`);
+    }
+    const imageBuffer = await imageResponse.arrayBuffer();
+    log.info(`✅ Image downloaded (${imageBuffer.byteLength} bytes)`);
+
+    // Step 3: Upload image binary to LinkedIn
+    log.info('📤 Step 3: Uploading image binary to LinkedIn...');
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: imageBuffer,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      log.error('❌ Failed to upload image to LinkedIn:', {
+        status: uploadResponse.status,
+        error: errorText
+      });
+      throw new Error(`Failed to upload image to LinkedIn: ${uploadResponse.status}`);
+    }
+
+    log.info('✅ Image uploaded successfully to LinkedIn');
+    return { success: true, assetId: asset };
+  } catch (error) {
+    log.error('❌ Image upload error:', error);
+    return { success: false };
   }
 }
