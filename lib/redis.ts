@@ -29,7 +29,7 @@ export function getRedisClient(): RedisLike {
   if (url) {
     try {
       // Try to load ioredis dynamically if available
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const IORedis = require('ioredis');
       const real = new IORedis(url);
       client = {

@@ -33,6 +33,40 @@ export class ScheduledPostWorker {
   }
 
   /**
+   * Helper: fetch with simple retry for transient errors (network ETIMEDOUT, 5xx)
+   */
+  private async fetchWithRetry(
+    url: string,
+    options?: RequestInit,
+    attempts = 3,
+    backoffMs = 500
+  ): Promise<Response> {
+    let lastErr: any = null;
+    for (let i = 1; i <= attempts; i++) {
+      try {
+        const resp = await fetch(url, options);
+        // Treat 5xx as retryable
+        if (resp.status >= 500 && resp.status < 600) {
+          lastErr = new Error(`Server error ${resp.status}`);
+          // small backoff before next attempt
+          if (i < attempts) await new Promise((r) => setTimeout(r, backoffMs));
+          continue;
+        }
+        return resp;
+      } catch (err) {
+        lastErr = err;
+        log.warn(`⚠️ fetch attempt ${i} for ${url} failed: ${err}`);
+        if (i < attempts) {
+          await new Promise((r) => setTimeout(r, backoffMs));
+          continue;
+        }
+        throw lastErr;
+      }
+    }
+    throw lastErr;
+  }
+
+  /**
    * Stop the worker
    */
   stop() {
@@ -48,7 +82,11 @@ export class ScheduledPostWorker {
    * Trigger an immediate reschedule
    * Call this when a new post is scheduled to update the timer immediately
    */
-  reschedule() {
+  /**
+   * Trigger an immediate reschedule
+   * Call this when a new post is scheduled to update the timer immediately
+   */
+  async reschedule() {
     if (!this.isRunning) {
       log.warn('⚠️ Cannot reschedule - worker is not running');
       return;
@@ -62,8 +100,8 @@ export class ScheduledPostWorker {
       this.timeoutId = null;
     }
 
-    // Reschedule immediately
-    this.scheduleNextCheck();
+    // Run scheduling loop immediately and wait for it to settle
+    await this.scheduleNextCheck();
   }
 
   /**
@@ -75,54 +113,54 @@ export class ScheduledPostWorker {
 
       const now = new Date();
 
-      // First, check and publish any posts that are already due
+      // First, publish any posts that are already due
       const publishedCount = await this.checkAndPublishScheduledPosts();
 
       // If we published any posts, immediately check again for more due posts
       if (publishedCount > 0) {
         log.info('🔄 Published posts, checking immediately for more...');
-        // Use setImmediate to avoid stack overflow, but run immediately
+        // Run immediately to catch any additional due posts
         setImmediate(() => this.scheduleNextCheck());
         return;
       }
 
-      // Find the next scheduled post (future posts only)
+      // Find the next scheduled post (strictly in the future)
       const nextPost = await prisma.post.findFirst({
         where: {
           status: 'SCHEDULED',
           scheduledAt: {
-            gt: now, // Greater than current time (future posts only)
+            gt: now,
           },
         },
         orderBy: {
-          scheduledAt: 'asc', // Get the earliest one
+          scheduledAt: 'asc',
         },
       });
 
-      // If there's a next post, schedule a timer for it
+      // If there's a next post, decide whether to publish now or set an exact timer
       if (nextPost && nextPost.scheduledAt) {
         const timeUntilPost = nextPost.scheduledAt.getTime() - now.getTime();
-        
-        // Add a small buffer (1 second) to ensure we don't miss it
-        const delay = Math.max(1000, timeUntilPost + 1000);
 
-        log.info(`⏰ Next post scheduled for ${nextPost.scheduledAt.toISOString()}`);
-        log.info(`⏳ Will check again in ${Math.round(delay / 1000)} seconds`);
+        // If it's basically time now (<= 1 second), publish immediately
+        if (timeUntilPost <= 1000) {
+          log.info('⚡ Next post is due now, publishing immediately...');
+          await this.checkAndPublishScheduledPosts();
+          setImmediate(() => this.scheduleNextCheck());
+          return;
+        }
 
-        this.timeoutId = setTimeout(() => {
-          this.scheduleNextCheck();
-        }, delay);
+        // Schedule exact timer for the future post (no extra buffer)
+        const delay = timeUntilPost;
+        log.info(`⏰ Next post scheduled at ${nextPost.scheduledAt.toISOString()} (in ${Math.round(delay)}ms)`);
+        this.timeoutId = setTimeout(() => this.scheduleNextCheck(), delay);
       } else {
-        // No upcoming posts, check again in 5 minutes
-        log.info('📭 No upcoming scheduled posts. Will check again in 5 minutes.');
-        
-        this.timeoutId = setTimeout(() => {
-          this.scheduleNextCheck();
-        }, 5 * 60 * 1000); // 5 minutes
+        // No upcoming posts — check again in 1 minute
+        log.info('📭 No upcoming posts. Checking again in 1 minute.');
+        this.timeoutId = setTimeout(() => this.scheduleNextCheck(), 60 * 1000);
       }
     } catch (error) {
       log.error('❌ Error scheduling next check:', error);
-      
+
       // On error, retry in 1 minute
       this.timeoutId = setTimeout(() => {
         this.scheduleNextCheck();
@@ -251,12 +289,17 @@ export class ScheduledPostWorker {
     imageUrl?: string | null
   ): Promise<{ success: boolean; error?: string; linkedInPostId?: string }> {
     try {
-      // Get LinkedIn Person URN from userinfo endpoint
-      const userProfileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
+      // Get LinkedIn Person URN from userinfo endpoint (with retries on transient failures)
+      const userProfileResponse = await this.fetchWithRetry(
+        'https://api.linkedin.com/v2/userinfo',
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
         },
-      });
+        3,
+        1000
+      );
 
       if (!userProfileResponse.ok) {
         const errorText = await userProfileResponse.text();
@@ -277,7 +320,8 @@ export class ScheduledPostWorker {
         throw new Error('LinkedIn Person ID (sub) not found in user profile');
       }
 
-      // Prepare post payload according to LinkedIn Share API
+      // Prepare post payload according to LinkedIn Share API.
+      // Start with no media; only set IMAGE when upload succeeds.
       const postPayload: any = {
         author: `urn:li:person:${personId}`,
         lifecycleState: 'PUBLISHED',
@@ -286,7 +330,7 @@ export class ScheduledPostWorker {
             shareCommentary: {
               text: text,
             },
-            shareMediaCategory: imageUrl ? 'IMAGE' : 'NONE',
+            shareMediaCategory: 'NONE',
           },
         },
         visibility: {
@@ -294,7 +338,7 @@ export class ScheduledPostWorker {
         },
       };
 
-      // If there's an image, upload it first
+      // If there's an image, attempt upload. Only switch to IMAGE if upload returns an assetId.
       if (imageUrl) {
         const imageUploadResult = await this.uploadImageToLinkedIn(
           accessToken,
@@ -303,6 +347,7 @@ export class ScheduledPostWorker {
         );
 
         if (imageUploadResult.success && imageUploadResult.assetId) {
+          postPayload.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'IMAGE';
           postPayload.specificContent['com.linkedin.ugc.ShareContent'].media = [
             {
               status: 'READY',
@@ -316,20 +361,26 @@ export class ScheduledPostWorker {
             },
           ];
         } else {
-          log.warn(`⚠️ Image upload failed, posting without image`);
+          // Keep shareMediaCategory as NONE to avoid sending empty media
+          log.warn('⚠️ Image upload failed or timed out; publishing without image');
         }
       }
 
-      // Publish post to LinkedIn
-      const publishResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
+      // Publish post to LinkedIn (retry on transient failures)
+      const publishResponse = await this.fetchWithRetry(
+        'https://api.linkedin.com/v2/ugcPosts',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+          body: JSON.stringify(postPayload),
         },
-        body: JSON.stringify(postPayload),
-      });
+        2,
+        500
+      );
 
       if (!publishResponse.ok) {
         const errorData = await publishResponse.json().catch(() => ({}));
@@ -368,29 +419,45 @@ export class ScheduledPostWorker {
     try {
       log.info('📸 Step 1: Registering image upload with LinkedIn...');
       
-      // Step 1: Register upload
-      const registerResponse = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          registerUploadRequest: {
-            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-            owner: `urn:li:person:${linkedInUserId}`,
-            serviceRelationships: [
-              {
-                relationshipType: 'OWNER',
-                identifier: 'urn:li:userGeneratedContent',
+  // Step 1: Register upload (with retries on transient failures)
+  // Use fetchWithRetry for registration (3 attempts)
+  let registerResponse: Response | null = null;
+      try {
+        registerResponse = await this.fetchWithRetry(
+          'https://api.linkedin.com/v2/assets?action=registerUpload',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              registerUploadRequest: {
+                recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                owner: `urn:li:person:${linkedInUserId}`,
+                serviceRelationships: [
+                  {
+                    relationshipType: 'OWNER',
+                    identifier: 'urn:li:userGeneratedContent',
+                  },
+                ],
               },
-            ],
+            }),
           },
-        }),
-      });
+          3,
+          700
+        );
+      } catch (err) {
+        log.error('❌ registerUpload failed after retries:', err);
+        throw err;
+      }
+
+      if (!registerResponse) {
+        throw new Error('Failed to register image upload: no response');
+      }
 
       if (!registerResponse.ok) {
-        const errorText = await registerResponse.text();
+        const errorText = await registerResponse.text().catch(() => '');
         log.error('❌ Failed to register image upload:', {
           status: registerResponse.status,
           error: errorText
@@ -414,7 +481,7 @@ export class ScheduledPostWorker {
 
       // Step 2: Download image from our storage
       log.info('📥 Step 2: Downloading image from storage...');
-      const imageResponse = await fetch(imageUrl);
+      const imageResponse = await this.fetchWithRetry(imageUrl, undefined, 2, 300);
       if (!imageResponse.ok) {
         throw new Error(`Failed to download image: ${imageResponse.status}`);
       }
@@ -423,14 +490,19 @@ export class ScheduledPostWorker {
 
       // Step 3: Upload image binary to LinkedIn
       log.info('📤 Step 3: Uploading image binary to LinkedIn...');
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/octet-stream',
+      const uploadResponse = await this.fetchWithRetry(
+        uploadUrl,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/octet-stream',
+          },
+          body: imageBuffer,
         },
-        body: imageBuffer,
-      });
+        2,
+        500
+      );
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();

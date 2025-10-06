@@ -101,8 +101,10 @@ export async function POST(request: NextRequest) {
     // Trigger worker to reschedule immediately
     try {
       const { scheduledPostWorker } = await import('@/workers/scheduler');
-      scheduledPostWorker.reschedule();
-      log.info('🔄 Worker rescheduled for new post');
+      if (scheduledPostWorker?.reschedule) {
+        await scheduledPostWorker.reschedule();
+        log.info('🔄 Worker rescheduled for new post');
+      }
     } catch (error) {
       log.warn('⚠️ Could not reschedule worker (may not be running):', error);
       // This is not a critical error, so we don't fail the request
@@ -204,8 +206,10 @@ export async function DELETE(request: NextRequest) {
     // Trigger worker to reschedule since we removed a scheduled post
     try {
       const { scheduledPostWorker } = await import('@/workers/scheduler');
-      scheduledPostWorker.reschedule();
-      log.info('🔄 Worker rescheduled after cancellation');
+      if (scheduledPostWorker?.reschedule) {
+        await scheduledPostWorker.reschedule();
+        log.info('🔄 Worker rescheduled after cancellation');
+      }
     } catch (error) {
       log.warn('⚠️ Could not reschedule worker (may not be running):', error);
     }

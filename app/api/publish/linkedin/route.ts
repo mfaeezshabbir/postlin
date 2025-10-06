@@ -285,29 +285,41 @@ async function uploadImageToLinkedIn(
   try {
     log.info('📸 Step 1: Registering image upload with LinkedIn...');
     
-    // Step 1: Register upload
-    const registerResponse = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        registerUploadRequest: {
-          recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-          owner: `urn:li:person:${personId}`,
-          serviceRelationships: [
-            {
-              relationshipType: 'OWNER',
-              identifier: 'urn:li:userGeneratedContent',
+    // Step 1: Register upload (with one retry for transient failures)
+    let registerResponse: Response | null = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        registerResponse = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            registerUploadRequest: {
+              recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+              owner: `urn:li:person:${personId}`,
+              serviceRelationships: [
+                {
+                  relationshipType: 'OWNER',
+                  identifier: 'urn:li:userGeneratedContent',
+                },
+              ],
             },
-          ],
-        },
-      }),
-    });
+          }),
+        });
+      } catch (err) {
+        log.warn(`⚠️ registerUpload attempt ${attempt} failed: ${err}`);
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 500));
+        else throw err;
+      }
+      if (registerResponse) break;
+    }
+
+    if (!registerResponse) throw new Error('Failed to register image upload: no response');
 
     if (!registerResponse.ok) {
-      const errorText = await registerResponse.text();
+      const errorText = await registerResponse.text().catch(() => '');
       log.error('❌ Failed to register image upload:', {
         status: registerResponse.status,
         error: errorText
