@@ -35,7 +35,7 @@ const plans: Plan[] = [
 
 export default function Pricing({ isAuthenticated }: { isAuthenticated?: boolean }) {
   return (
-    <section className="max-w-7xl mx-auto my-16 px-4">
+    <section id="pricing" className="max-w-7xl mx-auto my-16 px-4">
       <div className="text-center mb-8">
         <h2 className="text-3xl sm:text-4xl font-bold">Pricing that grows with you</h2>
         <p className="text-gray-600 mt-2">Simple, transparent pricing. Upgrade or cancel anytime.</p>

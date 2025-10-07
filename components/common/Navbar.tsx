@@ -24,19 +24,19 @@ const Navbar = async () => {
 
           <div className="hidden md:flex items-center gap-6">
             <a
-              href="#features"
+              href="/#features"
               className="text-sm text-gray-600 hover:text-gray-900 transition"
             >
               Features
             </a>
             <a
-              href="#how"
+              href="/#how"
               className="text-sm text-gray-600 hover:text-gray-900 transition"
             >
               How it works
             </a>
             <a
-              href="#pricing"
+              href="/#pricing"
               className="text-sm text-gray-600 hover:text-gray-900 transition"
             >
               Pricing
