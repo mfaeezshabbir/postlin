@@ -1,20 +1,22 @@
 "use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  FileText, 
-  Clock, 
-  History, 
-  Settings, 
+import Link from "next/link";
+import Logo from "@/components/brand/Logo";
+import { usePathname } from "next/navigation";
+import {
+  FileText,
+  Clock,
+  History,
+  Settings,
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+  ChevronRight,
+} from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -28,10 +30,10 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: 'Drafts', href: '/dashboard/drafts', icon: FileText },
-  { name: 'Scheduled', href: '/dashboard/scheduled', icon: Clock },
-  { name: 'History', href: '/dashboard/history', icon: History },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: "Drafts", href: "/dashboard/drafts", icon: FileText },
+  { name: "Scheduled", href: "/dashboard/scheduled", icon: Clock },
+  { name: "History", href: "/dashboard/history", icon: History },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export default function DashboardSidebar({ user }: DashboardSidebarProps) {
@@ -44,10 +46,8 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-            </svg>
+          <div className="w-10 h-10 flex items-center justify-center">
+            <Logo className="w-full h-full" />
           </div>
           <span className="text-xl font-bold text-gray-900">Postlin</span>
         </div>
@@ -56,7 +56,11 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
           size="icon"
           onClick={() => setIsMobileOpen(!isMobileOpen)}
         >
-          {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {isMobileOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
@@ -89,10 +93,8 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
+              <div className="w-10 h-10 flex items-center justify-center">
+                <Logo className="w-full h-full" />
               </div>
               <span className="text-xl font-bold text-gray-900">Postlin</span>
             </div>
@@ -117,28 +119,45 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
   );
 }
 
-function SidebarContent({ pathname, isCollapsed }: { pathname: string; isCollapsed: boolean }) {
+function SidebarContent({
+  pathname,
+  isCollapsed,
+}: {
+  pathname: string;
+  isCollapsed: boolean;
+}) {
+  const router = useRouter();
   return (
     <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
       {navigation.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+        const isActive =
+          pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
-        
         return (
-          <Link
+          <button
             key={item.name}
-            href={item.href}
+            onClick={() => {
+              // Do nothing when already on the active page to avoid unnecessary navigation
+              if (isActive) return;
+              router.push(item.href);
+            }}
+            aria-current={isActive ? "page" : undefined}
+            title={isCollapsed ? item.name : undefined}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+              "w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
               isActive
                 ? "bg-blue-50 text-blue-700"
                 : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
             )}
-            title={isCollapsed ? item.name : undefined}
           >
-            <Icon className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-5 w-5")} />
+            <Icon
+              className={cn(
+                "flex-shrink-0",
+                isCollapsed ? "h-5 w-5" : "h-5 w-5"
+              )}
+            />
             {!isCollapsed && <span>{item.name}</span>}
-          </Link>
+          </button>
         );
       })}
     </nav>

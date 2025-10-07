@@ -44,29 +44,25 @@ export default function DashboardTopbar({ user }: DashboardTopbarProps) {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-30 lg:top-0">
-      <div className="px-4 sm:px-6 lg:px-8 py-3 lg:py-4">
-        <div className="flex items-center justify-between">
-          {/* Left side - could add breadcrumbs or page title here */}
+    <header className="sticky top-4 z-30 px-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-white/60 backdrop-blur-md border border-gray-100 shadow-sm">
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-900 hidden sm:block">
               Welcome back, {user.name?.split(' ')[0] || 'there'}!
             </h2>
           </div>
 
-          {/* Right side - User menu */}
           <div className="flex items-center gap-4">
-            {/* Quick actions */}
             <Button
               variant="default"
               size="sm"
               onClick={() => router.push('/dashboard/drafts')}
-              className="hidden sm:inline-flex"
+              className="hidden sm:inline-flex bg-gradient-to-r from-indigo-600 to-pink-600 text-white"
             >
               New Draft
             </Button>
 
-            {/* User dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">

@@ -15,12 +15,16 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
       <DashboardSidebar user={user} />
       <div className="lg:pl-64">
         <DashboardTopbar user={user} />
-        <main className="py-6 px-4 sm:px-6 lg:px-8">
-          {children}
+        <main className="py-8">
+          <div className="app-container">
+            <div className="rounded-3xl bg-white/70 backdrop-blur-md border border-gray-100 p-8 shadow-sm">
+              {children}
+            </div>
+          </div>
         </main>
       </div>
     </div>

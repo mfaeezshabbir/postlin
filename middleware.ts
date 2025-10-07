@@ -10,6 +10,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect logged-in users away from login page
   if (pathname === '/login' && token) {
+    // send authenticated users back to the public landing page
     url.pathname = '/dashboard/drafts';
     return NextResponse.redirect(url);
   }
