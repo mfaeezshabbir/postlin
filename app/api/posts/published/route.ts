@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Calculate stats
     const stats = {
       total: posts.length,
-      thisMonth: posts.filter(p => {
+      thisMonth: posts.filter((p: any) => {
         const publishedDate = new Date(p.publishedAt!);
         const now = new Date();
         return publishedDate.getMonth() === now.getMonth() &&

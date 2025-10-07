@@ -77,7 +77,7 @@ export function getAuthOptions(): NextAuthOptions {
             if (refreshToken) updateData.refreshToken = refreshToken;
             
             if (Object.keys(updateData).length > 0) {
-              await prisma.user.update({ where: { id: dbUser.id }, data: updateData }).catch((e) => {
+              await prisma.user.update({ where: { id: dbUser.id }, data: updateData }).catch((e: any) => {
                 log.error('update user failed', e);
               });
             }
@@ -92,7 +92,7 @@ export function getAuthOptions(): NextAuthOptions {
             if (accessToken) createData.accessToken = accessToken;
             if (refreshToken) createData.refreshToken = refreshToken;
             
-            const newUser = await prisma.user.create({ data: createData }).catch((e) => {
+            const newUser = await prisma.user.create({ data: createData }).catch((e: any) => {
               log.error('create user failed', e);
               return null;
             });
