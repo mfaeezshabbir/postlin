@@ -9,9 +9,9 @@
     "start": "next start",
     "lint": "eslint",
     "worker": "tsx scripts/run-worker.ts",
-    "postinstall": "prisma generate"
-    ,
-    "test": "jest --passWithNoTests --coverage"
+    "postinstall": "prisma generate",
+    "test": "jest --passWithNoTests --coverage",
+    "test:db": "node scripts/test-db-connection.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

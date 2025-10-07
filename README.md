@@ -31,13 +31,19 @@ cp .env.example .env
 # edit .env to add any API keys or NEXTAUTH_SECRET
 ```
 
-2. Start local services (MongoDB + Redis) with Docker (optional):
+2. **Database Setup:**
 
-```bash
-docker compose up -d
-```
+   **Option A: MongoDB Atlas (Recommended for Production)**
+   - See [MongoDB Atlas Setup Guide](docs/MONGODB_ATLAS_SETUP.md) for detailed instructions
+   - Free tier (M0) is supported with automatic transaction disabling
+   - Update `DATABASE_URL` in `.env` with your Atlas connection string
 
-If you have a system `mongod` or Redis already running on the same ports, either stop those services or update `docker-compose.yml` to use different host ports.
+   **Option B: Local Docker (Development)**
+   ```bash
+   docker compose up -d
+   ```
+
+   If you have a system `mongod` or Redis already running on the same ports, either stop those services or update `docker-compose.yml` to use different host ports.
 
 3. Install dependencies (if not already):
 

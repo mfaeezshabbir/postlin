@@ -77,11 +77,14 @@ export function getAuthOptions(): NextAuthOptions {
             if (refreshToken) updateData.refreshToken = refreshToken;
             
             if (Object.keys(updateData).length > 0) {
-              await prisma.user.update({ where: { id: dbUser.id }, data: updateData }).catch((e: any) => {
+              try {
+                await prisma.user.update({ where: { id: dbUser.id }, data: updateData });
+                log.info('User updated with access token', { userId: dbUser.id, hasToken: !!accessToken });
+              } catch (e: any) {
                 log.error('update user failed', e);
-              });
+                // Don't fail auth if update fails - user can still sign in
+              }
             }
-            log.info('User updated with access token', { userId: dbUser.id, hasToken: !!accessToken });
           } else {
             // Create new user
             const createData: any = {};
@@ -92,12 +95,18 @@ export function getAuthOptions(): NextAuthOptions {
             if (accessToken) createData.accessToken = accessToken;
             if (refreshToken) createData.refreshToken = refreshToken;
             
-            const newUser = await prisma.user.create({ data: createData }).catch((e: any) => {
-              log.error('create user failed', e);
-              return null;
-            });
-            if (newUser) {
+            try {
+              const newUser = await prisma.user.create({ data: createData });
               log.info('User created with access token', { userId: newUser.id, hasToken: !!accessToken });
+            } catch (e: any) {
+              // Special handling for transaction errors (MongoDB Atlas M0)
+              if (e.code === 'P2010' && e.message?.includes('Transactions are not supported')) {
+                log.error('❌ MongoDB Atlas M0 (free tier) does not support transactions.');
+                log.error('Please check docs/MONGODB_ATLAS_SETUP.md for configuration instructions.');
+              }
+              log.error('create user failed', e);
+              // Return false to prevent sign in if user creation fails
+              return false;
             }
           }
 

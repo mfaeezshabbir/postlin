@@ -13,6 +13,9 @@ generator client {
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
+  // Disable transactions for MongoDB Atlas M0 (free tier)
+  // M0 clusters don't support transactions
+  directUrl = env("DATABASE_URL")
 }
 
 // Enum for post status
