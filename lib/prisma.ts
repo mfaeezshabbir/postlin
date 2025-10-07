@@ -16,7 +16,7 @@ function initPrisma() {
   // Require dynamically to avoid top-level ESM import during build-time
   // which can fail if prisma generate hasn't run in some CI/build steps.
   // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
-  const { PrismaClient } = require('@prisma/client');
+  const { PrismaClient } = require('../app/generated/prisma');
   _prisma = global.__prisma || new PrismaClient();
   if (process.env.NODE_ENV !== 'production') global.__prisma = _prisma;
   return _prisma;
