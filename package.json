@@ -11,7 +11,7 @@
     "worker": "tsx scripts/run-worker.ts",
     "postinstall": "prisma generate"
     ,
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests --coverage"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -54,6 +54,7 @@
     "typescript": "^5",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.0",
-    "@types/jest": "^29.5.3"
+    "@types/jest": "^29.5.3",
+    "jest-environment-jsdom": "^29.7.0"
   }
 }
