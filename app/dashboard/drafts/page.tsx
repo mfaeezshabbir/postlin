@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  FileText,
-  Plus,
-  Loader2,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Send,
-  Calendar,
-} from "lucide-react";
+import { FileText, Plus, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,13 +10,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { DraftModal } from "../components/DraftModal";
 import DashboardContainer from "../components/DashboardContainer";
 import ScheduleDialog from "../components/ScheduleDialog";

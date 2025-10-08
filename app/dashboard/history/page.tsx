@@ -9,9 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import DashboardContainer from "../components/DashboardContainer";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { History, Eye, ExternalLink, Loader2, RotateCcw } from "lucide-react";
+import { History, Eye, Loader2 } from "lucide-react";
 import PostCard from "../components/PostCard";
 import PostActions from "../components/PostActions";
 
