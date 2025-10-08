@@ -28,6 +28,7 @@ model User {
   id           String    @id @map("_id") @default(auto()) @db.ObjectId
   email        String    @unique
   name         String?
+  image        String?
   linkedInId   String?   @unique
   accessToken  String?   // LinkedIn OAuth access token
   refreshToken String?   // LinkedIn OAuth refresh token

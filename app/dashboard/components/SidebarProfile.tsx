@@ -10,14 +10,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface User {
   id: string;
   name?: string;
   email?: string;
   linkedInId?: string | null;
+  image?: string | null;
 }
 
 export default function SidebarProfile({
@@ -58,15 +61,21 @@ export default function SidebarProfile({
               className="flex items-center gap-3 focus:outline-none"
               aria-label="Open profile menu"
             >
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-semibold"
-                style={{
-                  background: "linear-gradient(135deg,#6366f1 0%,#ec4899 100%)",
-                }}
+              <Avatar
+                className="w-10 h-10 rounded-lg"
                 title={user?.name || "User"}
               >
-                {initials}
-              </div>
+                {user?.image ? (
+                  <Image
+                    src={user.image}
+                    width={40}
+                    height={40}
+                    alt={user?.name || "User"}
+                  />
+                ) : (
+                  <AvatarFallback>{initials}</AvatarFallback>
+                )}
+              </Avatar>
               {!isCollapsed && (
                 <div className="flex-1 text-left">
                   <div className="text-sm font-medium text-gray-900">

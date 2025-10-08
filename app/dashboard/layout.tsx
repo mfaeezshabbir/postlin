@@ -1,6 +1,6 @@
-import getCurrentUser from '../../lib/auth';
-import { redirect } from 'next/navigation';
-import ClientDashboardLayout from './ClientDashboardLayout';
+import getCurrentUser from "../../lib/auth";
+import { redirect } from "next/navigation";
+import ClientDashboardLayout from "./ClientDashboardLayout";
 export default async function DashboardLayout({
   children,
 }: {
@@ -9,7 +9,7 @@ export default async function DashboardLayout({
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect('/login');
+    redirect("/login");
   }
 
   return (

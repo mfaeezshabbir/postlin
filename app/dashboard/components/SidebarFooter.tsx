@@ -1,14 +1,46 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
-export default function SidebarFooter({ isCollapsed }: { isCollapsed: boolean }) {
+export default function SidebarFooter({
+  isCollapsed,
+  onClose,
+  onAccount,
+  onNewDraft,
+}: {
+  isCollapsed?: boolean;
+  onClose?: () => void;
+  onAccount?: () => void;
+  onNewDraft?: () => void;
+}) {
+  const router = useRouter();
+
   return (
-    <div className="mt-auto p-3 border-t border-gray-100">
-      <div className={cn("flex items-center gap-2 px-2 py-1 rounded-md text-xs text-gray-600", isCollapsed ? "justify-center" : "") }>
-        <a href="/docs" className="hover:text-gray-900" title="Docs">Docs</a>
-        {!isCollapsed && <span className="text-xs text-gray-400">•</span>}
-        {!isCollapsed && <a href="/support" className="hover:text-gray-900">Support</a>}
+    <div
+      className="mt-auto p-3 border-t border-gray-100"
+      data-collapsed={isCollapsed}
+    >
+      <div className="flex items-center gap-2">
+        <button
+          className="text-sm text-gray-700 w-full text-left"
+          onClick={() => {
+            onClose && onClose();
+            if (onAccount) onAccount();
+            else router.push("/docs");
+          }}
+        >
+          Docs
+        </button>
+        <button
+          className="text-sm text-gray-700"
+          onClick={() => {
+            onClose && onClose();
+            if (onNewDraft) onNewDraft();
+            else router.push("/support");
+          }}
+        >
+          Support
+        </button>
       </div>
     </div>
   );

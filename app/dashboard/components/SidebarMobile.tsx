@@ -22,33 +22,14 @@ export default function SidebarMobile({
   const router = useRouter();
   return (
     <div className="flex flex-col h-full">
-      <SidebarProfile user={user} />
       <SidebarNav items={items} isCollapsed={false} />
-
-      <div className="mt-auto p-3 border-t border-gray-100">
-        <div className="flex items-center gap-2">
-          <button
-            className="text-sm text-gray-700 w-full text-left"
-            onClick={() => {
-              onClose && onClose();
-              if (onAccount) onAccount();
-              else router.push("/docs");
-            }}
-          >
-            Docs
-          </button>
-          <button
-            className="text-sm text-gray-700"
-            onClick={() => {
-              onClose && onClose();
-              if (onNewDraft) onNewDraft();
-              else router.push("/support");
-            }}
-          >
-            Support
-          </button>
-        </div>
-      </div>
+      <SidebarProfile user={user} />
+      <SidebarFooter
+        isCollapsed={false}
+        onClose={onClose}
+        onAccount={onAccount}
+        onNewDraft={onNewDraft}
+      />
     </div>
   );
 }
