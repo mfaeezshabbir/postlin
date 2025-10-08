@@ -26,15 +26,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { DraftModal } from "../components/DraftModal";
+import DashboardContainer from "../components/DashboardContainer";
+import ScheduleDialog from "../components/ScheduleDialog";
+import PostCard from "../components/PostCard";
+import PostActions from "../components/PostActions";
 
 interface Draft {
   id: string;
@@ -227,282 +223,108 @@ export default function DraftsPage() {
   const stats = draftsData?.stats || { total: 0, aiGenerated: 0, manual: 0 };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Drafts</h1>
-          <p className="text-gray-600 mt-1">Manage your LinkedIn post drafts</p>
-        </div>
-        <Button onClick={handleCreateDraft}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Draft
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Drafts
-            </CardTitle>
+    <>
+      <DashboardContainer
+        title="Drafts"
+        description="Manage your LinkedIn post drafts"
+        headerRight={
+          <Button onClick={handleCreateDraft}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Draft
+          </Button>
+        }
+        stats={[
+          {
+            title: "Total Drafts",
+            value: stats.total,
+            subtitle: "Saved drafts",
+          },
+          {
+            title: "AI Generated",
+            value: stats.aiGenerated,
+            subtitle: "Created by AI",
+          },
+          {
+            title: "Manual",
+            value: stats.manual,
+            subtitle: "Created manually",
+          },
+        ]}
+      >
+  <Card className="h-full flex flex-col w-full">
+          <CardHeader>
+            <CardTitle>Your Drafts</CardTitle>
+            <CardDescription>
+              All your saved draft posts that are ready to be scheduled or
+              published
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-gray-500 mt-1">Saved drafts</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              AI Generated
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.aiGenerated}</div>
-            <p className="text-xs text-gray-500 mt-1">Created by AI</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Manual
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.manual}</div>
-            <p className="text-xs text-gray-500 mt-1">Created manually</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Drafts List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Drafts</CardTitle>
-          <CardDescription>
-            All your saved draft posts that are ready to be scheduled or
-            published
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {drafts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                <FileText className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No drafts yet
-              </h3>
-              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                You don't have any drafts yet. Create your first draft to get
-                started with AI-powered LinkedIn content.
-              </p>
-              <Button onClick={handleCreateDraft}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Draft
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {drafts.map((draft) => (
-                <div
-                  key={draft.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary">Draft</Badge>
-                        <span className="text-xs text-gray-500">
-                          Created{" "}
-                          {new Date(draft.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
-                      </div>
-
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3 mb-3">
-                        {draft.draftText}
-                      </p>
-
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>
-                          {draft.draftText.split(/\s+/).filter(Boolean).length}{" "}
-                          words
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        onClick={() => handlePublish(draft.id)}
-                        disabled={
-                          publishingId === draft.id || deletingId === draft.id
-                        }
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {publishingId === draft.id ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                            Publishing...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 mr-1" />
-                            Publish
-                          </>
-                        )}
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={
-                              deletingId === draft.id ||
-                              publishingId === draft.id
-                            }
-                          >
-                            {deletingId === draft.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <MoreVertical className="w-4 h-4" />
-                            )}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleOpenScheduleDialog(draft.id)}
-                          >
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Schedule
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleEdit(draft.id)}
-                          >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(draft.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
+          <CardContent className="flex-1 overflow-auto">
+            {drafts.length === 0 ? (
+              <div className="text-center flex flex-col items-center justify-center mx-auto h-full">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                  <FileText className="h-8 w-8 text-gray-400" />
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Unified Draft Modal */}
-      <DraftModal
-        open={showDraftModal}
-        onOpenChange={setShowDraftModal}
-        onDraftSaved={fetchDrafts}
-        mode={draftModalMode}
-        draftId={editingDraftId}
-      />
-
-      {/* Schedule Dialog */}
-      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Schedule Post</DialogTitle>
-            <DialogDescription>
-              Choose when you want this post to be published to LinkedIn
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Date</label>
-              <input
-                type="date"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="w-full px-3 py-2 border rounded-md"
-                disabled={scheduling}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Time</label>
-              <input
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
-                disabled={scheduling}
-              />
-            </div>
-
-            {scheduledDate && scheduledTime && (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                <p className="text-sm text-blue-800">
-                  <strong>Post will be published on:</strong>
-                  <br />
-                  {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString(
-                    "en-US",
-                    {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    }
-                  )}
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No drafts yet
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                  You don't have any drafts yet. Create your first draft to get
+                  started with AI-powered LinkedIn content.
                 </p>
+                <Button onClick={handleCreateDraft}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Your First Draft
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {drafts.map((draft) => (
+                  <PostCard
+                    key={draft.id}
+                    id={draft.id}
+                    content={draft.draftText}
+                    status="draft"
+                    createdAt={draft.createdAt}
+                    meta={<span>{draft.draftText.split(/\s+/).filter(Boolean).length} words</span>}
+                    actions={
+                      <PostActions
+                        id={draft.id}
+                        status="draft"
+                        onPublish={handlePublish}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onSchedule={handleOpenScheduleDialog}
+                        loading={{ publishing: publishingId, deleting: deletingId }}
+                      />
+                    }
+                  />
+                ))}
               </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowScheduleDialog(false)}
-              disabled={scheduling}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSchedule}
-              disabled={scheduling || !scheduledDate || !scheduledTime}
-            >
-              {scheduling ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Scheduling...
-                </>
-              ) : (
-                <>
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Schedule Post
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        {/* Unified Draft Modal */}
+        <DraftModal
+          open={showDraftModal}
+          onOpenChange={setShowDraftModal}
+          onDraftSaved={fetchDrafts}
+          mode={draftModalMode}
+          draftId={editingDraftId}
+        />
+
+        <ScheduleDialog
+          open={showScheduleDialog}
+          onOpenChange={setShowScheduleDialog}
+          scheduledDate={scheduledDate}
+          setScheduledDate={setScheduledDate}
+          scheduledTime={scheduledTime}
+          setScheduledTime={setScheduledTime}
+          scheduling={scheduling}
+          onSchedule={handleSchedule}
+        />
+      </DashboardContainer>
+    </>
   );
 }

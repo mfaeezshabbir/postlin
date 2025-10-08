@@ -1,10 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { History, TrendingUp, Eye, Heart, MessageCircle, Share2, ExternalLink, Loader2, RotateCcw } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import DashboardContainer from "../components/DashboardContainer";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { History, Eye, ExternalLink, Loader2, RotateCcw } from "lucide-react";
+import PostCard from "../components/PostCard";
+import PostActions from "../components/PostActions";
 
 interface PublishedPost {
   id: string;
@@ -28,48 +37,52 @@ export default function HistoryPage() {
 
   const fetchPublishedPosts = async () => {
     try {
-      const response = await fetch('/api/posts/published');
-      if (!response.ok) throw new Error('Failed to fetch published posts');
-      
+      const response = await fetch("/api/posts/published");
+      if (!response.ok) throw new Error("Failed to fetch published posts");
+
       const data = await response.json();
       setPostsData(data);
     } catch (error) {
-      console.error('Error fetching published posts:', error);
+      console.error("Error fetching published posts:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleRevertToDraft = async (postId: string) => {
-    if (!confirm('Are you sure you want to revert this post to draft? This will clear the LinkedIn post link.')) {
+    if (
+      !confirm(
+        "Are you sure you want to revert this post to draft? This will clear the LinkedIn post link."
+      )
+    ) {
       return;
     }
 
     setRevertingPostId(postId);
 
     try {
-      const response = await fetch('/api/posts/revert-to-draft', {
-        method: 'POST',
+      const response = await fetch("/api/posts/revert-to-draft", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ postId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to revert post to draft');
+        throw new Error("Failed to revert post to draft");
       }
 
       const data = await response.json();
 
       // Show success message
-      alert(data.message || 'Post reverted to draft successfully!');
+      alert(data.message || "Post reverted to draft successfully!");
 
       // Refresh the published posts list
       await fetchPublishedPosts();
     } catch (error) {
-      console.error('Error reverting post:', error);
-      alert('Failed to revert post to draft. Please try again.');
+      console.error("Error reverting post:", error);
+      alert("Failed to revert post to draft. Please try again.");
     } finally {
       setRevertingPostId(null);
     }
@@ -91,161 +104,89 @@ export default function HistoryPage() {
   const stats = postsData?.stats || { total: 0, thisMonth: 0 };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">History</h1>
-          <p className="text-gray-600 mt-1">View your published LinkedIn posts</p>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Posts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-gray-500 mt-1">All time</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              This Month
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.thisMonth}</div>
-            <p className="text-xs text-gray-500 mt-1">Published this month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Analytics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Coming Soon</div>
-            <p className="text-xs text-gray-500 mt-1">Engagement metrics</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Published Posts List */}
-      <Card>
+    <DashboardContainer
+      title="History"
+      description="View your published LinkedIn posts"
+      stats={[
+        { title: "Total Posts", value: stats.total, subtitle: "All time" },
+        {
+          title: "This Month",
+          value: stats.thisMonth,
+          subtitle: "Published this month",
+        },
+        {
+          title: "Analytics",
+          value: "Coming Soon",
+          subtitle: "Engagement metrics",
+        },
+      ]}
+    >
+      <Card className="h-full flex flex-col w-full">
         <CardHeader>
           <CardTitle>Published Posts</CardTitle>
           <CardDescription>
             All your posts that have been published to LinkedIn
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 overflow-auto">
           {posts.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                 <History className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No published posts yet</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No published posts yet
+              </h3>
               <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                Once you publish drafts to LinkedIn, they'll appear here with engagement metrics.
+                Once you publish drafts to LinkedIn, they'll appear here with
+                engagement metrics.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {posts.map((post) => (
-                <div 
-                  key={post.id} 
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                          Published
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                      
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3 mb-3">
-                        {post.finalText}
-                      </p>
-
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>{post.finalText.split(/\s+/).filter(Boolean).length} words</span>
-                        {/* Placeholder for analytics - will be fetched from LinkedIn API later */}
-                        <span className="flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          -
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="w-3 h-3" />
-                          -
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="w-3 h-3" />
-                          -
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      {post.linkedInPostId && (
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            // LinkedIn post URL format
-                            const postUrl = `https://www.linkedin.com/feed/update/${post.linkedInPostId}`;
-                            window.open(postUrl, '_blank');
-                          }}
-                        >
-                          <ExternalLink className="w-4 h-4 mr-1" />
-                          View on LinkedIn
-                        </Button>
-                      )}
-                      <Button 
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleRevertToDraft(post.id)}
-                        disabled={revertingPostId === post.id}
-                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                      >
-                        {revertingPostId === post.id ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                            Reverting...
-                          </>
-                        ) : (
-                          <>
-                            <RotateCcw className="w-4 h-4 mr-1" />
-                            Revert to Draft
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <PostCard
+                  key={post.id}
+                  id={post.id}
+                  content={post.finalText}
+                  status="published"
+                  createdAt={post.publishedAt}
+                  meta={
+                    <>
+                      <span>
+                        {post.finalText.split(/\s+/).filter(Boolean).length}{" "}
+                        words
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" /> -
+                      </span>
+                    </>
+                  }
+                  actions={
+                    <PostActions
+                      id={post.id}
+                      status="published"
+                      onView={() => {
+                        const linkedId = post.linkedInPostId;
+                        if (!linkedId) {
+                          alert("No LinkedIn link available for this post.");
+                          return;
+                        }
+                        const url = linkedId.startsWith("http")
+                          ? linkedId
+                          : `https://www.linkedin.com/feed/update/${post.linkedInPostId}`;
+                        window.open(url, "_blank");
+                      }}
+                      onRevert={() => handleRevertToDraft(post.id)}
+                      loading={{ deleting: revertingPostId }}
+                    />
+                  }
+                />
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-    </div>
+    </DashboardContainer>
   );
 }
