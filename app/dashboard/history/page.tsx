@@ -29,6 +29,7 @@ interface PublishedPostsData {
 }
 
 export default function HistoryPage() {
+  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
   const [postsData, setPostsData] = useState<PublishedPostsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [revertingPostId, setRevertingPostId] = useState<string | null>(null);
@@ -73,14 +74,14 @@ export default function HistoryPage() {
 
       const data = await response.json();
 
-      // Show success message
-      alert(data.message || "Post reverted to draft successfully!");
+  // Show success message
+  push({ title: "Reverted", description: data.message || "Post reverted to draft successfully!", variant: "success" });
 
       // Refresh the published posts list
       await fetchPublishedPosts();
     } catch (error) {
-      console.error("Error reverting post:", error);
-      alert("Failed to revert post to draft. Please try again.");
+  console.error("Error reverting post:", error);
+  push({ title: "Failed", description: "Failed to revert post to draft. Please try again.", variant: "error" });
     } finally {
       setRevertingPostId(null);
     }

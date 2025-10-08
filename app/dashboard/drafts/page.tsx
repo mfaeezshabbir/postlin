@@ -33,6 +33,7 @@ interface DraftsData {
 }
 
 export default function DraftsPage() {
+  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
   const [draftsData, setDraftsData] = useState<DraftsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -96,7 +97,7 @@ export default function DraftsPage() {
       await fetchDrafts(); // Refresh the list
     } catch (error) {
       console.error("Error deleting draft:", error);
-      alert("Failed to delete draft. Please try again.");
+  push({ title: "Failed", description: "Failed to delete draft. Please try again.", variant: "error" });
     } finally {
       setDeletingId(null);
     }
@@ -120,7 +121,7 @@ export default function DraftsPage() {
         throw new Error(data.details || data.error || "Failed to publish");
       }
 
-      alert("✅ Successfully published to LinkedIn!");
+  push({ title: "Published", description: "Successfully published to LinkedIn!", variant: "success" });
       await fetchDrafts(); // Refresh the list
     } catch (error) {
       console.error("Error publishing to LinkedIn:", error);
@@ -128,9 +129,7 @@ export default function DraftsPage() {
         error instanceof Error
           ? error.message
           : "Failed to publish. Please try again.";
-      alert(
-        `❌ Publishing Error: ${errorMessage}\n\nPlease make sure you have granted posting permissions to the app.`
-      );
+      push({ title: "Publishing Error", description: `${errorMessage}. Please make sure you have granted posting permissions to the app.`, variant: "error" });
     } finally {
       setPublishingId(null);
     }
@@ -145,12 +144,12 @@ export default function DraftsPage() {
 
   const handleSchedule = async () => {
     if (!scheduledDate || !scheduledTime) {
-      alert("Please select both date and time");
+  push({ title: "Schedule", description: "Please select both date and time", variant: "info" });
       return;
     }
 
     if (!schedulingDraftId) {
-      alert("No draft selected");
+  push({ title: "Schedule", description: "No draft selected", variant: "error" });
       return;
     }
 
@@ -159,7 +158,7 @@ export default function DraftsPage() {
     const now = new Date();
 
     if (scheduledDateTime <= now) {
-      alert("Scheduled time must be in the future");
+  push({ title: "Schedule", description: "Scheduled time must be in the future", variant: "error" });
       return;
     }
 
@@ -182,14 +181,14 @@ export default function DraftsPage() {
       }
 
       const data = await response.json();
-      alert(data.message || "Post scheduled successfully!");
+  push({ title: "Scheduled", description: data.message || "Post scheduled successfully!", variant: "success" });
       setShowScheduleDialog(false);
       await fetchDrafts(); // Refresh to remove scheduled post from drafts
     } catch (error) {
       console.error("Error scheduling post:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      alert(`Failed to schedule post.\n\nError: ${errorMessage}`);
+  push({ title: "Schedule Error", description: `Failed to schedule post. Error: ${errorMessage}`, variant: "error" });
     } finally {
       setScheduling(false);
     }

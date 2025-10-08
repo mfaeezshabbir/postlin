@@ -1,3 +1,6 @@
+"use client";
+
+import Link from "next/link";
 import Logo from "@/components/brand/Logo";
 import { Github, Linkedin } from "lucide-react";
 
@@ -21,20 +24,37 @@ export default function Footer() {
           </div>
 
           <div className="flex items-center gap-6">
-            <nav className="hidden sm:flex items-center gap-4">
-              <a
+            <nav
+              className="hidden sm:flex items-center gap-4"
+              aria-label="Footer navigation"
+            >
+              <Link
+                href="/docs"
+                className="text-sm text-slate-300 hover:text-white transition"
+              >
+                Docs
+              </Link>
+              <span className="text-sm text-slate-600">|</span>
+              <Link
+                href="/support"
+                className="text-sm text-slate-300 hover:text-white transition"
+              >
+                Support
+              </Link>
+              <span className="text-sm text-slate-600">|</span>
+              <Link
                 href="/terms"
                 className="text-sm text-slate-300 hover:text-white transition"
               >
                 Terms
-              </a>
+              </Link>
               <span className="text-sm text-slate-600">|</span>
-              <a
+              <Link
                 href="/privacy"
                 className="text-sm text-slate-300 hover:text-white transition"
               >
                 Privacy
-              </a>
+              </Link>
             </nav>
 
             <div className="flex items-center gap-3">
@@ -45,7 +65,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="p-2 rounded-md bg-white/6 hover:bg-white/12 transition"
               >
-                <Github className="w-5 h-5 text-slate-200" />
+                <Github className="w-5 h-5 text-slate-200" aria-hidden />
               </a>
 
               <a
@@ -55,7 +75,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="p-2 rounded-md bg-white/6 hover:bg-white/12 transition"
               >
-                <Linkedin className="w-5 h-5 text-slate-200" />
+                <Linkedin className="w-5 h-5 text-slate-200" aria-hidden />
               </a>
             </div>
           </div>
