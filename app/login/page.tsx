@@ -3,6 +3,7 @@
 import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Button } from '@/components/ui/button';
 import Logo from "@/components/brand/Logo";
 import { XCircle, Loader2, Linkedin, CheckCircle } from 'lucide-react';
 
@@ -15,7 +16,7 @@ function LoginContent() {
 
   useEffect(() => {
     if (session) {
-      router.push("/dashboard/drafts");
+      router.push("/dashboard");
     }
   }, [session, router]);
 
@@ -56,12 +57,11 @@ function LoginContent() {
           )}
 
           <div className="space-y-4">
-            <button
+            <Button
               onClick={async () => {
                 setLoading(true);
                 try {
-                  // callbackUrl intentionally set to / so middleware can route appropriately
-                  await signIn("linkedin", { callbackUrl: "/" });
+                  await signIn("linkedin", { callbackUrl: "/dashboard" });
                 } catch (err) {
                   console.error("Sign in error:", err);
                   setLoading(false);
@@ -81,7 +81,7 @@ function LoginContent() {
                   <span>Continue with LinkedIn</span>
                 </>
               )}
-            </button>
+            </Button>
 
             {/* Features list */}
             <div className="pt-6 border-t border-gray-100">

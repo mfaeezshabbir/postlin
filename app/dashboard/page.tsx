@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
 export default function DashboardPage() {
-  // Redirect to drafts by default
+  // Redirect /dashboard to /dashboard/drafts
   redirect('/dashboard/drafts');
 }

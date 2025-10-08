@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import Logo from "@/components/brand/Logo";
-import { usePathname } from "next/navigation";
 import {
   FileText,
   Clock,
@@ -10,13 +8,17 @@ import {
   Settings,
   Menu,
   X,
-  ChevronLeft,
-  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import SidebarProfile from "./SidebarProfile";
+import SidebarNav from "./SidebarNav";
+import SidebarFooter from "./SidebarFooter";
+import SidebarMobile from "./SidebarMobile";
 
 interface User {
   id: string;
@@ -27,6 +29,10 @@ interface User {
 
 interface DashboardSidebarProps {
   user: User;
+  onAccount?: () => void;
+  onNewDraft?: () => void;
+  isCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const navigation = [
@@ -36,25 +42,44 @@ const navigation = [
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-export default function DashboardSidebar({ user }: DashboardSidebarProps) {
-  const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export default function DashboardSidebar({
+  user,
+  onAccount,
+  onNewDraft,
+  isCollapsed: controlledCollapsed,
+  onCollapsedChange,
+}: DashboardSidebarProps) {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const router = useRouter();
+
+  const isCollapsed = controlledCollapsed ?? internalCollapsed;
+
+  const toggle = () => {
+    if (controlledCollapsed !== undefined) {
+      onCollapsedChange?.(!controlledCollapsed);
+    } else {
+      setInternalCollapsed((v) => !v);
+    }
+  };
 
   return (
     <>
-      {/* Mobile menu button */}
+      {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 flex items-center justify-center">
             <Logo className="w-full h-full" />
           </div>
-          <span className="text-xl font-bold text-gray-900">Postlin</span>
+          <span className="text-lg font-semibold tracking-tight text-gray-900">
+            Postlin
+          </span>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          onClick={() => setIsMobileOpen((v) => !v)}
+          aria-label="Open sidebar"
         >
           {isMobileOpen ? (
             <X className="h-5 w-5" />
@@ -67,99 +92,79 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-[57px]"
+          className="lg:hidden fixed inset-0 bg-black/40 z-40 mt-[57px]"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar for mobile */}
+      {/* Mobile drawer */}
       <aside
         className={cn(
-          "lg:hidden fixed left-0 top-[57px] bottom-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out",
+          "lg:hidden fixed left-0 top-[57px] bottom-0 z-40 w-72 bg-white border-r border-gray-200 transform transition-transform duration-250 ease-in-out shadow-lg",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarContent pathname={pathname} isCollapsed={false} />
+        <SidebarMobile
+          items={navigation}
+          user={user}
+          onClose={() => setIsMobileOpen(false)}
+          onAccount={onAccount}
+          onNewDraft={onNewDraft}
+        />
       </aside>
 
-      {/* Sidebar for desktop */}
+      {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col bg-white border-r border-gray-200 transition-all duration-300",
-          isCollapsed ? "lg:w-20" : "lg:w-64"
+          "hidden lg:fixed lg:left-0 lg:top-0 lg:bottom-0 lg:flex lg:flex-col bg-white border-r border-gray-200 transition-all duration-300 lg:rounded-r-3xl",
+          isCollapsed ? "lg:w-20" : "lg:w-64",
+          !isCollapsed
+            ? "lg:backdrop-blur-sm lg:shadow-lg lg:border-gray-100"
+            : ""
         )}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-          {!isCollapsed && (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <Logo className="w-full h-full" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">Postlin</span>
-            </div>
+        {/* logo */}
+        <div
+          className={cn(
+            "flex items-center justify-between px-4 py-3 border-b border-gray-200",
+            isCollapsed ? "lg:justify-center" : ""
           )}
+        >
+          <div
+            className={cn(
+              "flex items-center gap-3",
+              isCollapsed ? "justify-center" : ""
+            )}
+          >
+            <div className="w-10 h-10 flex items-center justify-center">
+              <Logo className="w-full h-full" />
+            </div>
+            {!isCollapsed && (
+              <span className="text-lg font-semibold tracking-tight text-gray-900">
+                Postlin
+              </span>
+            )}
+          </div>
+
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="ml-auto"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
+            onClick={toggle}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(
+              isCollapsed
+                ? "h-7 w-7 lg:absolute lg:top-16 lg:right-0 lg:transform lg:-translate-y-1/2 lg:translate-x-1/2 lg:z-20 lg:bg-white lg:shadow"
+                : ""
             )}
+          >
+            {isCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
           </Button>
         </div>
 
-        <SidebarContent pathname={pathname} isCollapsed={isCollapsed} />
+        <SidebarNav items={navigation} isCollapsed={isCollapsed} />
+        <SidebarProfile user={user} isCollapsed={isCollapsed} />
+        <SidebarFooter isCollapsed={isCollapsed} />
       </aside>
     </>
-  );
-}
-
-function SidebarContent({
-  pathname,
-  isCollapsed,
-}: {
-  pathname: string;
-  isCollapsed: boolean;
-}) {
-  const router = useRouter();
-  return (
-    <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-      {navigation.map((item) => {
-        const isActive =
-          pathname === item.href || pathname.startsWith(item.href + "/");
-        const Icon = item.icon;
-        return (
-          <button
-            key={item.name}
-            onClick={() => {
-              // Do nothing when already on the active page to avoid unnecessary navigation
-              if (isActive) return;
-              router.push(item.href);
-            }}
-            aria-current={isActive ? "page" : undefined}
-            title={isCollapsed ? item.name : undefined}
-            className={cn(
-              "w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              isActive
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            )}
-          >
-            <Icon
-              className={cn(
-                "flex-shrink-0",
-                isCollapsed ? "h-5 w-5" : "h-5 w-5"
-              )}
-            />
-            {!isCollapsed && <span>{item.name}</span>}
-          </button>
-        );
-      })}
-    </nav>
   );
 }
