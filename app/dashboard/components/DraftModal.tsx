@@ -27,6 +27,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import ScheduleDialog from "./ScheduleDialog";
+import { AIImageOptionsDialog } from "./AIImageOptionsDialog";
+import { ImagePromptDialog } from "./ImagePromptDialog";
+import { MediaUpload } from "./MediaUpload";
 
 interface DraftModalProps {
   open: boolean;
@@ -57,9 +60,12 @@ export function DraftModal({
   const [length, setLength] = useState("medium");
   const [generatedContent, setGeneratedContent] = useState("");
 
-  // Image upload states
+  // Media upload states
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'none' | 'image' | 'video'>('none');
 
   // Hashtag states
   const [hashtagInput, setHashtagInput] = useState("");
@@ -68,8 +74,10 @@ export function DraftModal({
   // Track if current content was AI-generated
   const [isAIGenerated, setIsAIGenerated] = useState(false);
 
-  // Image prompt fallback states
+  // AI Image generation dialogs
+  const [showAIImageOptions, setShowAIImageOptions] = useState(false);
   const [showImagePromptDialog, setShowImagePromptDialog] = useState(false);
+  const [imageGenerationType, setImageGenerationType] = useState<'ai_generated' | 'ai_prompt_used' | 'user_uploaded' | null>(null);
 
   // Scheduling states
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -151,12 +159,16 @@ export function DraftModal({
     setGeneratedContent("");
     setSelectedImage(null);
     setImagePreview(null);
+    setSelectedVideo(null);
+    setVideoPreview(null);
+    setMediaType('none');
     setHashtags([]);
     setHashtagInput("");
     setLoading(false);
     setIsAIGenerated(false);
     setImagePromptText("");
     setStoredImagePrompt(null);
+    setImageGenerationType(null);
   };
 
   const handleClose = () => {
@@ -167,10 +179,7 @@ export function DraftModal({
   };
 
   // Image handling
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleImageSelectFromFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file");
       return;
@@ -182,6 +191,7 @@ export function DraftModal({
     }
 
     setSelectedImage(file);
+    setMediaType('image');
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -190,9 +200,62 @@ export function DraftModal({
     reader.readAsDataURL(file);
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageSelectFromFile(file);
+  };
+
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+  };
+
+  // Video handling
+  const handleVideoSelect = (file: File) => {
+    setSelectedVideo(file);
+    setMediaType('video');
+    setImageGenerationType('user_uploaded');
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setVideoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Unified media removal
+  const handleRemoveMedia = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setSelectedVideo(null);
+    setVideoPreview(null);
+    setMediaType('none');
+    setImageGenerationType(null);
+  };
+
+  // AI Image Options
+  const handleAIImageRequest = () => {
+    setShowAIImageOptions(true);
+  };
+
+  const handleGenerateForMe = () => {
+    setShowAIImageOptions(false);
+    // This will be handled in the AI generation flow
+    // Set a flag that we want to generate image automatically
+    setImageGenerationType('ai_generated');
+  };
+
+  const handleGiveMePrompt = () => {
+    setShowAIImageOptions(false);
+    // Generate prompt but don't generate image
+    setImageGenerationType('ai_prompt_used');
+    // The prompt will be shown after AI content generation
+  };
+
+  // Update image select to track generation type
+  const handleImageSelectWithType = (file: File) => {
+    handleImageSelectFromFile(file);
+    setImageGenerationType('user_uploaded');
   };
 
   // Hashtag handling
@@ -235,6 +298,9 @@ export function DraftModal({
 
     setLoading(true);
     try {
+      // Determine if we should generate image based on user's choice
+      const shouldGenerateImage = imageGenerationType === 'ai_generated';
+      
       const response = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -242,7 +308,7 @@ export function DraftModal({
           prompt: aiPrompt,
           tone,
           length,
-          generateImage: true,
+          generateImage: shouldGenerateImage,
         }),
       });
 
@@ -272,10 +338,13 @@ export function DraftModal({
         }
       }
 
-      if (data.image?.base64) {
+      // Handle AI-generated image
+      if (data.image?.base64 && imageGenerationType === 'ai_generated') {
         setImagePreview(data.image.base64);
+        setMediaType('image');
       }
 
+      // Handle image prompt
       if (data.imagePrompt) {
         const promptToStore =
           typeof data.imagePrompt === "object"
@@ -283,7 +352,11 @@ export function DraftModal({
             : data.imagePrompt;
         setImagePromptText(promptToStore);
 
-        if (!data.image?.base64) {
+        // Show prompt dialog if user chose "Give Me a Prompt" option
+        if (imageGenerationType === 'ai_prompt_used') {
+          setShowImagePromptDialog(true);
+        } else if (!data.image?.base64 && imageGenerationType === 'ai_generated') {
+          // Fallback: show prompt if generation failed
           setShowImagePromptDialog(true);
         }
       }
@@ -702,48 +775,20 @@ export function DraftModal({
                               )}
                             </div>
 
-                            {/* Image Section */}
+                            {/* Media Upload Section */}
                             <div>
                               <label className="text-sm font-semibold text-gray-700 mb-3 block">
-                                Post Image
+                                Post Media
                               </label>
-                              {!imagePreview ? (
-                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-400 transition-colors">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageSelect}
-                                    className="hidden"
-                                    id="image-upload-ai"
-                                  />
-                                  <label
-                                    htmlFor="image-upload-ai"
-                                    className="cursor-pointer"
-                                  >
-                                    <Upload className="w-10 h-10 mx-auto mb-3 text-gray-400" />
-                                    <p className="text-sm font-medium text-gray-700">
-                                      Upload an image
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      PNG, JPG up to 10MB
-                                    </p>
-                                  </label>
-                                </div>
-                              ) : (
-                                <div className="relative rounded-xl overflow-hidden">
-                                  <img
-                                    src={imagePreview}
-                                    alt="Preview"
-                                    className="w-full h-64 object-cover"
-                                  />
-                                  <button
-                                    onClick={handleRemoveImage}
-                                    className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 shadow-lg transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              )}
+                              <MediaUpload
+                                onImageSelect={handleImageSelectWithType}
+                                onVideoSelect={handleVideoSelect}
+                                onAIImageRequest={handleAIImageRequest}
+                                imagePreview={imagePreview}
+                                videoPreview={videoPreview}
+                                onRemoveMedia={handleRemoveMedia}
+                                disabled={loading}
+                              />
                             </div>
 
                             {/* Hashtags Section */}
@@ -882,48 +927,20 @@ export function DraftModal({
                     </div>
 
                     <div className="space-y-5">
-                      {/* Image Upload */}
+                      {/* Media Upload */}
                       <div>
                         <label className="text-sm font-semibold text-gray-700 mb-3 block">
-                          Post Image
+                          Post Media
                         </label>
-                        {!imagePreview ? (
-                          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-400 transition-colors">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleImageSelect}
-                              className="hidden"
-                              id="image-upload-manual"
-                            />
-                            <label
-                              htmlFor="image-upload-manual"
-                              className="cursor-pointer"
-                            >
-                              <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                              <p className="text-xs font-medium text-gray-700">
-                                Upload image
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                PNG, JPG up to 10MB
-                              </p>
-                            </label>
-                          </div>
-                        ) : (
-                          <div className="relative rounded-xl overflow-hidden">
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="w-full h-40 object-cover"
-                            />
-                            <button
-                              onClick={handleRemoveImage}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-lg"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                        <MediaUpload
+                          onImageSelect={handleImageSelectWithType}
+                          onVideoSelect={handleVideoSelect}
+                          onAIImageRequest={handleAIImageRequest}
+                          imagePreview={imagePreview}
+                          videoPreview={videoPreview}
+                          onRemoveMedia={handleRemoveMedia}
+                          disabled={loading}
+                        />
                       </div>
 
                       {/* Hashtags */}
@@ -1093,62 +1110,21 @@ export function DraftModal({
         onSchedule={handleSchedule}
       />
 
-      {/* Image Prompt Fallback Dialog */}
-      <Dialog
+      {/* AI Image Options Dialog */}
+      <AIImageOptionsDialog
+        open={showAIImageOptions}
+        onOpenChange={setShowAIImageOptions}
+        onGenerateForMe={handleGenerateForMe}
+        onGiveMePrompt={handleGiveMePrompt}
+        loading={loading}
+      />
+
+      {/* Image Prompt Dialog */}
+      <ImagePromptDialog
         open={showImagePromptDialog}
         onOpenChange={setShowImagePromptDialog}
-      >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-blue-500" />
-              Image Generation Unavailable
-            </DialogTitle>
-            <DialogDescription>
-              We couldn't generate an image due to API rate limits, but we've
-              created a perfect prompt for you!
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="relative">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-[200px] overflow-y-auto">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {imagePromptText}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute top-2 right-2"
-                onClick={() => {
-                  navigator.clipboard.writeText(imagePromptText);
-                }}
-              >
-                Copy
-              </Button>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-sm text-blue-900 mb-2">
-                Suggested Tools:
-              </h4>
-              <ul className="space-y-1 text-sm text-blue-800">
-                <li>• Google AI Studio (Free)</li>
-                <li>• Bing Image Creator (Free)</li>
-                <li>• Leonardo AI (Free tier)</li>
-                <li>• Craiyon (Free)</li>
-              </ul>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button onClick={() => setShowImagePromptDialog(false)}>
-              Got it!
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        imagePrompt={imagePromptText}
+      />
     </>
   );
 }
