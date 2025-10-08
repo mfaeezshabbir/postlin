@@ -456,12 +456,19 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto border-0 shadow-2xl">
         {/* Loading state when fetching draft */}
         {fetchingDraft ? (
           <>
-            <DialogHeader>
-              <DialogTitle>Loading Draft...</DialogTitle>
+            <DialogHeader className="space-y-3 pb-2">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                </div>
+                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  Loading Draft...
+                </DialogTitle>
+              </div>
             </DialogHeader>
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -472,11 +479,20 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
             {/* Choose Creation Mode (only for create mode) */}
             {mode === 'create' && creationMode === 'choose' && (
               <>
-                <DialogHeader>
-                  <DialogTitle>Create New Draft</DialogTitle>
-                  <DialogDescription>
-                    Choose how you want to create your LinkedIn post
-                  </DialogDescription>
+                <DialogHeader className="space-y-3 pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        Create New Draft
+                      </DialogTitle>
+                      <DialogDescription className="text-sm text-gray-500 mt-1">
+                        Choose how you want to create your LinkedIn post
+                      </DialogDescription>
+                    </div>
+                  </div>
                 </DialogHeader>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-6">
@@ -521,11 +537,20 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
             {/* AI Generation Mode */}
             {creationMode === 'ai' && (
               <>
-                <DialogHeader>
-                  <DialogTitle>AI Content Generation</DialogTitle>
-                  <DialogDescription>
-                    Describe what you want to post about, and AI will create engaging content
-                  </DialogDescription>
+                <DialogHeader className="space-y-3 pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 shadow-lg shadow-purple-500/30">
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        AI Content Generation
+                      </DialogTitle>
+                      <DialogDescription className="text-sm text-gray-500 mt-1">
+                        Describe what you want to post about, and AI will create engaging content
+                      </DialogDescription>
+                    </div>
+                  </div>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
@@ -740,16 +765,23 @@ export function DraftModal({ open, onOpenChange, onDraftSaved, mode, draftId }: 
             {/* Manual Writing Mode */}
             {creationMode === 'manual' && (
               <>
-                <DialogHeader>
-                  <DialogTitle>
-                    {mode === 'edit' ? 'Edit Draft' : 'Write Your Post'}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {mode === 'edit' 
-                      ? 'Make changes to your draft post'
-                      : 'Create your LinkedIn post content manually'
-                    }
-                  </DialogDescription>
+                <DialogHeader className="space-y-3 pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        {mode === 'edit' ? 'Edit Draft' : 'Write Your Post'}
+                      </DialogTitle>
+                      <DialogDescription className="text-sm text-gray-500 mt-1">
+                        {mode === 'edit' 
+                          ? 'Make changes to your draft post'
+                          : 'Create your LinkedIn post content manually'
+                        }
+                      </DialogDescription>
+                    </div>
+                  </div>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">

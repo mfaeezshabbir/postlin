@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import PostCard from "../components/PostCard";
 import PostActions from "../components/PostActions";
+import ScheduleDialog from "../components/ScheduleDialog";
 
 interface ScheduledPost {
   id: string;
@@ -130,7 +131,9 @@ export default function ScheduledPage() {
       return;
     }
 
-    const newScheduledDateTime = new Date(`${newScheduledDate}T${newScheduledTime}`);
+    const newScheduledDateTime = new Date(
+      `${newScheduledDate}T${newScheduledTime}`
+    );
     const now = new Date();
 
     if (newScheduledDateTime <= now) {
@@ -151,7 +154,9 @@ export default function ScheduledPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || "Failed to reschedule post");
+        throw new Error(
+          errorData.details || errorData.error || "Failed to reschedule post"
+        );
       }
 
       const data = await response.json();
@@ -160,7 +165,8 @@ export default function ScheduledPage() {
       await fetchScheduledPosts(); // Refresh list
     } catch (error) {
       console.error("Error rescheduling post:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       alert(`Failed to reschedule post.\n\nError: ${errorMessage}`);
     } finally {
       setRescheduling(false);
@@ -199,7 +205,7 @@ export default function ScheduledPage() {
         },
       ]}
     >
-  <Card className="h-full flex flex-col w-full">
+      <Card className="h-full flex flex-col w-full">
         <CardHeader>
           <CardTitle>Upcoming Posts</CardTitle>
           <CardDescription>
@@ -228,26 +234,26 @@ export default function ScheduledPage() {
             </div>
           ) : (
             <div className="space-y-4">
-                {scheduledPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    id={post.id}
-                    content={post.draftText}
-                    status="scheduled"
-                    createdAt={post.createdAt}
-                    meta={<span>{post.hashtags?.length || 0} hashtags</span>}
-                    actions={
-                      <PostActions
-                        id={post.id}
-                        status="scheduled"
-                        onSchedule={() => handleOpenReschedule(post.id)}
-                        onEdit={() => {}}
-                        onDelete={() => confirmCancel(post.id)}
-                        loading={{ deleting: cancellingId }}
-                      />
-                    }
-                  />
-                ))}
+              {scheduledPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  id={post.id}
+                  content={post.draftText}
+                  status="scheduled"
+                  createdAt={post.createdAt}
+                  meta={<span>{post.hashtags?.length || 0} hashtags</span>}
+                  actions={
+                    <PostActions
+                      id={post.id}
+                      status="scheduled"
+                      onSchedule={() => handleOpenReschedule(post.id)}
+                      onEdit={() => {}}
+                      onDelete={() => confirmCancel(post.id)}
+                      loading={{ deleting: cancellingId }}
+                    />
+                  }
+                />
+              ))}
             </div>
           )}
         </CardContent>
@@ -289,67 +295,17 @@ export default function ScheduledPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Reschedule dialog */}
-      <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reschedule Post</DialogTitle>
-            <DialogDescription>
-              Choose a new date and time to publish this post to LinkedIn.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Date</label>
-              <input
-                type="date"
-                value={newScheduledDate}
-                onChange={(e) => setNewScheduledDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={rescheduling}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Time</label>
-              <input
-                type="time"
-                value={newScheduledTime}
-                onChange={(e) => setNewScheduledTime(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={rescheduling}
-              />
-            </div>
-            <p className="text-xs text-gray-500">
-              The post will be automatically published at the selected time.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowRescheduleDialog(false)}
-              disabled={rescheduling}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleReschedule}
-              disabled={rescheduling || !newScheduledDate || !newScheduledTime}
-            >
-              {rescheduling ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Rescheduling...
-                </>
-              ) : (
-                <>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Reschedule
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Reschedule dialog (reusable) */}
+      <ScheduleDialog
+        open={showRescheduleDialog}
+        onOpenChange={setShowRescheduleDialog}
+        scheduledDate={newScheduledDate}
+        setScheduledDate={setNewScheduledDate}
+        scheduledTime={newScheduledTime}
+        setScheduledTime={setNewScheduledTime}
+        scheduling={rescheduling}
+        onSchedule={handleReschedule}
+      />
     </DashboardContainer>
   );
 }
