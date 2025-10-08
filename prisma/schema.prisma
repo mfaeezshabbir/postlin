@@ -24,6 +24,20 @@ enum PostStatus {
   DISCARDED
 }
 
+// Enum for media type
+enum MediaType {
+  NONE
+  IMAGE
+  VIDEO
+}
+
+// Enum for image generation type
+enum ImageGenerationType {
+  AI_GENERATED      // Generated automatically by our system
+  AI_PROMPT_USED    // User got prompt and generated elsewhere
+  USER_UPLOADED     // User uploaded their own image
+}
+
 model User {
   id           String    @id @map("_id") @default(auto()) @db.ObjectId
   email        String    @unique
@@ -41,22 +55,31 @@ model User {
 }
 
 model Post {
-  id             String     @id @map("_id") @default(auto()) @db.ObjectId
-  userId         String     @db.ObjectId
-  user           User       @relation(fields: [userId], references: [id])
-  draftText      String
-  finalText      String?
-  status         PostStatus @default(DRAFT)
-  linkedInPostId String?
-  imageUrl       String?    // URL to stored image (Cloudinary, S3, or local)
-  imagePrompt    String?    // AI-generated image prompt for regeneration
-  hashtags       String[]   @default([]) // Array of hashtags
-  isAIGenerated  Boolean    @default(false) // Track if post was AI-generated
-  scheduledAt    DateTime?  // When the post is scheduled to be published
-  createdAt      DateTime   @default(now())
-  publishedAt    DateTime?
+  id                  String               @id @map("_id") @default(auto()) @db.ObjectId
+  userId              String               @db.ObjectId
+  user                User                 @relation(fields: [userId], references: [id])
+  draftText           String
+  finalText           String?
+  status              PostStatus           @default(DRAFT)
+  linkedInPostId      String?
+  
+  // Media fields
+  mediaType           MediaType            @default(NONE)
+  imageUrl            String?              // URL to stored image
+  videoUrl            String?              // URL to stored video
+  imagePrompt         String?              // AI-generated image prompt for regeneration
+  imageGenerationType ImageGenerationType? // How the image was obtained
+  
+  // Content metadata
+  hashtags            String[]             @default([]) // Array of hashtags
+  isAIGenerated       Boolean              @default(false) // Track if post was AI-generated
+  
+  // Scheduling
+  scheduledAt         DateTime?            // When the post is scheduled to be published
+  createdAt           DateTime             @default(now())
+  publishedAt         DateTime?
 
-  analytics      Analytics?
+  analytics           Analytics?
 }
 
 model Preference {
