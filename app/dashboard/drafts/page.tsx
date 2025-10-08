@@ -251,7 +251,7 @@ export default function DraftsPage() {
           },
         ]}
       >
-  <Card className="h-full flex flex-col w-full">
+        <Card className="h-full flex flex-col w-full">
           <CardHeader>
             <CardTitle>Your Drafts</CardTitle>
             <CardDescription>
@@ -286,7 +286,12 @@ export default function DraftsPage() {
                     content={draft.draftText}
                     status="draft"
                     createdAt={draft.createdAt}
-                    meta={<span>{draft.draftText.split(/\s+/).filter(Boolean).length} words</span>}
+                    meta={
+                      <span>
+                        {draft.draftText.split(/\s+/).filter(Boolean).length}{" "}
+                        words
+                      </span>
+                    }
                     actions={
                       <PostActions
                         id={draft.id}
@@ -295,7 +300,10 @@ export default function DraftsPage() {
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onSchedule={handleOpenScheduleDialog}
-                        loading={{ publishing: publishingId, deleting: deletingId }}
+                        loading={{
+                          publishing: publishingId,
+                          deleting: deletingId,
+                        }}
                       />
                     }
                   />
