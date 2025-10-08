@@ -7,7 +7,7 @@ interface HeroProps {
 
 export default function Hero({ isAuthenticated }: HeroProps) {
   return (
-    <section className="relative overflow-hidden py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 -z-10 blur-3xl opacity-30">
         {/* large decorative accents hidden on very small screens */}
         <div className="hidden sm:block absolute -left-40 top-0 w-[520px] h-[420px] bg-gradient-to-tr from-blue-600 to-purple-600 rounded-3xl transform rotate-12 opacity-70"></div>
@@ -89,7 +89,7 @@ export default function Hero({ isAuthenticated }: HeroProps) {
           </div>
 
           {/* Right: Mockup / Visual */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative">
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative z-50">
             <div
               className="relative w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[520px] rounded-2xl bg-gradient-to-b from-white/80 to-white/60 border border-gray-100 shadow-2xl p-4"
               aria-hidden
