@@ -1,71 +1,78 @@
+"use client";
+
+import Link from "next/link";
+import { Github, Linkedin, Mail, HelpCircle } from "lucide-react";
 import Logo from "@/components/brand/Logo";
-import { Github, Linkedin } from "lucide-react";
 
 export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-gradient-to-r from-slate-900 to-slate-800 text-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-white/10 flex items-center justify-center">
-              <Logo className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="font-semibold text-white">Postlin</div>
-              <div className="text-xs text-slate-400">
-                Schedule. Publish. Grow.
-              </div>
-            </div>
+    <footer className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-slate-300 border-t border-white/10 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur">
+            <Logo className="w-6 h-6 text-white" />
           </div>
-
-          <div className="flex items-center gap-6">
-            <nav className="hidden sm:flex items-center gap-4">
-              <a
-                href="/terms"
-                className="text-sm text-slate-300 hover:text-white transition"
-              >
-                Terms
-              </a>
-              <span className="text-sm text-slate-600">|</span>
-              <a
-                href="/privacy"
-                className="text-sm text-slate-300 hover:text-white transition"
-              >
-                Privacy
-              </a>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              <a
-                href="https://github.com/mfaeezshabbir"
-                aria-label="mfaeezshabbir on GitHub"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-md bg-white/6 hover:bg-white/12 transition"
-              >
-                <Github className="w-5 h-5 text-slate-200" />
-              </a>
-
-              <a
-                href="https://www.linkedin.com/in/mfaeezshabbir"
-                aria-label="mfaeezshabbir on LinkedIn"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-md bg-white/6 hover:bg-white/12 transition"
-              >
-                <Linkedin className="w-5 h-5 text-slate-200" />
-              </a>
-            </div>
+          <div>
+            <p className="font-semibold text-white text-lg">Postlin</p>
+            <p className="text-xs text-slate-400">Schedule. Publish. Grow.</p>
           </div>
         </div>
 
-        <div className="mt-6 border-t border-white/6 pt-4 text-center">
-          <p className="text-xs text-slate-500">
-            © {year} Postlin. All rights reserved.
-          </p>
+        <nav className="flex items-center gap-5 text-sm">
+          <Link href="/docs" className="hover:text-white transition">
+            Docs
+          </Link>
+          <Link href="/support" className="hover:text-white transition">
+            Support
+          </Link>
+          <Link href="/terms" className="hover:text-white transition">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-white transition">
+            Privacy
+          </Link>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="mailto:support@postlin.app"
+            className="p-2 rounded-md bg-white/5 hover:bg-white/10 transition"
+            aria-label="Contact via Email"
+          >
+            <Mail className="w-5 h-5" />
+          </a>
+          <a
+            href="https://postlin.app/support"
+            className="p-2 rounded-md bg-white/5 hover:bg-white/10 transition"
+            aria-label="Help & Support"
+          >
+            <HelpCircle className="w-5 h-5" />
+          </a>
+          <a
+            href="https://github.com/mfaeezshabbir"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-md bg-white/5 hover:bg-white/10 transition"
+            aria-label="GitHub"
+          >
+            <Github className="w-5 h-5" />
+          </a>
+          <a
+            href="https://linkedin.com/in/mfaeezshabbir"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-md bg-white/5 hover:bg-white/10 transition"
+            aria-label="LinkedIn"
+          >
+            <Linkedin className="w-5 h-5" />
+          </a>
         </div>
+      </div>
+
+      <div className="border-t border-white/10 py-4 text-center text-xs text-slate-500">
+        © {year} Postlin. All rights reserved.
       </div>
     </footer>
   );

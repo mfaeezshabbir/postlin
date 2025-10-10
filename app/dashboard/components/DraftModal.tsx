@@ -46,6 +46,7 @@ export function DraftModal({
   mode,
   draftId,
 }: DraftModalProps) {
+  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
   // Main states
   const [creationMode, setCreationMode] = useState<"choose" | "manual" | "ai">(
     "choose"
@@ -130,8 +131,8 @@ export function DraftModal({
 
       setCreationMode("manual");
     } catch (error) {
-      console.error("Error fetching draft:", error);
-      alert("Failed to load draft. Please try again.");
+  console.error("Error fetching draft:", error);
+  push({ title: "Failed", description: "Failed to load draft. Please try again.", variant: "error" });
       onOpenChange(false);
     } finally {
       setFetchingDraft(false);
@@ -181,12 +182,12 @@ export function DraftModal({
   // Image handling
   const handleImageSelectFromFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      push({ title: "Invalid File", description: "Please select an image file", variant: "error" });
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert("Image size must be less than 10MB");
+      push({ title: "Image Too Large", description: "Image size must be less than 10MB", variant: "error" });
       return;
     }
 
@@ -366,9 +367,7 @@ export function DraftModal({
         error instanceof Error
           ? error.message
           : "Failed to generate content. Please try again.";
-      alert(
-        `AI Generation Error: ${errorMessage}\n\nPlease check that your GEMINI_API_KEY is valid.`
-      );
+      push({ title: "AI Error", description: `AI Generation Error: ${errorMessage}. Please check that your GEMINI_API_KEY is valid.`, variant: "error" });
     } finally {
       setLoading(false);
     }
@@ -377,7 +376,7 @@ export function DraftModal({
   // Save Draft
   const handleSaveDraft = async (): Promise<string | null> => {
     if (!content.trim()) {
-      alert("Please enter some content");
+      push({ title: "Validation", description: "Please enter some content", variant: "info" });
       return null;
     }
 
@@ -448,11 +447,7 @@ export function DraftModal({
       );
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      alert(
-        `Failed to ${
-          mode === "edit" ? "update" : "create"
-        } draft.\n\nError: ${errorMessage}\n\nPlease try again.`
-      );
+      push({ title: "Save Failed", description: `Failed to ${mode === "edit" ? "update" : "create"} draft. Error: ${errorMessage}`, variant: "error" });
       return null;
     } finally {
       setLoading(false);
@@ -462,7 +457,7 @@ export function DraftModal({
   // Handle Schedule
   const handleSchedule = async () => {
     if (!scheduledDate || !scheduledTime) {
-      alert("Please select both date and time");
+      push({ title: "Schedule", description: "Please select both date and time", variant: "info" });
       return;
     }
 
@@ -470,7 +465,7 @@ export function DraftModal({
     const now = new Date();
 
     if (scheduledDateTime <= now) {
-      alert("Scheduled time must be in the future");
+      push({ title: "Schedule", description: "Scheduled time must be in the future", variant: "error" });
       return;
     }
 
@@ -505,8 +500,8 @@ export function DraftModal({
         );
       }
 
-      const data = await response.json();
-      alert(data.message || "Post scheduled successfully!");
+  const data = await response.json();
+  push({ title: "Scheduled", description: data.message || "Post scheduled successfully!", variant: "success" });
       setShowScheduleDialog(false);
       onDraftSaved();
       handleClose();
@@ -514,7 +509,7 @@ export function DraftModal({
       console.error("Error scheduling post:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      alert(`Failed to schedule post.\n\nError: ${errorMessage}`);
+      push({ title: "Schedule Error", description: `Failed to schedule post. Error: ${errorMessage}`, variant: "error" });
     } finally {
       setScheduling(false);
     }
