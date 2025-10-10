@@ -136,23 +136,34 @@ export default function PostActions({
 
   const PublishedActions = () => (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap flex-row sm:flex-col items-center gap-2">
         {onView && (
-          <Button size="sm" variant="ghost" onClick={() => onView?.(id)}>
-            <ExternalLink className="w-4 h-4 mr-2" />
-            View on LinkedIn
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onView?.(id)}
+            disabled={deleting || publishing}
+            title="View published post on LinkedIn"
+            aria-label="View published post on LinkedIn"
+            className="w-full sm:w-auto text-gray-700"
+          >
+            <ExternalLink className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">View on LinkedIn</span>
           </Button>
         )}
 
         {onRevert && (
           <Button
             size="sm"
-            variant="ghost"
+            variant="destructive"
             onClick={() => onRevert?.(id)}
-            className="text-orange-600"
+            disabled={deleting || publishing}
+            className="w-full sm:w-auto text-gray-100"
+            title="Revert post to draft"
+            aria-label="Revert post to draft"
           >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Revert to Draft
+            <RotateCcw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Revert to Draft</span>
           </Button>
         )}
       </div>

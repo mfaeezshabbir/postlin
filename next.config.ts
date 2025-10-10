@@ -8,7 +8,13 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ["media.licdn.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "media.licdn.com",
+        pathname: "/**",
+      },
+    ],
   },
 };
 

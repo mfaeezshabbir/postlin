@@ -42,7 +42,9 @@ interface ScheduledPost {
 }
 
 export default function ScheduledPage() {
-  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
+  const { push } = require("@/components/ToastProvider").useToasts?.() || {
+    push: (t: any) => "",
+  };
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -92,14 +94,26 @@ export default function ScheduledPage() {
       if (response.ok) {
         // Remove from list
         setScheduledPosts((prev) => prev.filter((p) => p.id !== postToCancel));
-  push({ title: "Cancelled", description: "Scheduled post cancelled successfully", variant: "success" });
+        push({
+          title: "Cancelled",
+          description: "Scheduled post cancelled successfully",
+          variant: "success",
+        });
       } else {
         const data = await response.json();
-  push({ title: "Cancel Failed", description: `Failed to cancel: ${data.error || "Unknown error"}`, variant: "error" });
+        push({
+          title: "Cancel Failed",
+          description: `Failed to cancel: ${data.error || "Unknown error"}`,
+          variant: "error",
+        });
       }
     } catch (error) {
       console.error("Error cancelling schedule:", error);
-  push({ title: "Cancel Failed", description: "Failed to cancel scheduled post", variant: "error" });
+      push({
+        title: "Cancel Failed",
+        description: "Failed to cancel scheduled post",
+        variant: "error",
+      });
     } finally {
       setCancellingId(null);
       setShowCancelDialog(false);
@@ -128,7 +142,11 @@ export default function ScheduledPage() {
 
   const handleReschedule = async () => {
     if (!postToReschedule || !newScheduledDate || !newScheduledTime) {
-      push({ title: "Reschedule", description: "Please select both date and time", variant: "info" });
+      push({
+        title: "Reschedule",
+        description: "Please select both date and time",
+        variant: "info",
+      });
       return;
     }
 
@@ -138,7 +156,11 @@ export default function ScheduledPage() {
     const now = new Date();
 
     if (newScheduledDateTime <= now) {
-      push({ title: "Reschedule", description: "Scheduled time must be in the future", variant: "error" });
+      push({
+        title: "Reschedule",
+        description: "Scheduled time must be in the future",
+        variant: "error",
+      });
       return;
     }
 
@@ -161,14 +183,22 @@ export default function ScheduledPage() {
       }
 
       const data = await response.json();
-  push({ title: "Rescheduled", description: data.message || "Post rescheduled successfully!", variant: "success" });
+      push({
+        title: "Rescheduled",
+        description: data.message || "Post rescheduled successfully!",
+        variant: "success",
+      });
       setShowRescheduleDialog(false);
       await fetchScheduledPosts(); // Refresh list
     } catch (error) {
       console.error("Error rescheduling post:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-  push({ title: "Reschedule Error", description: `Failed to reschedule post. Error: ${errorMessage}`, variant: "error" });
+      push({
+        title: "Reschedule Error",
+        description: `Failed to reschedule post. Error: ${errorMessage}`,
+        variant: "error",
+      });
     } finally {
       setRescheduling(false);
     }
@@ -196,13 +226,11 @@ export default function ScheduledPage() {
         {
           title: "Total Scheduled",
           value: scheduledPosts.length,
-          subtitle: "Queued for publishing",
         },
-        { title: "This Week", value: thisWeek, subtitle: "In the next 7 days" },
+        { title: "This Week", value: thisWeek },
         {
           title: "This Month",
           value: thisMonth,
-          subtitle: "In the next 30 days",
         },
       ]}
     >

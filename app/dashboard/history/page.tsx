@@ -29,7 +29,9 @@ interface PublishedPostsData {
 }
 
 export default function HistoryPage() {
-  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
+  const { push } = require("@/components/ToastProvider").useToasts?.() || {
+    push: (t: any) => "",
+  };
   const [postsData, setPostsData] = useState<PublishedPostsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [revertingPostId, setRevertingPostId] = useState<string | null>(null);
@@ -74,14 +76,22 @@ export default function HistoryPage() {
 
       const data = await response.json();
 
-  // Show success message
-  push({ title: "Reverted", description: data.message || "Post reverted to draft successfully!", variant: "success" });
+      // Show success message
+      push({
+        title: "Reverted",
+        description: data.message || "Post reverted to draft successfully!",
+        variant: "success",
+      });
 
       // Refresh the published posts list
       await fetchPublishedPosts();
     } catch (error) {
-  console.error("Error reverting post:", error);
-  push({ title: "Failed", description: "Failed to revert post to draft. Please try again.", variant: "error" });
+      console.error("Error reverting post:", error);
+      push({
+        title: "Failed",
+        description: "Failed to revert post to draft. Please try again.",
+        variant: "error",
+      });
     } finally {
       setRevertingPostId(null);
     }
@@ -107,16 +117,14 @@ export default function HistoryPage() {
       title="History"
       description="View your published LinkedIn posts"
       stats={[
-        { title: "Total Posts", value: stats.total, subtitle: "All time" },
+        { title: "Total Posts", value: stats.total },
         {
           title: "This Month",
           value: stats.thisMonth,
-          subtitle: "Published this month",
         },
         {
           title: "Analytics",
           value: "Coming Soon",
-          subtitle: "Engagement metrics",
         },
       ]}
     >

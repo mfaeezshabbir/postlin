@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Upload, X, Image as ImageIcon, Video as VideoIcon, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface MediaUploadProps {
   onImageSelect: (file: File) => void;
@@ -43,23 +49,23 @@ export function MediaUpload({
     const file = e.dataTransfer.files[0];
     if (!file) return;
 
-    if (file.type.startsWith('image/')) {
+    if (file.type.startsWith("image/")) {
       validateAndSelectImage(file);
-    } else if (file.type.startsWith('video/')) {
+    } else if (file.type.startsWith("video/")) {
       validateAndSelectVideo(file);
     } else {
-      alert('Please drop an image or video file');
+      alert("Please drop an image or video file");
     }
   };
 
   const validateAndSelectImage = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('Image size must be less than 10MB');
+      alert("Image size must be less than 10MB");
       return;
     }
 
@@ -67,27 +73,29 @@ export function MediaUpload({
   };
 
   const validateAndSelectVideo = (file: File) => {
-    if (!file.type.startsWith('video/')) {
-      alert('Please select a video file');
+    if (!file.type.startsWith("video/")) {
+      alert("Please select a video file");
       return;
     }
 
     // LinkedIn video limits
     if (file.size > 200 * 1024 * 1024) {
-      alert('Video size must be less than 200MB (recommended). Maximum is 5GB but large files may take longer to upload.');
+      alert(
+        "Video size must be less than 200MB (recommended). Maximum is 5GB but large files may take longer to upload."
+      );
       return;
     }
 
     // Get video duration
-    const video = document.createElement('video');
-    video.preload = 'metadata';
+    const video = document.createElement("video");
+    video.preload = "metadata";
 
     video.onloadedmetadata = () => {
       window.URL.revokeObjectURL(video.src);
       const duration = video.duration;
 
       if (duration < 3 || duration > 600) {
-        alert('Video duration must be between 3 seconds and 10 minutes');
+        alert("Video duration must be between 3 seconds and 10 minutes");
         return;
       }
 
@@ -155,25 +163,24 @@ export function MediaUpload({
       <button
         onClick={onAIImageRequest}
         disabled={disabled}
-        className="w-full group relative overflow-hidden rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 p-6 text-left transition-all duration-300 hover:border-purple-400 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+        className="w-full group relative overflow-hidden rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 p-3 text-left transition-all duration-300 hover:border-purple-400 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
       >
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150" />
-        
-        <div className="relative flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-            <Sparkles className="w-6 h-6 text-white" />
+
+        <div className="relative flex flex-col items-center gap-4">
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-gray-900 mb-1">
+                Generate Image with AI
+              </h4>
+              <p className="text-[11px] text-gray-600">
+                Let AI create a perfect image for your post
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-gray-900 mb-1">
-              AI Generate Image
-            </h4>
-            <p className="text-sm text-gray-600">
-              Let AI create a perfect image for your post
-            </p>
-          </div>
-          <Badge className="bg-purple-100 text-purple-700 border-0">
-            Recommended
-          </Badge>
         </div>
       </button>
 
@@ -184,17 +191,15 @@ export function MediaUpload({
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
           dragOver
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            ? "border-blue-400 bg-blue-50"
+            : "border-gray-300 hover:border-gray-400"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
         <p className="text-sm font-medium text-gray-700 mb-2">
           Drag & drop your media here
         </p>
-        <p className="text-xs text-gray-500 mb-4">
-          or click to browse
-        </p>
+        <p className="text-xs text-gray-500 mb-4">or click to browse</p>
 
         <div className="flex items-center justify-center gap-3">
           {/* Image Upload */}

@@ -33,7 +33,9 @@ interface DraftsData {
 }
 
 export default function DraftsPage() {
-  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
+  const { push } = require("@/components/ToastProvider").useToasts?.() || {
+    push: (t: any) => "",
+  };
   const [draftsData, setDraftsData] = useState<DraftsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -97,7 +99,11 @@ export default function DraftsPage() {
       await fetchDrafts(); // Refresh the list
     } catch (error) {
       console.error("Error deleting draft:", error);
-  push({ title: "Failed", description: "Failed to delete draft. Please try again.", variant: "error" });
+      push({
+        title: "Failed",
+        description: "Failed to delete draft. Please try again.",
+        variant: "error",
+      });
     } finally {
       setDeletingId(null);
     }
@@ -121,7 +127,11 @@ export default function DraftsPage() {
         throw new Error(data.details || data.error || "Failed to publish");
       }
 
-  push({ title: "Published", description: "Successfully published to LinkedIn!", variant: "success" });
+      push({
+        title: "Published",
+        description: "Successfully published to LinkedIn!",
+        variant: "success",
+      });
       await fetchDrafts(); // Refresh the list
     } catch (error) {
       console.error("Error publishing to LinkedIn:", error);
@@ -129,7 +139,11 @@ export default function DraftsPage() {
         error instanceof Error
           ? error.message
           : "Failed to publish. Please try again.";
-      push({ title: "Publishing Error", description: `${errorMessage}. Please make sure you have granted posting permissions to the app.`, variant: "error" });
+      push({
+        title: "Publishing Error",
+        description: `${errorMessage}. Please make sure you have granted posting permissions to the app.`,
+        variant: "error",
+      });
     } finally {
       setPublishingId(null);
     }
@@ -144,12 +158,20 @@ export default function DraftsPage() {
 
   const handleSchedule = async () => {
     if (!scheduledDate || !scheduledTime) {
-  push({ title: "Schedule", description: "Please select both date and time", variant: "info" });
+      push({
+        title: "Schedule",
+        description: "Please select both date and time",
+        variant: "info",
+      });
       return;
     }
 
     if (!schedulingDraftId) {
-  push({ title: "Schedule", description: "No draft selected", variant: "error" });
+      push({
+        title: "Schedule",
+        description: "No draft selected",
+        variant: "error",
+      });
       return;
     }
 
@@ -158,7 +180,11 @@ export default function DraftsPage() {
     const now = new Date();
 
     if (scheduledDateTime <= now) {
-  push({ title: "Schedule", description: "Scheduled time must be in the future", variant: "error" });
+      push({
+        title: "Schedule",
+        description: "Scheduled time must be in the future",
+        variant: "error",
+      });
       return;
     }
 
@@ -181,14 +207,22 @@ export default function DraftsPage() {
       }
 
       const data = await response.json();
-  push({ title: "Scheduled", description: data.message || "Post scheduled successfully!", variant: "success" });
+      push({
+        title: "Scheduled",
+        description: data.message || "Post scheduled successfully!",
+        variant: "success",
+      });
       setShowScheduleDialog(false);
       await fetchDrafts(); // Refresh to remove scheduled post from drafts
     } catch (error) {
       console.error("Error scheduling post:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-  push({ title: "Schedule Error", description: `Failed to schedule post. Error: ${errorMessage}`, variant: "error" });
+      push({
+        title: "Schedule Error",
+        description: `Failed to schedule post. Error: ${errorMessage}`,
+        variant: "error",
+      });
     } finally {
       setScheduling(false);
     }
@@ -210,27 +244,18 @@ export default function DraftsPage() {
       <DashboardContainer
         title="Drafts"
         description="Manage your LinkedIn post drafts"
-        headerRight={
-          <Button onClick={handleCreateDraft}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Draft
-          </Button>
-        }
         stats={[
           {
             title: "Total Drafts",
             value: stats.total,
-            subtitle: "Saved drafts",
           },
           {
             title: "AI Generated",
             value: stats.aiGenerated,
-            subtitle: "Created by AI",
           },
           {
             title: "Manual",
             value: stats.manual,
-            subtitle: "Created manually",
           },
         ]}
       >

@@ -46,7 +46,9 @@ export function DraftModal({
   mode,
   draftId,
 }: DraftModalProps) {
-  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
+  const { push } = require("@/components/ToastProvider").useToasts?.() || {
+    push: (t: any) => "",
+  };
   // Main states
   const [creationMode, setCreationMode] = useState<"choose" | "manual" | "ai">(
     "choose"
@@ -66,7 +68,9 @@ export function DraftModal({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<'none' | 'image' | 'video'>('none');
+  const [mediaType, setMediaType] = useState<"none" | "image" | "video">(
+    "none"
+  );
 
   // Hashtag states
   const [hashtagInput, setHashtagInput] = useState("");
@@ -78,7 +82,9 @@ export function DraftModal({
   // AI Image generation dialogs
   const [showAIImageOptions, setShowAIImageOptions] = useState(false);
   const [showImagePromptDialog, setShowImagePromptDialog] = useState(false);
-  const [imageGenerationType, setImageGenerationType] = useState<'ai_generated' | 'ai_prompt_used' | 'user_uploaded' | null>(null);
+  const [imageGenerationType, setImageGenerationType] = useState<
+    "ai_generated" | "ai_prompt_used" | "user_uploaded" | null
+  >(null);
 
   // Scheduling states
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -131,8 +137,12 @@ export function DraftModal({
 
       setCreationMode("manual");
     } catch (error) {
-  console.error("Error fetching draft:", error);
-  push({ title: "Failed", description: "Failed to load draft. Please try again.", variant: "error" });
+      console.error("Error fetching draft:", error);
+      push({
+        title: "Failed",
+        description: "Failed to load draft. Please try again.",
+        variant: "error",
+      });
       onOpenChange(false);
     } finally {
       setFetchingDraft(false);
@@ -162,7 +172,7 @@ export function DraftModal({
     setImagePreview(null);
     setSelectedVideo(null);
     setVideoPreview(null);
-    setMediaType('none');
+    setMediaType("none");
     setHashtags([]);
     setHashtagInput("");
     setLoading(false);
@@ -182,17 +192,25 @@ export function DraftModal({
   // Image handling
   const handleImageSelectFromFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      push({ title: "Invalid File", description: "Please select an image file", variant: "error" });
+      push({
+        title: "Invalid File",
+        description: "Please select an image file",
+        variant: "error",
+      });
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      push({ title: "Image Too Large", description: "Image size must be less than 10MB", variant: "error" });
+      push({
+        title: "Image Too Large",
+        description: "Image size must be less than 10MB",
+        variant: "error",
+      });
       return;
     }
 
     setSelectedImage(file);
-    setMediaType('image');
+    setMediaType("image");
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -214,8 +232,8 @@ export function DraftModal({
   // Video handling
   const handleVideoSelect = (file: File) => {
     setSelectedVideo(file);
-    setMediaType('video');
-    setImageGenerationType('user_uploaded');
+    setMediaType("video");
+    setImageGenerationType("user_uploaded");
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -230,7 +248,7 @@ export function DraftModal({
     setImagePreview(null);
     setSelectedVideo(null);
     setVideoPreview(null);
-    setMediaType('none');
+    setMediaType("none");
     setImageGenerationType(null);
   };
 
@@ -243,20 +261,20 @@ export function DraftModal({
     setShowAIImageOptions(false);
     // This will be handled in the AI generation flow
     // Set a flag that we want to generate image automatically
-    setImageGenerationType('ai_generated');
+    setImageGenerationType("ai_generated");
   };
 
   const handleGiveMePrompt = () => {
     setShowAIImageOptions(false);
     // Generate prompt but don't generate image
-    setImageGenerationType('ai_prompt_used');
+    setImageGenerationType("ai_prompt_used");
     // The prompt will be shown after AI content generation
   };
 
   // Update image select to track generation type
   const handleImageSelectWithType = (file: File) => {
     handleImageSelectFromFile(file);
-    setImageGenerationType('user_uploaded');
+    setImageGenerationType("user_uploaded");
   };
 
   // Hashtag handling
@@ -300,8 +318,8 @@ export function DraftModal({
     setLoading(true);
     try {
       // Determine if we should generate image based on user's choice
-      const shouldGenerateImage = imageGenerationType === 'ai_generated';
-      
+      const shouldGenerateImage = imageGenerationType === "ai_generated";
+
       const response = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -340,9 +358,9 @@ export function DraftModal({
       }
 
       // Handle AI-generated image
-      if (data.image?.base64 && imageGenerationType === 'ai_generated') {
+      if (data.image?.base64 && imageGenerationType === "ai_generated") {
         setImagePreview(data.image.base64);
-        setMediaType('image');
+        setMediaType("image");
       }
 
       // Handle image prompt
@@ -354,9 +372,12 @@ export function DraftModal({
         setImagePromptText(promptToStore);
 
         // Show prompt dialog if user chose "Give Me a Prompt" option
-        if (imageGenerationType === 'ai_prompt_used') {
+        if (imageGenerationType === "ai_prompt_used") {
           setShowImagePromptDialog(true);
-        } else if (!data.image?.base64 && imageGenerationType === 'ai_generated') {
+        } else if (
+          !data.image?.base64 &&
+          imageGenerationType === "ai_generated"
+        ) {
           // Fallback: show prompt if generation failed
           setShowImagePromptDialog(true);
         }
@@ -367,7 +388,11 @@ export function DraftModal({
         error instanceof Error
           ? error.message
           : "Failed to generate content. Please try again.";
-      push({ title: "AI Error", description: `AI Generation Error: ${errorMessage}. Please check that your GEMINI_API_KEY is valid.`, variant: "error" });
+      push({
+        title: "AI Error",
+        description: `AI Generation Error: ${errorMessage}. Please check that your GEMINI_API_KEY is valid.`,
+        variant: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -376,7 +401,11 @@ export function DraftModal({
   // Save Draft
   const handleSaveDraft = async (): Promise<string | null> => {
     if (!content.trim()) {
-      push({ title: "Validation", description: "Please enter some content", variant: "info" });
+      push({
+        title: "Validation",
+        description: "Please enter some content",
+        variant: "info",
+      });
       return null;
     }
 
@@ -447,7 +476,13 @@ export function DraftModal({
       );
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      push({ title: "Save Failed", description: `Failed to ${mode === "edit" ? "update" : "create"} draft. Error: ${errorMessage}`, variant: "error" });
+      push({
+        title: "Save Failed",
+        description: `Failed to ${
+          mode === "edit" ? "update" : "create"
+        } draft. Error: ${errorMessage}`,
+        variant: "error",
+      });
       return null;
     } finally {
       setLoading(false);
@@ -457,7 +492,11 @@ export function DraftModal({
   // Handle Schedule
   const handleSchedule = async () => {
     if (!scheduledDate || !scheduledTime) {
-      push({ title: "Schedule", description: "Please select both date and time", variant: "info" });
+      push({
+        title: "Schedule",
+        description: "Please select both date and time",
+        variant: "info",
+      });
       return;
     }
 
@@ -465,7 +504,11 @@ export function DraftModal({
     const now = new Date();
 
     if (scheduledDateTime <= now) {
-      push({ title: "Schedule", description: "Scheduled time must be in the future", variant: "error" });
+      push({
+        title: "Schedule",
+        description: "Scheduled time must be in the future",
+        variant: "error",
+      });
       return;
     }
 
@@ -500,8 +543,12 @@ export function DraftModal({
         );
       }
 
-  const data = await response.json();
-  push({ title: "Scheduled", description: data.message || "Post scheduled successfully!", variant: "success" });
+      const data = await response.json();
+      push({
+        title: "Scheduled",
+        description: data.message || "Post scheduled successfully!",
+        variant: "success",
+      });
       setShowScheduleDialog(false);
       onDraftSaved();
       handleClose();
@@ -509,14 +556,23 @@ export function DraftModal({
       console.error("Error scheduling post:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      push({ title: "Schedule Error", description: `Failed to schedule post. Error: ${errorMessage}`, variant: "error" });
+      push({
+        title: "Schedule Error",
+        description: `Failed to schedule post. Error: ${errorMessage}`,
+        variant: "error",
+      });
     } finally {
       setScheduling(false);
     }
   };
 
-  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-  const charCount = content.length;
+  // adding the hashtag and word/char count calculations
+  const contentWithHashtags = insertHashtagsIntoContent(content);
+  const wordCount = contentWithHashtags
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const charCount = contentWithHashtags.length;
 
   return (
     <>
@@ -909,23 +965,28 @@ export function DraftModal({
                       </button>
                     )}
 
-                    <div className="mb-6">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-4 shadow-lg">
-                        <Edit3 className="w-6 h-6 text-white" />
+                    <div className="relative w-full mb-4">
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-14 h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10">
+                        <Edit3 className="w-6 h-6 text-green-600" />
                       </div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        {mode === "edit" ? "Edit Draft" : "Write Post"}
-                      </h2>
-                      <p className="text-sm text-gray-600">
-                        Craft your message with full control
-                      </p>
+
+                      <div className="ml-16">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {mode === "edit" ? "Edit Draft" : "Compose Post"}
+                        </h2>
+                        <p className="text-[0.7rem] text-gray-500">
+                          {mode === "edit"
+                            ? "Make changes to your saved draft before publishing or scheduling."
+                            : "Write a concise, professional update to share with your network."}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="space-y-5">
                       {/* Media Upload */}
                       <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-3 block">
-                          Post Media
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                          Media
                         </label>
                         <MediaUpload
                           onImageSelect={handleImageSelectWithType}
@@ -940,7 +1001,7 @@ export function DraftModal({
 
                       {/* Hashtags */}
                       <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
                           Hashtags
                         </label>
                         <div className="flex gap-2 mb-3">
@@ -985,7 +1046,7 @@ export function DraftModal({
 
                       {/* Stats */}
                       <div className="bg-white rounded-xl p-4 border-2 border-gray-200">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
                           Content Stats
                         </h4>
                         <div className="space-y-2">

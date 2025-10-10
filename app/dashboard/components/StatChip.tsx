@@ -1,18 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import {
-  CheckCircle,
-  Sparkles,
-  User,
-  Calendar,
-  BarChart2,
-} from "lucide-react";
+import { CheckCircle, Sparkles, User, Calendar, BarChart2 } from "lucide-react";
 
 type StatChipProps = {
   title: string;
   value: React.ReactNode;
-  subtitle?: string;
 };
 
 function chooseAccent(title: string) {
@@ -33,7 +26,7 @@ function chooseIcon(title: string) {
   return BarChart2;
 }
 
-export default function StatChip({ title, value, subtitle }: StatChipProps) {
+export default function StatChip({ title, value }: StatChipProps) {
   const AccentIcon = chooseIcon(title);
   const accent = chooseAccent(title);
 
@@ -44,7 +37,8 @@ export default function StatChip({ title, value, subtitle }: StatChipProps) {
 
   useEffect(() => {
     // Animate numbers with a small count-up; otherwise fade text
-    const isNumber = typeof value === "number" || /^\d+(\.\d+)?$/.test(String(value));
+    const isNumber =
+      typeof value === "number" || /^\d+(\.\d+)?$/.test(String(value));
     if (!isNumber) {
       // simple fade: set display after small timeout to allow CSS transition
       setDisplay(String(value));
@@ -79,21 +73,23 @@ export default function StatChip({ title, value, subtitle }: StatChipProps) {
   } as const;
 
   return (
-    <div
-      className={`inline-flex items-center gap-3 px-3 py-2 rounded-full border shadow-sm transition-colors backdrop-blur-sm ${accentClasses[accent]}`}
-    >
-      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/60 border border-white">
-        <AccentIcon className="w-4 h-4" />
-      </div>
+    <>
+      <div
+        className={`inline-flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1 sm:py-2 rounded-full border shadow-sm transition-colors backdrop-blur-sm ${accentClasses[accent]}`}
+      >
+        <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/60 border border-white">
+          <AccentIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+        </div>
 
-      <div className="flex flex-col leading-tight">
-        <span className="text-sm font-semibold text-current transition-opacity duration-200">
-          {display}
-        </span>
-        <span className="text-xs text-current/60 -mt-0.5">{title}</span>
+        <div className="flex flex-col leading-tight">
+          <span className="text-xs sm:text-sm font-semibold text-current transition-opacity duration-200">
+            {display}
+          </span>
+          <span className="text-[10px] sm:text-xs text-current/60 -mt-0.5">
+            {title}
+          </span>
+        </div>
       </div>
-
-      {subtitle && <span className="text-xs text-current/40 ml-2">{subtitle}</span>}
-    </div>
+    </>
   );
 }
