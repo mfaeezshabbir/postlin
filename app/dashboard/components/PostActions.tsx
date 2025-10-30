@@ -8,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import {
   Loader2,
   MoreVertical,
@@ -29,6 +30,8 @@ type Props = {
   onRevert?: (id: string) => void;
   status?: "draft" | "scheduled" | "published" | string;
   loading?: { publishing?: string | null; deleting?: string | null };
+  // Optional scheduled time (ISO string or Date). Used to show scheduled time when clicking the Scheduled button.
+  scheduledAt?: string | Date | null;
 };
 
 export default function PostActions({
@@ -41,96 +44,151 @@ export default function PostActions({
   onRevert,
   status,
   loading,
+  scheduledAt,
 }: Props) {
   const publishing = loading?.publishing === id;
   const deleting = loading?.deleting === id;
 
+  // Format scheduled time for display. Returns null if no valid time.
+  const formatScheduled = (t?: string | Date | null) => {
+    if (!t) return null;
+    const d = new Date(t as any);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
   // Define which actions should be visible per status
   const DraftActions = () => (
     <>
-      <Button
-        size="sm"
-        onClick={() => onPublish?.(id)}
-        disabled={publishing || deleting}
-        className="bg-blue-600 hover:bg-blue-700"
-      >
-        {publishing ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-            Publishing...
-          </>
-        ) : (
-          <>
-            <Send className="w-4 h-4 mr-1" />
-            Publish
-          </>
-        )}
-      </Button>
+      <div className="flex flex-wrap flex-row sm:flex-col items-center gap-2">
+        <Button
+          size="sm"
+          onClick={() => onPublish?.(id)}
+          disabled={publishing || deleting}
+          className="bg-blue-600 hover:bg-blue-700 sm:w-full w-auto flex items-center justify-center"
+        >
+          {publishing ? (
+            <>
+              <Loader2 className="w-4 h-4 sm:mr-1 animate-spin" />
+              <span className="hidden sm:inline">Publishing...</span>
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Publish</span>
+            </>
+          )}
+        </Button>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" disabled={deleting || publishing}>
-            {deleting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <MoreVertical className="w-4 h-4" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onSchedule?.(id)}>
-            <Calendar className="w-4 h-4 mr-2" />
-            Schedule
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onEdit?.(id)}>
-            <Pencil className="w-4 h-4 mr-2" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onDelete?.(id)}
-            className="text-red-600"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onSchedule?.(id)}
+          disabled={publishing || deleting}
+          className="sm:w-full w-auto flex items-center justify-center"
+        >
+          <Calendar className="w-4 h-4 sm:mr-1" />
+          <span className="hidden sm:inline">Schedule</span>
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onEdit?.(id)}
+          disabled={publishing || deleting}
+          className="sm:w-full bg-green-500 text-white w-auto flex items-center justify-center"
+        >
+          <Pencil className="w-4 h-4 sm:mr-1" />
+          <span className="hidden sm:inline">Edit</span>
+        </Button>
+
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => onDelete?.(id)}
+          disabled={publishing || deleting}
+          className="sm:w-full w-auto flex items-center justify-center"
+        >
+          {deleting ? (
+            <>
+              <Loader2 className="w-4 h-4 sm:mr-1 animate-spin" />
+              <span className="hidden sm:inline">Deleting...</span>
+            </>
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Delete</span>
+            </>
+          )}
+        </Button>
+      </div>
     </>
   );
 
   const ScheduledActions = () => (
     <>
-      <Button size="sm" variant="outline" disabled className="text-xs">
-        SCHEDULED
-      </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" disabled={deleting || publishing}>
-            {deleting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <MoreVertical className="w-4 h-4" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onSchedule?.(id)}>
-            <Calendar className="w-4 h-4 mr-2" />
-            Reschedule
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onEdit?.(id)}>
-            <Pencil className="w-4 h-4 mr-2" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onDelete?.(id)}
-            className="text-red-600"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Cancel
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex flex-wrap flex-row sm:flex-col items-center gap-2">
+        {/* Show scheduled time inline as a chip/badge. Use formatted time if available, otherwise fall back to 'Scheduled'. */}
+        <Badge
+          variant="outline"
+          title={formatScheduled(scheduledAt) ?? "Scheduled"}
+          className="sm:w-full w-auto flex items-center justify-center text-xs"
+        >
+          <Calendar className="w-4 h-4 sm:mr-1" />
+          <span className="hidden sm:inline">
+            {formatScheduled(scheduledAt) ?? "Scheduled"}
+          </span>
+          {/* On very small screens show a compact time if available */}
+          <span className="sm:hidden">
+            {formatScheduled(scheduledAt) ?? "Scheduled"}
+          </span>
+        </Badge>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onSchedule?.(id)}
+          disabled={publishing || deleting}
+          className="sm:w-full w-auto flex items-center justify-center"
+        >
+          <Calendar className="w-4 h-4 sm:mr-1" />
+          <span className="hidden sm:inline">Reschedule</span>
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onEdit?.(id)}
+          disabled={publishing || deleting}
+          className="sm:w-full bg-green-500 text-white w-auto flex items-center justify-center"
+        >
+          <Pencil className="w-4 h-4 sm:mr-1" />
+          <span className="hidden sm:inline">Edit</span>
+        </Button>
+
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => onDelete?.(id)}
+          disabled={publishing || deleting}
+          className="sm:w-full w-auto flex items-center justify-center"
+        >
+          {deleting ? (
+            <>
+              <Loader2 className="w-4 h-4 sm:mr-1 animate-spin" />
+              <span className="hidden sm:inline">Canceling...</span>
+            </>
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Cancel</span>
+            </>
+          )}
+        </Button>
+      </div>
     </>
   );
 

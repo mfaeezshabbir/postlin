@@ -260,14 +260,22 @@ export default function DraftsPage() {
         ]}
       >
         <Card className="h-full flex flex-col w-full">
-          <CardHeader>
-            <CardTitle>Your Drafts</CardTitle>
-            <CardDescription>
-              All your saved draft posts that are ready to be scheduled or
-              published
-            </CardDescription>
+          <CardHeader className="flex items-center justify-between">
+            <div>
+              <CardTitle>Your Drafts</CardTitle>
+              <CardDescription>
+                All your saved draft posts that are ready to be scheduled or
+                published
+              </CardDescription>
+            </div>
+            <div>
+              <Button onClick={handleCreateDraft}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Draft
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="flex-1 overflow-auto">
+          <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
             {drafts.length === 0 ? (
               <div className="text-center flex flex-col items-center justify-center mx-auto h-full">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">

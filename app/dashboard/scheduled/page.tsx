@@ -242,7 +242,7 @@ export default function ScheduledPage() {
             scheduled time
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto">
+        <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
           {loading ? (
             <div className="text-center py-12">
               <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
@@ -276,6 +276,7 @@ export default function ScheduledPage() {
                       id={post.id}
                       status="scheduled"
                       onSchedule={() => handleOpenReschedule(post.id)}
+                      scheduledAt={post.scheduledAt}
                       onEdit={() => {}}
                       onDelete={() => confirmCancel(post.id)}
                       loading={{ deleting: cancellingId }}
@@ -450,6 +451,7 @@ function ScheduledPostCard({
             id={post.id}
             status="scheduled"
             onDelete={() => onCancel(post.id)}
+            scheduledAt={post.scheduledAt}
             loading={{ deleting: isCancelling ? post.id : null }}
           />
         </div>
