@@ -17,14 +17,51 @@ This repository contains a Next.js + TypeScript app with Prisma (MongoDB), BullM
 
 ## Key features
 
-- AI-assisted content generation (Gemini / OpenAI) via `/api/ai/generate`
-- Scheduling and worker-based publishing (BullMQ + Redis)
-- LinkedIn OAuth and publishing scaffolding (Prisma fields for tokens & post id)
-- Modular architecture: `modules/*` and `lib/*` for easy extensions
+- **Google Sign-In**: Primary authentication method for easy onboarding
+- **Onboarding Flow**: Guided setup for LinkedIn connection (optional) and Gemini API key (required for AI features)
+- **Per-User Gemini Keys**: Each user provides their own Gemini API key, stored encrypted with AES-256-GCM
+- **LinkedIn Connection**: Optional connection for auto-publishing and analytics
+- **AI-Assisted Content Generation**: Uses user's personal Gemini API key
+- **Manual Posting**: Create and copy posts without LinkedIn connection
+- **Scheduling**: Worker-based publishing system with BullMQ + Redis
+- **Secure Architecture**: Encrypted secrets, JWT sessions, modular design
+
+## Authentication & Setup
+
+### Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google+ API
+4. Go to "Credentials" and create OAuth 2.0 credentials
+5. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+6. Copy the Client ID and Client Secret to your `.env` file
+
+### LinkedIn OAuth Setup (Optional)
+
+1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/apps)
+2. Create a new app
+3. Request access to "Sign In with LinkedIn using OpenID Connect" and "Share on LinkedIn"
+4. Add redirect URL: `http://localhost:3000/api/auth/callback/linkedin`
+5. Copy the Client ID and Client Secret to your `.env` file
+
+See `docs/LINKEDIN_OAUTH_SETUP.md` for detailed instructions.
+
+### Gemini API Key Encryption
+
+Each user provides their own Gemini API key during onboarding. Keys are encrypted at rest using AES-256-GCM.
+
+Generate an encryption key for your application:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Add this to your `.env` as `GEMINI_KEYS_ENCRYPTION_KEY`.
 
 ## Quickstart (local)
 
-1. Copy `.env.example` to `.env` and edit secrets:
+1. Copy `.env.example` to `.env` and configure all required variables:
 
 ```bash
 cp .env.example .env
