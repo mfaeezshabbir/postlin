@@ -3,23 +3,12 @@ import { getServerSession } from 'next-auth';
 import { getAuthOptions } from '@/modules/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { log } from '@/lib/logger';
-
-// Initialize Gemini for text generation - check if API key exists
-if (!process.env.GEMINI_API_KEY) {
-  console.error('GEMINI_API_KEY is not set in environment variables');
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const imageApiKey = process.env.GEMINI_IMAGE_API_KEY || '';
-if (!process.env.GEMINI_IMAGE_API_KEY) {
-  log.warn('⚠️  GEMINI_IMAGE_API_KEY not set, using GEMINI_API_KEY for images');
-  log.warn('💡 Set a separate key to avoid rate limit conflicts between text and image generation');
-}
-const genAI_Image = new GoogleGenerativeAI(imageApiKey);
+import { getUserGeminiKey } from '@/app/api/gemini-key/route';
+import prisma from '@/lib/prisma';
 
 /**
  * POST /api/ai/generate
- * Generate LinkedIn post content using Gemini AI with hashtags and image
+ * Generate LinkedIn post content using user's personal Gemini API key
  */
 export async function POST(request: NextRequest) {
   try {
@@ -32,6 +21,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get user from database to retrieve their user ID
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get user's Gemini API key
+    const userApiKey = await getUserGeminiKey(user.id);
+    if (!userApiKey) {
+      return NextResponse.json(
+        { 
+          error: 'Gemini API key not configured',
+          message: 'Please add your Gemini API key in settings to use AI features.',
+          requiresSetup: true,
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { prompt, tone = 'professional', length = 'medium', generateImage = false } = body;
 
@@ -41,6 +56,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Initialize Gemini with user's API key
+    const genAI = new GoogleGenerativeAI(userApiKey);
+    const genAI_Image = new GoogleGenerativeAI(userApiKey);
 
     // Build system prompt based on preferences (now uses JSON format)
     const systemPrompt = buildSystemPrompt(tone, length);
@@ -93,7 +112,7 @@ You MUST respond with valid JSON in this exact format:
     if (generateImage) {
       try {
         log.info('Generating AI image for post...');
-        const imageData = await generatePostImage(prompt, generatedContent);
+        const imageData = await generatePostImage(prompt, generatedContent, genAI, genAI_Image);
         imageUrl = imageData.url;
         imageBase64 = imageData.base64;
         imagePrompt = imageData.prompt; // Save the prompt
@@ -251,7 +270,12 @@ IMPORTANT: Review your response to ensure no markdown formatting, no em dashes, 
 /**
  * Generate an image for the post using Google's Imagen 3
  */
-async function generatePostImage(prompt: string, postContent: string): Promise<{ url: string | null; base64: string; prompt: any }> {
+async function generatePostImage(
+  prompt: string, 
+  postContent: string,
+  genAI: GoogleGenerativeAI,
+  genAI_Image: GoogleGenerativeAI
+): Promise<{ url: string | null; base64: string; prompt: any }> {
   let imagePromptObject: any = null;
   let imagePromptText = '';
   
