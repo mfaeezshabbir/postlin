@@ -18,7 +18,9 @@ import {
   Palette,
   Shield,
   Linkedin,
+  Key,
 } from "lucide-react";
+import { GeminiKeyManager } from "./GeminiKeyManager";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -65,6 +67,22 @@ export default async function SettingsPage() {
 
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Gemini API Key section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                AI Configuration
+              </CardTitle>
+              <CardDescription>
+                Manage your Gemini API key for AI-powered content generation
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <GeminiKeyManager />
+            </CardContent>
+          </Card>
+
           {/* Profile section */}
           <Card>
             <CardHeader>
