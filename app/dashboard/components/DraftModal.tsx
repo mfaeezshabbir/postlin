@@ -495,12 +495,9 @@ export function DraftModal({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
                     {/* AI Generation Card */}
                     <button
-                      onClick={() => {
-                        if (profile?.features.canUseGemini) {
-                          setCreationMode("ai");
-                        }
-                      }}
+                      onClick={() => setCreationMode("ai")}
                       disabled={!profile?.features.canUseGemini}
+                      title={!profile?.features.canUseGemini ? "Add your Gemini API key in settings to unlock AI features" : ""}
                       className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
                         profile?.features.canUseGemini
                           ? "border-gray-200 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"

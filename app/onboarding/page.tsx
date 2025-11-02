@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Logo from "@/components/brand/Logo";
 import { CheckCircle, Linkedin, Key, Loader2, AlertCircle } from "lucide-react";
+import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
 
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
@@ -63,8 +64,8 @@ export default function OnboardingPage() {
   };
 
   const handleSaveGeminiKey = async () => {
-    if (!geminiKey || geminiKey.trim().length < 20) {
-      setError("Please enter a valid Gemini API key");
+    if (!geminiKey || geminiKey.trim().length < GEMINI_API_KEY_MIN_LENGTH) {
+      setError(`Please enter a valid Gemini API key (minimum ${GEMINI_API_KEY_MIN_LENGTH} characters)`);
       return;
     }
 

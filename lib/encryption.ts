@@ -24,6 +24,8 @@ function getEncryptionKey(): Buffer {
     }
     return key;
   } catch (error) {
+    // Log original error for debugging but don't expose sensitive details
+    console.error('Error loading encryption key:', error instanceof Error ? error.message : 'Unknown error');
     throw new Error('Invalid GEMINI_KEYS_ENCRYPTION_KEY format. Must be base64-encoded 32 bytes.');
   }
 }

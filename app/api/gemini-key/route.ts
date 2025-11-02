@@ -4,6 +4,7 @@ import { getAuthOptions } from '@/modules/auth';
 import prisma from '@/lib/prisma';
 import { encryptApiKey, decryptApiKey } from '@/lib/encryption';
 import { log } from '@/lib/logger';
+import { GEMINI_API_KEY_MIN_LENGTH } from '@/lib/constants';
 
 /**
  * GET /api/gemini-key
@@ -76,9 +77,9 @@ export async function POST(request: NextRequest) {
 
     // Basic validation for Gemini API key format
     const trimmedKey = apiKey.trim();
-    if (trimmedKey.length < 20) {
+    if (trimmedKey.length < GEMINI_API_KEY_MIN_LENGTH) {
       return NextResponse.json(
-        { error: 'Invalid API key format' },
+        { error: `API key must be at least ${GEMINI_API_KEY_MIN_LENGTH} characters` },
         { status: 400 }
       );
     }

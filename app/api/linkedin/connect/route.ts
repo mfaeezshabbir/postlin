@@ -22,10 +22,8 @@ export async function GET(request: NextRequest) {
     // Build LinkedIn OAuth URL
     const clientId = process.env.LINKEDIN_CLIENT_ID;
     const redirectUri = `${process.env.NEXTAUTH_URL}/api/auth/callback/linkedin`;
-    const state = Buffer.from(JSON.stringify({ 
-      email: session.user.email, 
-      timestamp: Date.now() 
-    })).toString('base64');
+    // Use a simple random state for CSRF protection
+    const state = Buffer.from(Math.random().toString()).toString('base64');
 
     const linkedInAuthUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
     linkedInAuthUrl.searchParams.append('response_type', 'code');

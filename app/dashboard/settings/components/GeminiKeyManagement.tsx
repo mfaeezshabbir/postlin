@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Key, Loader2, CheckCircle, XCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
 
 interface GeminiKeyManagementProps {
   initialHasKey: boolean;
@@ -22,8 +23,8 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
   const [success, setSuccess] = useState("");
 
   const handleSave = async () => {
-    if (!apiKey || apiKey.trim().length < 20) {
-      setError("Please enter a valid Gemini API key");
+    if (!apiKey || apiKey.trim().length < GEMINI_API_KEY_MIN_LENGTH) {
+      setError(`Please enter a valid Gemini API key (minimum ${GEMINI_API_KEY_MIN_LENGTH} characters)`);
       return;
     }
 

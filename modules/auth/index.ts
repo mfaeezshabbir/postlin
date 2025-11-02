@@ -252,12 +252,7 @@ export function getAuthOptions(): NextAuthOptions {
         // Allows callback URLs on the same origin
         else if (new URL(url).origin === baseUrl) return url;
         
-        // For new Google sign-ins, redirect to onboarding
-        // This is a simplified check - in production you may want to track first-time users
-        if (url.includes("google")) {
-          return `${baseUrl}/onboarding`;
-        }
-        
+        // Default redirect for all sign-ins
         return `${baseUrl}/dashboard/drafts`;
       },
     },
