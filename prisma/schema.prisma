@@ -25,15 +25,20 @@ enum PostStatus {
 }
 
 model User {
-  id           String    @id @map("_id") @default(auto()) @db.ObjectId
-  email        String    @unique
-  name         String?
-  image        String?
-  linkedInId   String?   @unique
-  accessToken  String?   // LinkedIn OAuth access token
-  refreshToken String?   // LinkedIn OAuth refresh token
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                      String    @id @map("_id") @default(auto()) @db.ObjectId
+  email                   String    @unique
+  name                    String?
+  image                   String?
+  googleId                String?   @unique // Google OAuth ID for primary auth
+  linkedInId              String?   @unique // LinkedIn OAuth ID
+  linkedInConnected       Boolean   @default(false) // Whether LinkedIn is connected
+  linkedInOauthData       Json?     // LinkedIn OAuth tokens and data
+  accessToken             String?   // LinkedIn OAuth access token (legacy, consider migrating to linkedInOauthData)
+  refreshToken            String?   // LinkedIn OAuth refresh token (legacy, consider migrating to linkedInOauthData)
+  geminiApiKeyEncrypted   String?   // Encrypted Gemini API key (AES-256-GCM with nonce)
+  geminiKeyAddedAt        DateTime? // When the Gemini API key was added
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   posts        Post[]
   preferences  Preference?
