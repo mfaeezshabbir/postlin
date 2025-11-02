@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   Sparkles,
   FileText,
@@ -14,6 +15,7 @@ import {
   Wand2,
   Edit3,
   ArrowLeft,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +45,7 @@ export function DraftModal({
   mode,
   draftId,
 }: DraftModalProps) {
+  const { data: session } = useSession();
   const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
   // Main states
   const [creationMode, setCreationMode] = useState<"choose" | "manual" | "ai">(
@@ -51,6 +54,10 @@ export function DraftModal({
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetchingDraft, setFetchingDraft] = useState(false);
+  
+  // User profile state for feature locking
+  const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const [checkingGeminiKey, setCheckingGeminiKey] = useState(true);
 
   // AI generation states
   const [aiPrompt, setAiPrompt] = useState("");
@@ -88,6 +95,28 @@ export function DraftModal({
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(
     draftId || null
   );
+
+  // Check if user has Gemini key
+  useEffect(() => {
+    if (open) {
+      checkGeminiKey();
+    }
+  }, [open]);
+
+  const checkGeminiKey = async () => {
+    setCheckingGeminiKey(true);
+    try {
+      const response = await fetch("/api/user/gemini-key");
+      if (response.ok) {
+        const data = await response.json();
+        setHasGeminiKey(data.hasKey);
+      }
+    } catch (error) {
+      console.error("Error checking Gemini key:", error);
+    } finally {
+      setCheckingGeminiKey(false);
+    }
+  };
 
   // Fetch draft if in edit mode
   useEffect(() => {
@@ -478,35 +507,70 @@ export function DraftModal({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
                     {/* AI Generation Card */}
                     <button
-                      onClick={() => setCreationMode("ai")}
-                      className="group relative overflow-hidden rounded-2xl border-2 border-gray-200 p-8 text-left transition-all duration-300 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"
+                      onClick={() => {
+                        if (hasGeminiKey) {
+                          setCreationMode("ai");
+                        } else {
+                          push({
+                            title: "Gemini API Key Required",
+                            description: "Please add your Gemini API key in settings to use AI features.",
+                            variant: "warning",
+                          });
+                        }
+                      }}
+                      disabled={checkingGeminiKey}
+                      className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
+                        hasGeminiKey
+                          ? "border-gray-200 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"
+                          : "border-gray-300 bg-gray-50 cursor-not-allowed opacity-75"
+                      }`}
                     >
+                      {!hasGeminiKey && (
+                        <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                          <Lock className="w-5 h-5 text-yellow-600" />
+                        </div>
+                      )}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150" />
 
                       <div className="relative">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30 transition-transform group-hover:scale-110">
+                        <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 shadow-lg transition-transform ${
+                          hasGeminiKey
+                            ? "bg-gradient-to-br from-purple-500 to-blue-600 shadow-purple-500/30 group-hover:scale-110"
+                            : "bg-gray-400"
+                        }`}>
                           <Wand2 className="w-8 h-8 text-white" />
                         </div>
 
                         <h3 className="text-2xl font-bold text-gray-900 mb-3">
                           AI Assistant
+                          {!hasGeminiKey && <span className="text-sm font-normal text-yellow-600 ml-2">(Locked)</span>}
                         </h3>
                         <p className="text-gray-600 mb-4 leading-relaxed">
-                          Describe your idea and let AI create engaging,
-                          professional content with hashtags and images
+                          {hasGeminiKey
+                            ? "Describe your idea and let AI create engaging, professional content with hashtags and images"
+                            : "Add your Gemini API key in settings to unlock AI-powered content generation"}
                         </p>
 
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-purple-100 text-purple-700 border-0">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            Recommended
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-gray-300 text-gray-600"
-                          >
-                            Fast & Easy
-                          </Badge>
+                          {hasGeminiKey ? (
+                            <>
+                              <Badge className="bg-purple-100 text-purple-700 border-0">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Recommended
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className="border-gray-300 text-gray-600"
+                              >
+                                Fast & Easy
+                              </Badge>
+                            </>
+                          ) : (
+                            <Badge className="bg-yellow-100 text-yellow-800 border-0">
+                              <Lock className="w-3 h-3 mr-1" />
+                              Requires API Key
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </button>

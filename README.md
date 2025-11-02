@@ -62,6 +62,93 @@ npm run dev
 
 Open http://localhost:3000
 
+## OAuth Setup
+
+### Google OAuth (Required for sign-in)
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google+ API
+4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
+5. Configure the OAuth consent screen
+6. Add authorized redirect URIs:
+   - `http://localhost:3000/api/auth/callback/google` (for local development)
+   - `https://yourdomain.com/api/auth/callback/google` (for production)
+7. Copy the Client ID and Client Secret to your `.env` file:
+   ```
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
+
+### LinkedIn OAuth (Optional for LinkedIn publishing)
+
+1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/)
+2. Create a new app
+3. Add the following redirect URIs in your app settings:
+   - `http://localhost:3000/api/auth/callback/linkedin` (for local development)
+   - `https://yourdomain.com/api/auth/callback/linkedin` (for production)
+4. Request access to the "Sign In with LinkedIn" and "Share on LinkedIn" products
+5. Copy the Client ID and Client Secret to your `.env` file:
+   ```
+   LINKEDIN_CLIENT_ID=your_linkedin_client_id
+   LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
+   ```
+
+### Gemini API Keys Encryption
+
+User Gemini API keys are encrypted at rest using AES-256-GCM. You need to generate a 32-byte encryption key:
+
+```bash
+# Generate a random 32-byte key (64 hex characters)
+openssl rand -hex 32
+```
+
+Add the key to your `.env` file:
+```
+GEMINI_KEYS_ENCRYPTION_KEY=your_64_character_hex_key
+```
+
+**Important:** Keep this key secure and never commit it to version control. If you lose this key, all encrypted Gemini API keys will be unrecoverable.
+
+### NextAuth Secret
+
+Generate a secret for NextAuth:
+```bash
+openssl rand -base64 32
+```
+
+Add to your `.env` file:
+```
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
+### Environment Variables Summary
+
+Your `.env` file should include:
+```bash
+# Database
+DATABASE_URL="mongodb://localhost:27017/postlin"
+
+# Redis
+REDIS_URL="redis://localhost:6379"
+
+# NextAuth
+NEXTAUTH_SECRET="your_nextauth_secret"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Google OAuth (Required)
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+
+# LinkedIn OAuth (Optional)
+LINKEDIN_CLIENT_ID="your_linkedin_client_id"
+LINKEDIN_CLIENT_SECRET="your_linkedin_client_secret"
+
+# Gemini Keys Encryption (Required)
+GEMINI_KEYS_ENCRYPTION_KEY="your_64_character_hex_key"
+```
+
 ## Useful commands
 
 - Start Docker services: `docker compose up -d`
