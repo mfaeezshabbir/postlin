@@ -3,10 +3,9 @@
 // Mock Web APIs for Next.js tests
 import { TextEncoder, TextDecoder } from 'util';
 
-// @ts-ignore
-global.TextEncoder = TextEncoder;
-// @ts-ignore
-global.TextDecoder = TextDecoder;
+// Define TextEncoder/TextDecoder globally for Node.js test environment
+global.TextEncoder = TextEncoder as any;
+global.TextDecoder = TextDecoder as any;
 
 // Mock fetch for tests
 if (!global.fetch) {
@@ -14,16 +13,15 @@ if (!global.fetch) {
 }
 
 // Mock Request for Next.js server tests
+// Using type assertion since we're defining minimal mock for testing
 if (!global.Request) {
-  // @ts-ignore
   global.Request = class Request {
     constructor(public url: string, public init?: any) {}
-  };
+  } as any;
 }
 
-// Mock Response with proper json() method
+// Mock Response with proper json() method for Next.js API route testing
 if (!global.Response) {
-  // @ts-ignore
   global.Response = class Response {
     constructor(public body: any, public init?: any) {}
     
@@ -34,5 +32,5 @@ if (!global.Response) {
         status: init?.status || 200,
       };
     }
-  };
+  } as any;
 }
