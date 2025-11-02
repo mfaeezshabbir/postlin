@@ -4,6 +4,7 @@ import { getAuthOptions } from '@/modules/auth';
 import prisma from '@/lib/prisma';
 import { encrypt, decrypt } from '@/lib/encryption';
 import { log } from '@/lib/logger';
+import { validateGeminiApiKey } from '@/lib/validation';
 
 /**
  * POST /api/user/gemini-key
@@ -23,17 +24,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { apiKey } = body;
 
-    if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
+    // Validate API key format
+    const validation = validateGeminiApiKey(apiKey);
+    if (!validation.isValid) {
       return NextResponse.json(
-        { error: 'API key is required' },
-        { status: 400 }
-      );
-    }
-
-    // Basic validation - Gemini API keys typically start with "AIzaSy"
-    if (!apiKey.startsWith('AIzaSy')) {
-      return NextResponse.json(
-        { error: 'Invalid Gemini API key format. Keys should start with "AIzaSy"' },
+        { error: validation.error },
         { status: 400 }
       );
     }

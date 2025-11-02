@@ -48,7 +48,8 @@ export function encrypt(plaintext: string): string {
     
     return Buffer.from(result).toString('base64');
   } catch (error) {
-    log.error('Encryption error:', error);
+    const errorType = error instanceof Error ? error.constructor.name : 'Unknown';
+    log.error('Encryption error:', { type: errorType, message: error instanceof Error ? error.message : 'Unknown error' });
     throw new Error('Failed to encrypt data');
   }
 }
@@ -82,7 +83,8 @@ export function decrypt(encryptedData: string): string {
     
     return decrypted;
   } catch (error) {
-    log.error('Decryption error:', error);
+    const errorType = error instanceof Error ? error.constructor.name : 'Unknown';
+    log.error('Decryption error:', { type: errorType, message: error instanceof Error ? error.message : 'Unknown error' });
     throw new Error('Failed to decrypt data');
   }
 }

@@ -27,6 +27,7 @@ import {
   ExternalLink,
   Trash2,
 } from "lucide-react";
+import { validateGeminiApiKey } from "@/lib/validation";
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
@@ -70,13 +71,10 @@ export default function SettingsPage() {
     setGeminiKeyError("");
     setGeminiKeySuccess("");
     
-    if (!geminiKey.trim()) {
-      setGeminiKeyError("Please enter your Gemini API key");
-      return;
-    }
-
-    if (!geminiKey.startsWith("AIzaSy")) {
-      setGeminiKeyError("Invalid API key format. Gemini keys should start with 'AIzaSy'");
+    // Validate API key format
+    const validation = validateGeminiApiKey(geminiKey);
+    if (!validation.isValid) {
+      setGeminiKeyError(validation.error || "Invalid API key");
       return;
     }
 

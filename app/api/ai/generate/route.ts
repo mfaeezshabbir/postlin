@@ -165,8 +165,8 @@ You MUST respond with valid JSON in this exact format:
       // More detailed error messages
       if (error.message.includes('API key') || error.message.includes('API_KEY')) {
         return NextResponse.json(
-          { error: 'AI service configuration error. Please check your API key.' },
-          { status: 500 }
+          { error: 'Invalid Gemini API key. Please check your API key in settings.' },
+          { status: 400 }
         );
       }
       

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from '@/components/ui/button';
 import Logo from "@/components/brand/Logo";
 import { Loader2, Linkedin, Key, CheckCircle, ArrowRight, ExternalLink } from 'lucide-react';
+import { validateGeminiApiKey } from '@/lib/validation';
 
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
@@ -62,13 +63,10 @@ export default function OnboardingPage() {
   const handleSaveGeminiKey = async () => {
     setKeyError("");
     
-    if (!geminiKey.trim()) {
-      setKeyError("Please enter your Gemini API key");
-      return;
-    }
-
-    if (!geminiKey.startsWith("AIzaSy")) {
-      setKeyError("Invalid API key format. Gemini keys should start with 'AIzaSy'");
+    // Validate API key format
+    const validation = validateGeminiApiKey(geminiKey);
+    if (!validation.isValid) {
+      setKeyError(validation.error || "Invalid API key");
       return;
     }
 

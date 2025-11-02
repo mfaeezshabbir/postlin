@@ -323,7 +323,7 @@ export function DraftModal({
         error instanceof Error
           ? error.message
           : "Failed to generate content. Please try again.";
-      push({ title: "AI Error", description: `AI Generation Error: ${errorMessage}. Please check that your GEMINI_API_KEY is valid.`, variant: "error" });
+      push({ title: "AI Error", description: `AI Generation Error: ${errorMessage}. Please check your Gemini API key in settings.`, variant: "error" });
     } finally {
       setLoading(false);
     }
