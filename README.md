@@ -17,19 +17,43 @@ This repository contains a Next.js + TypeScript app with Prisma (MongoDB), BullM
 
 ## Key features
 
-- AI-assisted content generation (Gemini / OpenAI) via `/api/ai/generate`
-- Scheduling and worker-based publishing (BullMQ + Redis)
-- LinkedIn OAuth and publishing scaffolding (Prisma fields for tokens & post id)
-- Modular architecture: `modules/*` and `lib/*` for easy extensions
+- **Google Sign-In**: Secure authentication with Google OAuth (primary method)
+- **Optional LinkedIn Integration**: Connect LinkedIn for automated posting
+- **User-Specific AI**: Each user provides their own Gemini API key for AI content generation
+- **AI-Powered Content**: Generate LinkedIn posts with Gemini AI (text + images)
+- **Scheduling**: Worker-based post scheduling (BullMQ + Redis)
+- **Secure Key Storage**: User API keys encrypted at rest with AES-256-GCM
+- **Manual Posting**: Create and manage posts without AI or LinkedIn connection
+- **Modular Architecture**: `modules/*` and `lib/*` for easy extensions
+
+## Authentication & Setup
+
+Postlin uses a multi-layered authentication approach:
+
+1. **Google OAuth** (required): Primary authentication method
+2. **LinkedIn OAuth** (optional): For posting to LinkedIn
+3. **Gemini API Key** (required for AI features): User-specific, stored encrypted
+
+### Setup Guides
+
+- **[Google OAuth Setup](docs/GOOGLE_OAUTH_SETUP.md)** - Configure Google sign-in
+- **[Gemini API Key Setup](docs/GEMINI_API_KEY_SETUP.md)** - How users add their Gemini keys
+- **[LinkedIn OAuth Setup](docs/LINKEDIN_OAUTH_SETUP.md)** - Optional LinkedIn connection
 
 ## Quickstart (local)
 
-1. Copy `.env.example` to `.env` and edit secrets:
+1. Copy `.env.example` to `.env` and configure required secrets:
 
 ```bash
 cp .env.example .env
-# edit .env to add any API keys or NEXTAUTH_SECRET
 ```
+
+Edit `.env` and add:
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (see [Google OAuth Setup](docs/GOOGLE_OAUTH_SETUP.md))
+- `NEXTAUTH_SECRET` (generate with: `openssl rand -base64 32`)
+- `ENCRYPTION_KEY` (generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
+- `DATABASE_URL` (MongoDB connection string)
+- Optional: LinkedIn credentials if enabling LinkedIn posting
 
 2. Start local services (MongoDB + Redis) with Docker (optional):
 
