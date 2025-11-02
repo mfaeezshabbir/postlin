@@ -14,6 +14,8 @@ import {
   Wand2,
   Edit3,
   ArrowLeft,
+  Key,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +29,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import ScheduleDialog from "./ScheduleDialog";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useRouter } from "next/navigation";
 
 interface DraftModalProps {
   open: boolean;
@@ -44,6 +48,9 @@ export function DraftModal({
   draftId,
 }: DraftModalProps) {
   const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
+  const router = useRouter();
+  const { hasGeminiKey } = useUserProfile();
+  
   // Main states
   const [creationMode, setCreationMode] = useState<"choose" | "manual" | "ai">(
     "choose"
@@ -478,35 +485,74 @@ export function DraftModal({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
                     {/* AI Generation Card */}
                     <button
-                      onClick={() => setCreationMode("ai")}
-                      className="group relative overflow-hidden rounded-2xl border-2 border-gray-200 p-8 text-left transition-all duration-300 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"
+                      onClick={() => {
+                        if (!hasGeminiKey) {
+                          router.push('/onboarding?step=gemini');
+                          onOpenChange(false);
+                          return;
+                        }
+                        setCreationMode("ai");
+                      }}
+                      className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
+                        hasGeminiKey 
+                          ? 'border-gray-200 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1' 
+                          : 'border-gray-300 opacity-75 cursor-pointer hover:border-orange-400 hover:shadow-lg'
+                      }`}
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150" />
 
                       <div className="relative">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30 transition-transform group-hover:scale-110">
-                          <Wand2 className="w-8 h-8 text-white" />
+                        <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 shadow-lg transition-transform group-hover:scale-110 ${
+                          hasGeminiKey 
+                            ? 'bg-gradient-to-br from-purple-500 to-blue-600 shadow-purple-500/30' 
+                            : 'bg-gradient-to-br from-orange-500 to-red-600 shadow-orange-500/30'
+                        }`}>
+                          {hasGeminiKey ? (
+                            <Wand2 className="w-8 h-8 text-white" />
+                          ) : (
+                            <Key className="w-8 h-8 text-white" />
+                          )}
                         </div>
 
                         <h3 className="text-2xl font-bold text-gray-900 mb-3">
                           AI Assistant
+                          {!hasGeminiKey && (
+                            <Badge className="ml-2 bg-orange-100 text-orange-700 border-0">
+                              <Key className="w-3 h-3 mr-1" />
+                              Setup Required
+                            </Badge>
+                          )}
                         </h3>
                         <p className="text-gray-600 mb-4 leading-relaxed">
-                          Describe your idea and let AI create engaging,
-                          professional content with hashtags and images
+                          {hasGeminiKey ? (
+                            <>Describe your idea and let AI create engaging, professional content with hashtags and images</>
+                          ) : (
+                            <>Add your Gemini API key to unlock AI-powered content generation with hashtags and images</>
+                          )}
                         </p>
 
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-purple-100 text-purple-700 border-0">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            Recommended
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-gray-300 text-gray-600"
-                          >
-                            Fast & Easy
-                          </Badge>
+                          {hasGeminiKey ? (
+                            <>
+                              <Badge className="bg-purple-100 text-purple-700 border-0">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Recommended
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className="border-gray-300 text-gray-600"
+                              >
+                                Fast & Easy
+                              </Badge>
+                            </>
+                          ) : (
+                            <>
+                              <Badge className="bg-orange-100 text-orange-700 border-0">
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                                Click to Setup
+                              </Badge>
+                            </>
+                          )}
                         </div>
                       </div>
                     </button>

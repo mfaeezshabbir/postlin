@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Linkedin, Key, CheckCircle, Loader2, ArrowRight, SkipForward } from "lucide-react";
@@ -12,20 +12,38 @@ type OnboardingStep = "linkedin" | "gemini";
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<OnboardingStep>("linkedin");
   const [loading, setLoading] = useState(false);
   const [geminiKey, setGeminiKey] = useState("");
   const [error, setError] = useState("");
   const [profile, setProfile] = useState<any>(null);
 
+  // Check for step query parameter
+  useEffect(() => {
+    const stepParam = searchParams.get('step');
+    if (stepParam === 'gemini') {
+      setStep('gemini');
+    }
+  }, [searchParams]);
+
   // Fetch user profile to check onboarding status
   useEffect(() => {
     if (status === "authenticated" && session?.user?.email) {
+      const stepParam = searchParams.get('step');
+      
       fetch("/api/user/profile")
         .then((res) => res.json())
         .then((data) => {
           setProfile(data);
           
+          // If coming from a specific step param, respect it
+          if (stepParam === 'gemini') {
+            setStep('gemini');
+            return;
+          }
+          
+          // Otherwise, use default flow
           // If user already has Gemini key, skip to dashboard
           if (data.hasGeminiKey) {
             router.push("/dashboard/drafts");
@@ -36,7 +54,7 @@ export default function OnboardingPage() {
         })
         .catch((err) => console.error("Failed to fetch profile:", err));
     }
-  }, [status, session, router]);
+  }, [status, session, router, searchParams]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
