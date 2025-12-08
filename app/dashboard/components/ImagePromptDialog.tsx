@@ -1,6 +1,6 @@
 'use client';
 
-import { ImageIcon, Copy, ExternalLink, Check } from 'lucide-react';
+import { ImageIcon, Copy, ExternalLink, Check, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,6 +16,8 @@ interface ImagePromptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   imagePrompt: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 const IMAGE_TOOLS = [
@@ -61,6 +63,8 @@ export function ImagePromptDialog({
   open,
   onOpenChange,
   imagePrompt,
+  onRefresh,
+  isRefreshing = false,
 }: ImagePromptDialogProps) {
   const [copied, setCopied] = useState(false);
 
@@ -178,7 +182,30 @@ export function ImagePromptDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex gap-3 justify-between">
+          {onRefresh && (
+            <Button 
+              onClick={() => {
+                onRefresh();
+                onOpenChange(false);
+              }} 
+              disabled={isRefreshing}
+              variant="outline"
+              className="border-2"
+            >
+              {isRefreshing ? (
+                <>
+                  <RotateCw className="w-4 h-4 mr-2 animate-spin" />
+                  Regenerating...
+                </>
+              ) : (
+                <>
+                  <RotateCw className="w-4 h-4 mr-2" />
+                  Refresh Prompt
+                </>
+              )}
+            </Button>
+          )}
           <Button onClick={() => onOpenChange(false)} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
             Got it! I'll generate the image
           </Button>

@@ -254,21 +254,171 @@ export function DraftModal({
 
   // AI Image Options
   const handleAIImageRequest = () => {
+    if (!content.trim()) {
+      push({
+        title: "No Content",
+        description: "Please write or generate some post content first",
+        variant: "error",
+      });
+      return;
+    }
     setShowAIImageOptions(true);
   };
 
-  const handleGenerateForMe = () => {
+  const handleGenerateForMe = async () => {
     setShowAIImageOptions(false);
-    // This will be handled in the AI generation flow
-    // Set a flag that we want to generate image automatically
-    setImageGenerationType("ai_generated");
+    if (!content.trim()) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ai/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postContent: content,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle service overload (503) gracefully
+        if (response.status === 503) {
+          push({
+            title: "Service Busy",
+            description: "The AI service is temporarily overloaded. Please try again in a few moments.",
+            variant: "info",
+          });
+          return;
+        }
+        
+        throw new Error(
+          errorData.details || errorData.error || "Failed to generate image"
+        );
+      }
+
+      const data = await response.json();
+
+      // If image was generated successfully
+      if (data.image?.base64) {
+        setImagePreview(data.image.base64);
+        setMediaType("image");
+        setImageGenerationType("ai_generated");
+        push({
+          title: "Image Generated",
+          description: "Your AI-generated image is ready!",
+          variant: "success",
+        });
+      } 
+      // Fallback: quota exceeded but prompt available
+      else if (data.imagePrompt) {
+        const promptToStore =
+          typeof data.imagePrompt === "object"
+            ? JSON.stringify(data.imagePrompt, null, 2)
+            : data.imagePrompt;
+        setImagePromptText(promptToStore);
+        setImageGenerationType("ai_prompt_used");
+        setShowImagePromptDialog(true);
+        push({
+          title: "Quota Limit Reached",
+          description: data.message || "Use the prompt with free AI tools to generate your image!",
+          variant: "info",
+        });
+      } else {
+        throw new Error("No image or prompt data received");
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      push({
+        title: "Generation Failed",
+        description: `Failed to generate image: ${errorMessage}`,
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGiveMePrompt = () => {
+  const handleGiveMePrompt = async (regenerate: boolean = false) => {
     setShowAIImageOptions(false);
-    // Generate prompt but don't generate image
-    setImageGenerationType("ai_prompt_used");
-    // The prompt will be shown after AI content generation
+    if (!content.trim()) return;
+
+    // If we have a saved prompt and not regenerating, show it immediately
+    if (storedImagePrompt && !regenerate) {
+      setImagePromptText(storedImagePrompt);
+      setImageGenerationType("ai_prompt_used");
+      setShowImagePromptDialog(true);
+      push({
+        title: "Prompt Ready",
+        description: "Click refresh to regenerate a new prompt!",
+        variant: "info",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ai/generate-image-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postContent: content,
+          draftId: currentDraftId, // Send draft ID for saving
+          regenerate, // Indicate if this is a regeneration
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle service overload (503) gracefully
+        if (response.status === 503) {
+          push({
+            title: "Service Busy",
+            description: "The AI service is temporarily overloaded. Please try again in a few moments.",
+            variant: "info",
+          });
+          return;
+        }
+        
+        throw new Error(
+          errorData.details || errorData.error || "Failed to generate prompt"
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.imagePrompt) {
+        const promptToStore =
+          typeof data.imagePrompt === "object"
+            ? JSON.stringify(data.imagePrompt, null, 2)
+            : data.imagePrompt;
+        setImagePromptText(promptToStore);
+        setStoredImagePrompt(promptToStore); // Save to state
+        setImageGenerationType("ai_prompt_used");
+        setShowImagePromptDialog(true);
+        push({
+          title: regenerate ? "Prompt Regenerated" : "Prompt Ready",
+          description: "Copy and use the prompt in any free AI image tool!",
+          variant: "success",
+        });
+      } else {
+        throw new Error("No prompt data received");
+      }
+    } catch (error) {
+      console.error("Error generating prompt:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      push({
+        title: "Generation Failed",
+        description: `Failed to generate prompt: ${errorMessage}`,
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Update image select to track generation type
@@ -1183,6 +1333,8 @@ export function DraftModal({
         open={showImagePromptDialog}
         onOpenChange={setShowImagePromptDialog}
         imagePrompt={imagePromptText}
+        onRefresh={() => handleGiveMePrompt(true)}
+        isRefreshing={loading}
       />
     </>
   );

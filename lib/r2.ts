@@ -2,29 +2,52 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 
-// Validate environment variables
-if (!process.env.R2_ACCOUNT_ID) {
-  throw new Error('R2_ACCOUNT_ID is not set in environment variables');
-}
-if (!process.env.R2_ACCESS_KEY_ID) {
-  throw new Error('R2_ACCESS_KEY_ID is not set in environment variables');
-}
-if (!process.env.R2_SECRET_ACCESS_KEY) {
-  throw new Error('R2_SECRET_ACCESS_KEY is not set in environment variables');
-}
-if (!process.env.R2_BUCKET_NAME) {
-  throw new Error('R2_BUCKET_NAME is not set in environment variables');
-}
+// Lazy initialization of R2 client - only initialize when actually used (not at import time)
+let r2ClientInstance: S3Client | null = null;
 
-// Create R2 client (S3-compatible)
-export const r2Client = new S3Client({
-  region: 'auto', // R2 uses 'auto' for region
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+const getR2Client = (): S3Client => {
+  if (r2ClientInstance) {
+    return r2ClientInstance;
+  }
+
+  // Validate environment variables only when client is actually needed
+  if (!process.env.R2_ACCOUNT_ID) {
+    throw new Error('R2_ACCOUNT_ID is not set in environment variables');
+  }
+  if (!process.env.R2_ACCESS_KEY_ID) {
+    throw new Error('R2_ACCESS_KEY_ID is not set in environment variables');
+  }
+  if (!process.env.R2_SECRET_ACCESS_KEY) {
+    throw new Error('R2_SECRET_ACCESS_KEY is not set in environment variables');
+  }
+  if (!process.env.R2_BUCKET_NAME) {
+    throw new Error('R2_BUCKET_NAME is not set in environment variables');
+  }
+
+  // Create R2 client (S3-compatible)
+  r2ClientInstance = new S3Client({
+    region: 'auto', // R2 uses 'auto' for region
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+  return r2ClientInstance;
+};
+
+// Export lazy getter for client
+export const r2Client = {
+  get send() {
+    return getR2Client().send.bind(getR2Client());
   },
-});
+} as any;
+
+// Export helper to get the actual client instance
+export function getRawR2Client(): S3Client {
+  return getR2Client();
+}
 
 export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
 export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // Optional: for public access
@@ -54,7 +77,8 @@ export async function uploadToR2(
   contentType: string
 ): Promise<string> {
   try {
-    await r2Client.send(
+    const client = getRawR2Client();
+    await client.send(
       new PutObjectCommand({
         Bucket: R2_BUCKET_NAME,
         Key: fileName,
@@ -98,7 +122,8 @@ export async function getSignedFileUrl(fileKey: string, expiresIn: number = 3600
       Key: key,
     });
 
-    const signedUrl = await getSignedUrl(r2Client, command, { expiresIn });
+    const client = getRawR2Client();
+    const signedUrl = await getSignedUrl(client, command, { expiresIn });
     return signedUrl;
   } catch (error) {
     console.error('Error generating signed URL:', error);
@@ -114,7 +139,8 @@ export async function deleteFromR2(fileUrl: string): Promise<void> {
     // Extract key from URL
     const key = extractKeyFromUrl(fileUrl);
     
-    await r2Client.send(
+    const client = getRawR2Client();
+    await client.send(
       new DeleteObjectCommand({
         Bucket: R2_BUCKET_NAME,
         Key: key,
