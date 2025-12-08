@@ -103,6 +103,12 @@ export function DraftModal({
     draftId || null
   );
 
+  // Track unsaved changes
+  const [originalContent, setOriginalContent] = useState("");
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [originalHashtags, setOriginalHashtags] = useState<string[]>([]);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+
   // Fetch draft if in edit mode
   useEffect(() => {
     if (open && mode === "edit" && draftId) {
@@ -122,9 +128,11 @@ export function DraftModal({
 
       const data = await response.json();
       setContent(data.draft.draftText);
+      setOriginalContent(data.draft.draftText);
 
       if (data.draft.imageUrl) {
         setImagePreview(data.draft.imageUrl);
+        setOriginalImage(data.draft.imageUrl);
       }
 
       if (data.draft.imagePrompt) {
@@ -133,7 +141,9 @@ export function DraftModal({
 
       const hashtagRegex = /#[\w]+/g;
       const foundHashtags = data.draft.draftText.match(hashtagRegex) || [];
-      setHashtags(foundHashtags.map((tag: string) => tag.substring(1)));
+      const extractedHashtags = foundHashtags.map((tag: string) => tag.substring(1));
+      setHashtags(extractedHashtags);
+      setOriginalHashtags([...extractedHashtags]);
 
       setCreationMode("manual");
     } catch (error) {
@@ -180,10 +190,49 @@ export function DraftModal({
     setImagePromptText("");
     setStoredImagePrompt(null);
     setImageGenerationType(null);
+    setOriginalContent("");
+    setOriginalImage(null);
+    setOriginalHashtags([]);
+  };
+
+  const hasUnsavedChanges = () => {
+    // Only check for changes if we're in manual or AI mode (not in choose mode)
+    if (creationMode === "choose") return false;
+    
+    const contentChanged = content.trim() !== originalContent.trim();
+    const imageChanged = imagePreview !== originalImage;
+    const hashtagsChanged = JSON.stringify(hashtags.sort()) !== JSON.stringify(originalHashtags.sort());
+    
+    return contentChanged || imageChanged || hashtagsChanged;
   };
 
   const handleClose = () => {
-    if (!loading) {
+    if (loading) return;
+    
+    if (hasUnsavedChanges()) {
+      setShowUnsavedDialog(true);
+    } else {
+      resetModal();
+      onOpenChange(false);
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    setShowUnsavedDialog(false);
+    resetModal();
+    onOpenChange(false);
+  };
+
+  const handleSaveAndClose = async () => {
+    setShowUnsavedDialog(false);
+    const savedId = await handleSaveDraft();
+    if (savedId) {
+      push({
+        title: "Success",
+        description: "Draft saved successfully!",
+        variant: "success",
+      });
+      onDraftSaved();
       resetModal();
       onOpenChange(false);
     }
@@ -1380,6 +1429,43 @@ export function DraftModal({
         onRefresh={() => handleGiveMePrompt(true)}
         isRefreshing={loading}
       />
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Unsaved Changes</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes. What would you like to do?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handleDiscardChanges}
+              disabled={loading}
+            >
+              Discard Changes
+            </Button>
+            <Button
+              onClick={handleSaveAndClose}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save & Close
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
