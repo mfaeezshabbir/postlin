@@ -66,6 +66,7 @@ export function DraftModal({
   // Media upload states
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isNewImage, setIsNewImage] = useState(false); // Track if image is newly selected (base64) vs existing (URL)
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"none" | "image" | "video">(
@@ -133,6 +134,7 @@ export function DraftModal({
       if (data.draft.imageUrl) {
         setImagePreview(data.draft.imageUrl);
         setOriginalImage(data.draft.imageUrl);
+        setIsNewImage(false); // This is an existing image from database
       }
 
       if (data.draft.imagePrompt) {
@@ -180,6 +182,7 @@ export function DraftModal({
     setGeneratedContent("");
     setSelectedImage(null);
     setImagePreview(null);
+    setIsNewImage(false);
     setSelectedVideo(null);
     setVideoPreview(null);
     setMediaType("none");
@@ -260,6 +263,7 @@ export function DraftModal({
 
     setSelectedImage(file);
     setMediaType("image");
+    setIsNewImage(true); // Mark as new image requiring upload
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -276,6 +280,7 @@ export function DraftModal({
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+    setIsNewImage(false);
   };
 
   // Video handling
@@ -295,6 +300,7 @@ export function DraftModal({
   const handleRemoveMedia = () => {
     setSelectedImage(null);
     setImagePreview(null);
+    setIsNewImage(false);
     setSelectedVideo(null);
     setVideoPreview(null);
     setMediaType("none");
@@ -352,6 +358,7 @@ export function DraftModal({
       if (data.image?.base64) {
         setImagePreview(data.image.base64);
         setMediaType("image");
+        setIsNewImage(true); // Mark as new image requiring upload
         setImageGenerationType("ai_generated");
         push({
           title: "Image Generated",
@@ -599,6 +606,7 @@ export function DraftModal({
       if (data.image?.base64 && imageGenerationType === "ai_generated") {
         setImagePreview(data.image.base64);
         setMediaType("image");
+        setIsNewImage(true); // Mark as new image requiring upload
       }
 
       // Handle image prompt
@@ -658,7 +666,8 @@ export function DraftModal({
     try {
       let uploadedImageUrl = null;
 
-      if (imagePreview) {
+      // Only upload if this is a new image (base64) that was just selected/generated
+      if (imagePreview && isNewImage) {
         const uploadResponse = await fetch("/api/upload/image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -668,7 +677,15 @@ export function DraftModal({
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           uploadedImageUrl = uploadData.imageUrl;
+        } else {
+          const errorData = await uploadResponse
+            .json()
+            .catch(() => ({ error: "Unknown error" }));
+          throw new Error(`Image upload failed: ${errorData.error}`);
         }
+      } else if (imagePreview && !isNewImage) {
+        // This is an existing image URL from database, keep it as-is
+        uploadedImageUrl = imagePreview;
       }
 
       let response;
@@ -1154,8 +1171,14 @@ export function DraftModal({
                               onClick={async () => {
                                 const savedId = await handleSaveDraft();
                                 if (savedId) {
+                                  push({
+                                    title: "Success",
+                                    description: "Draft saved successfully!",
+                                    variant: "success",
+                                  });
                                   onDraftSaved();
-                                  handleClose();
+                                  resetModal();
+                                  onOpenChange(false);
                                 }
                               }}
                               disabled={loading || !content.trim()}
@@ -1371,8 +1394,14 @@ export function DraftModal({
                           onClick={async () => {
                             const savedId = await handleSaveDraft();
                             if (savedId) {
+                              push({
+                                title: "Success",
+                                description: "Draft saved successfully!",
+                                variant: "success",
+                              });
                               onDraftSaved();
-                              handleClose();
+                              resetModal();
+                              onOpenChange(false);
                             }
                           }}
                           disabled={loading || !content.trim()}
