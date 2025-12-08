@@ -12,6 +12,8 @@ generator client {
 // Use MongoDB as the datasource for this project
 datasource db {
   provider = "mongodb"
+  // In Prisma v7+, the URL is moved to prisma.config.ts
+  // For now, we keep it here for v6 compatibility
   url      = env("DATABASE_URL")
 }
 
@@ -115,18 +117,18 @@ model Analytics {
 }
 
 model Media {
-  id          String   @id @map("_id") @default(auto()) @db.ObjectId
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
+  id          String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id])
   fileName    String
-  fileUrl     String   // Public or signed URL from R2
-  fileType    String   // MIME type (image/jpeg, video/mp4, etc.)
-  fileSize    Int      // Size in bytes
-  width       Int?     // For images/videos
-  height      Int?     // For images/videos
-  duration    Float?   // For videos (in seconds)
-  mediaType   String   // 'image' or 'video'
-  uploadedAt  DateTime @default(now())
+  fileUrl     String    // Public or signed URL from R2
+  fileType    String    // MIME type (image/jpeg, video/mp4, etc.)
+  fileSize    Int       // Size in bytes
+  width       Int?      // For images/videos
+  height      Int?      // For images/videos
+  duration    Float?    // For videos (in seconds)
+  mediaType   MediaType @default(NONE) // 'image' or 'video'
+  uploadedAt  DateTime  @default(now())
   expiresAt   DateTime? // Optional: for temporary files
   
   @@index([userId])
