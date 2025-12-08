@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToasts } from "@/components/ToastProvider";
 
 interface MediaUploadProps {
   onImageSelect: (file: File) => void;
@@ -31,6 +32,7 @@ export function MediaUpload({
   disabled = false,
 }: MediaUploadProps) {
   const [dragOver, setDragOver] = useState(false);
+  const { push } = useToasts();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -54,18 +56,30 @@ export function MediaUpload({
     } else if (file.type.startsWith("video/")) {
       validateAndSelectVideo(file);
     } else {
-      alert("Please drop an image or video file");
+      push({
+        title: "Invalid File Type",
+        description: "Please drop an image or video file",
+        variant: "error",
+      });
     }
   };
 
   const validateAndSelectImage = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      push({
+        title: "Invalid File Type",
+        description: "Please select an image file",
+        variant: "error",
+      });
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert("Image size must be less than 10MB");
+      push({
+        title: "File Too Large",
+        description: "Image size must be less than 10MB",
+        variant: "error",
+      });
       return;
     }
 
@@ -74,15 +88,22 @@ export function MediaUpload({
 
   const validateAndSelectVideo = (file: File) => {
     if (!file.type.startsWith("video/")) {
-      alert("Please select a video file");
+      push({
+        title: "Invalid File Type",
+        description: "Please select a video file",
+        variant: "error",
+      });
       return;
     }
 
     // LinkedIn video limits
     if (file.size > 200 * 1024 * 1024) {
-      alert(
-        "Video size must be less than 200MB (recommended). Maximum is 5GB but large files may take longer to upload."
-      );
+      push({
+        title: "File Too Large",
+        description:
+          "Video size must be less than 200MB (recommended). Maximum is 5GB but large files may take longer to upload.",
+        variant: "error",
+      });
       return;
     }
 
@@ -95,7 +116,11 @@ export function MediaUpload({
       const duration = video.duration;
 
       if (duration < 3 || duration > 600) {
-        alert("Video duration must be between 3 seconds and 10 minutes");
+        push({
+          title: "Invalid Video Duration",
+          description: "Video duration must be between 3 seconds and 10 minutes",
+          variant: "error",
+        });
         return;
       }
 
