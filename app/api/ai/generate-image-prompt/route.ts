@@ -112,8 +112,7 @@ Make the imagePrompt field extremely detailed and comprehensive for best AI imag
 
     return NextResponse.json({
       success: true,
-      imagePrompt: imagePromptObject.imagePrompt,
-      fullPromptObject: imagePromptObject,
+      imagePrompt: imagePromptObject,
     });
   } catch (error) {
     console.error('Error generating image prompt:', error);

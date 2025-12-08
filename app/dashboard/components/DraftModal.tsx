@@ -312,11 +312,16 @@ export function DraftModal({
       } 
       // Fallback: quota exceeded but prompt available
       else if (data.imagePrompt) {
-        const promptToStore =
-          typeof data.imagePrompt === "object"
-            ? JSON.stringify(data.imagePrompt, null, 2)
-            : data.imagePrompt;
-        setImagePromptText(promptToStore);
+        // API always returns full JSON object
+        const promptObject = typeof data.imagePrompt === "object" 
+          ? data.imagePrompt 
+          : JSON.parse(data.imagePrompt);
+        
+        const promptJsonString = JSON.stringify(promptObject, null, 2);
+        const promptText = promptObject.imagePrompt;
+        
+        setImagePromptText(promptText);
+        setStoredImagePrompt(promptJsonString); // Save full JSON for later
         setImageGenerationType("ai_prompt_used");
         setShowImagePromptDialog(true);
         push({
@@ -343,11 +348,38 @@ export function DraftModal({
 
   const handleGiveMePrompt = async (regenerate: boolean = false) => {
     setShowAIImageOptions(false);
-    if (!content.trim()) return;
+    
+    // Ensure content is a string
+    const contentText = String(content || '').trim();
+    if (!contentText) return;
 
     // If we have a saved prompt and not regenerating, show it immediately
     if (storedImagePrompt && !regenerate) {
-      setImagePromptText(storedImagePrompt);
+      try {
+        // Just extract the imagePrompt field directly without full parsing
+        // storedImagePrompt is a JSON string like: {"imagePrompt": "...", "style": "..."}
+        const promptMatch = storedImagePrompt.match(/"imagePrompt"\s*:\s*"((?:\\.|[^"\\])*)"/) || 
+                           storedImagePrompt.match(/"imagePrompt"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/) ||
+                           JSON.parse(storedImagePrompt)?.imagePrompt;
+        
+        // If we got a match from regex, use that, otherwise parse
+        let promptText = "";
+        if (typeof promptMatch === "string") {
+          // Unescape the matched string
+          promptText = promptMatch.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        } else {
+          try {
+            promptText = JSON.parse(storedImagePrompt).imagePrompt;
+          } catch {
+            promptText = storedImagePrompt;
+          }
+        }
+        
+        setImagePromptText(promptText);
+      } catch (e) {
+        // If it's not valid JSON, assume it's plain text
+        setImagePromptText(String(storedImagePrompt));
+      }
       setImageGenerationType("ai_prompt_used");
       setShowImagePromptDialog(true);
       push({
@@ -360,13 +392,16 @@ export function DraftModal({
 
     setLoading(true);
     try {
+      // Ensure draftId is a string or null
+      const draftIdStr = currentDraftId ? String(currentDraftId) : null;
+      
       const response = await fetch("/api/ai/generate-image-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          postContent: content,
-          draftId: currentDraftId, // Send draft ID for saving
-          regenerate, // Indicate if this is a regeneration
+          postContent: contentText,
+          draftId: draftIdStr,
+          regenerate: Boolean(regenerate),
         }),
       });
 
@@ -391,12 +426,16 @@ export function DraftModal({
       const data = await response.json();
 
       if (data.imagePrompt) {
-        const promptToStore =
-          typeof data.imagePrompt === "object"
-            ? JSON.stringify(data.imagePrompt, null, 2)
-            : data.imagePrompt;
-        setImagePromptText(promptToStore);
-        setStoredImagePrompt(promptToStore); // Save to state
+        // API always returns full JSON object
+        const promptObject = typeof data.imagePrompt === "object" 
+          ? data.imagePrompt 
+          : JSON.parse(data.imagePrompt);
+        
+        const promptJsonString = JSON.stringify(promptObject, null, 2);
+        const promptText = promptObject.imagePrompt;
+        
+        setImagePromptText(promptText);
+        setStoredImagePrompt(promptJsonString); // Save full JSON to state
         setImageGenerationType("ai_prompt_used");
         setShowImagePromptDialog(true);
         push({
@@ -515,11 +554,16 @@ export function DraftModal({
 
       // Handle image prompt
       if (data.imagePrompt) {
-        const promptToStore =
-          typeof data.imagePrompt === "object"
-            ? JSON.stringify(data.imagePrompt, null, 2)
-            : data.imagePrompt;
-        setImagePromptText(promptToStore);
+        // API always returns full JSON object
+        const promptObject = typeof data.imagePrompt === "object" 
+          ? data.imagePrompt 
+          : JSON.parse(data.imagePrompt);
+        
+        const promptJsonString = JSON.stringify(promptObject, null, 2);
+        const promptText = promptObject.imagePrompt;
+        
+        setImagePromptText(promptText);
+        setStoredImagePrompt(promptJsonString); // Save full JSON
 
         // Show prompt dialog if user chose "Give Me a Prompt" option
         if (imageGenerationType === "ai_prompt_used") {
