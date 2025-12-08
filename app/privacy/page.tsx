@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/common/Footer";
 
 export const metadata: Metadata = {
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 py-16">
         <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow p-8 border border-gray-100">

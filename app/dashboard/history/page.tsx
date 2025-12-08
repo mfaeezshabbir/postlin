@@ -29,7 +29,9 @@ interface PublishedPostsData {
 }
 
 export default function HistoryPage() {
-  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
+  const { push } = require("@/components/ToastProvider").useToasts?.() || {
+    push: (t: any) => "",
+  };
   const [postsData, setPostsData] = useState<PublishedPostsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [revertingPostId, setRevertingPostId] = useState<string | null>(null);
@@ -74,14 +76,22 @@ export default function HistoryPage() {
 
       const data = await response.json();
 
-  // Show success message
-  push({ title: "Reverted", description: data.message || "Post reverted to draft successfully!", variant: "success" });
+      // Show success message
+      push({
+        title: "Reverted",
+        description: data.message || "Post reverted to draft successfully!",
+        variant: "success",
+      });
 
       // Refresh the published posts list
       await fetchPublishedPosts();
     } catch (error) {
-  console.error("Error reverting post:", error);
-  push({ title: "Failed", description: "Failed to revert post to draft. Please try again.", variant: "error" });
+      console.error("Error reverting post:", error);
+      push({
+        title: "Failed",
+        description: "Failed to revert post to draft. Please try again.",
+        variant: "error",
+      });
     } finally {
       setRevertingPostId(null);
     }
@@ -91,14 +101,6 @@ export default function HistoryPage() {
     fetchPublishedPosts();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
-  }
-
   const posts = postsData?.posts || [];
   const stats = postsData?.stats || { total: 0, thisMonth: 0 };
 
@@ -107,16 +109,14 @@ export default function HistoryPage() {
       title="History"
       description="View your published LinkedIn posts"
       stats={[
-        { title: "Total Posts", value: stats.total, subtitle: "All time" },
+        { title: "Total Posts", value: loading ? 0 : stats.total },
         {
           title: "This Month",
-          value: stats.thisMonth,
-          subtitle: "Published this month",
+          value: loading ? 0 : stats.thisMonth,
         },
         {
           title: "Analytics",
           value: "Coming Soon",
-          subtitle: "Engagement metrics",
         },
       ]}
     >
@@ -127,8 +127,13 @@ export default function HistoryPage() {
             All your posts that have been published to LinkedIn
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto">
-          {posts.length === 0 ? (
+        <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
+          {loading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading published posts...</p>
+            </div>
+          ) : posts.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                 <History className="h-8 w-8 text-gray-400" />

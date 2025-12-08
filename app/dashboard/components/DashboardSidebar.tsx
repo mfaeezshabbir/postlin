@@ -163,7 +163,7 @@ export default function DashboardSidebar({
 
         <SidebarNav items={navigation} isCollapsed={isCollapsed} />
         <SidebarProfile user={user} isCollapsed={isCollapsed} />
-        <SidebarFooter isCollapsed={isCollapsed} />
+        {isCollapsed ? null : <SidebarFooter isCollapsed={isCollapsed} />}
       </aside>
     </>
   );

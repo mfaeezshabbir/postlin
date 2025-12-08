@@ -31,6 +31,9 @@ import { Badge } from "@/components/ui/badge";
 import ScheduleDialog from "./ScheduleDialog";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import Link from "next/link";
+import { AIImageOptionsDialog } from "./AIImageOptionsDialog";
+import { ImagePromptDialog } from "./ImagePromptDialog";
+import { MediaUpload } from "./MediaUpload";
 
 interface DraftModalProps {
   open: boolean;
@@ -47,7 +50,9 @@ export function DraftModal({
   mode,
   draftId,
 }: DraftModalProps) {
-  const { push } = require("@/components/ToastProvider").useToasts?.() || { push: (t: any) => "" };
+  const { push } = require("@/components/ToastProvider").useToasts?.() || {
+    push: (t: any) => "",
+  };
   const { profile } = useUserProfile();
   
   // Main states
@@ -64,9 +69,15 @@ export function DraftModal({
   const [length, setLength] = useState("medium");
   const [generatedContent, setGeneratedContent] = useState("");
 
-  // Image upload states
+  // Media upload states
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isNewImage, setIsNewImage] = useState(false); // Track if image is newly selected (base64) vs existing (URL)
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"none" | "image" | "video">(
+    "none"
+  );
 
   // Hashtag states
   const [hashtagInput, setHashtagInput] = useState("");
@@ -75,8 +86,12 @@ export function DraftModal({
   // Track if current content was AI-generated
   const [isAIGenerated, setIsAIGenerated] = useState(false);
 
-  // Image prompt fallback states
+  // AI Image generation dialogs
+  const [showAIImageOptions, setShowAIImageOptions] = useState(false);
   const [showImagePromptDialog, setShowImagePromptDialog] = useState(false);
+  const [imageGenerationType, setImageGenerationType] = useState<
+    "ai_generated" | "ai_prompt_used" | "user_uploaded" | null
+  >(null);
 
   // Scheduling states
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -94,6 +109,12 @@ export function DraftModal({
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(
     draftId || null
   );
+
+  // Track unsaved changes
+  const [originalContent, setOriginalContent] = useState("");
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [originalHashtags, setOriginalHashtags] = useState<string[]>([]);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
   // Fetch draft if in edit mode
   useEffect(() => {
@@ -114,9 +135,12 @@ export function DraftModal({
 
       const data = await response.json();
       setContent(data.draft.draftText);
+      setOriginalContent(data.draft.draftText);
 
       if (data.draft.imageUrl) {
         setImagePreview(data.draft.imageUrl);
+        setOriginalImage(data.draft.imageUrl);
+        setIsNewImage(false); // This is an existing image from database
       }
 
       if (data.draft.imagePrompt) {
@@ -125,12 +149,18 @@ export function DraftModal({
 
       const hashtagRegex = /#[\w]+/g;
       const foundHashtags = data.draft.draftText.match(hashtagRegex) || [];
-      setHashtags(foundHashtags.map((tag: string) => tag.substring(1)));
+      const extractedHashtags = foundHashtags.map((tag: string) => tag.substring(1));
+      setHashtags(extractedHashtags);
+      setOriginalHashtags([...extractedHashtags]);
 
       setCreationMode("manual");
     } catch (error) {
-  console.error("Error fetching draft:", error);
-  push({ title: "Failed", description: "Failed to load draft. Please try again.", variant: "error" });
+      console.error("Error fetching draft:", error);
+      push({
+        title: "Failed",
+        description: "Failed to load draft. Please try again.",
+        variant: "error",
+      });
       onOpenChange(false);
     } finally {
       setFetchingDraft(false);
@@ -158,37 +188,88 @@ export function DraftModal({
     setGeneratedContent("");
     setSelectedImage(null);
     setImagePreview(null);
+    setIsNewImage(false);
+    setSelectedVideo(null);
+    setVideoPreview(null);
+    setMediaType("none");
     setHashtags([]);
     setHashtagInput("");
     setLoading(false);
     setIsAIGenerated(false);
     setImagePromptText("");
     setStoredImagePrompt(null);
+    setImageGenerationType(null);
+    setOriginalContent("");
+    setOriginalImage(null);
+    setOriginalHashtags([]);
+  };
+
+  const hasUnsavedChanges = () => {
+    // Only check for changes if we're in manual or AI mode (not in choose mode)
+    if (creationMode === "choose") return false;
+    
+    const contentChanged = content.trim() !== originalContent.trim();
+    const imageChanged = imagePreview !== originalImage;
+    const hashtagsChanged = JSON.stringify(hashtags.sort()) !== JSON.stringify(originalHashtags.sort());
+    
+    return contentChanged || imageChanged || hashtagsChanged;
   };
 
   const handleClose = () => {
-    if (!loading) {
+    if (loading) return;
+    
+    if (hasUnsavedChanges()) {
+      setShowUnsavedDialog(true);
+    } else {
+      resetModal();
+      onOpenChange(false);
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    setShowUnsavedDialog(false);
+    resetModal();
+    onOpenChange(false);
+  };
+
+  const handleSaveAndClose = async () => {
+    setShowUnsavedDialog(false);
+    const savedId = await handleSaveDraft();
+    if (savedId) {
+      push({
+        title: "Success",
+        description: "Draft saved successfully!",
+        variant: "success",
+      });
+      onDraftSaved();
       resetModal();
       onOpenChange(false);
     }
   };
 
   // Image handling
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleImageSelectFromFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      push({ title: "Invalid File", description: "Please select an image file", variant: "error" });
+      push({
+        title: "Invalid File",
+        description: "Please select an image file",
+        variant: "error",
+      });
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      push({ title: "Image Too Large", description: "Image size must be less than 10MB", variant: "error" });
+      push({
+        title: "Image Too Large",
+        description: "Image size must be less than 10MB",
+        variant: "error",
+      });
       return;
     }
 
     setSelectedImage(file);
+    setMediaType("image");
+    setIsNewImage(true); // Mark as new image requiring upload
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -197,9 +278,254 @@ export function DraftModal({
     reader.readAsDataURL(file);
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageSelectFromFile(file);
+  };
+
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+    setIsNewImage(false);
+  };
+
+  // Video handling
+  const handleVideoSelect = (file: File) => {
+    setSelectedVideo(file);
+    setMediaType("video");
+    setImageGenerationType("user_uploaded");
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setVideoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Unified media removal
+  const handleRemoveMedia = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setIsNewImage(false);
+    setSelectedVideo(null);
+    setVideoPreview(null);
+    setMediaType("none");
+    setImageGenerationType(null);
+  };
+
+  // AI Image Options
+  const handleAIImageRequest = () => {
+    if (!content.trim()) {
+      push({
+        title: "No Content",
+        description: "Please write or generate some post content first",
+        variant: "error",
+      });
+      return;
+    }
+    setShowAIImageOptions(true);
+  };
+
+  const handleGenerateForMe = async () => {
+    setShowAIImageOptions(false);
+    if (!content.trim()) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ai/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postContent: content,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle service overload (503) gracefully
+        if (response.status === 503) {
+          push({
+            title: "Service Busy",
+            description: "The AI service is temporarily overloaded. Please try again in a few moments.",
+            variant: "info",
+          });
+          return;
+        }
+        
+        throw new Error(
+          errorData.details || errorData.error || "Failed to generate image"
+        );
+      }
+
+      const data = await response.json();
+
+      // If image was generated successfully
+      if (data.image?.base64) {
+        setImagePreview(data.image.base64);
+        setMediaType("image");
+        setIsNewImage(true); // Mark as new image requiring upload
+        setImageGenerationType("ai_generated");
+        push({
+          title: "Image Generated",
+          description: "Your AI-generated image is ready!",
+          variant: "success",
+        });
+      } 
+      // Fallback: quota exceeded but prompt available
+      else if (data.imagePrompt) {
+        // API always returns full JSON object
+        const promptObject = typeof data.imagePrompt === "object" 
+          ? data.imagePrompt 
+          : JSON.parse(data.imagePrompt);
+        
+        const promptJsonString = JSON.stringify(promptObject, null, 2);
+        const promptText = promptObject.imagePrompt;
+        
+        setImagePromptText(promptText);
+        setStoredImagePrompt(promptJsonString); // Save full JSON for later
+        setImageGenerationType("ai_prompt_used");
+        setShowImagePromptDialog(true);
+        push({
+          title: "Quota Limit Reached",
+          description: data.message || "Use the prompt with free AI tools to generate your image!",
+          variant: "info",
+        });
+      } else {
+        throw new Error("No image or prompt data received");
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      push({
+        title: "Generation Failed",
+        description: `Failed to generate image: ${errorMessage}`,
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGiveMePrompt = async (regenerate: boolean = false) => {
+    setShowAIImageOptions(false);
+    
+    // Ensure content is a string
+    const contentText = String(content || '').trim();
+    if (!contentText) return;
+
+    // If we have a saved prompt and not regenerating, show it immediately
+    if (storedImagePrompt && !regenerate) {
+      try {
+        // Just extract the imagePrompt field directly without full parsing
+        // storedImagePrompt is a JSON string like: {"imagePrompt": "...", "style": "..."}
+        const promptMatch = storedImagePrompt.match(/"imagePrompt"\s*:\s*"((?:\\.|[^"\\])*)"/) || 
+                           storedImagePrompt.match(/"imagePrompt"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/) ||
+                           JSON.parse(storedImagePrompt)?.imagePrompt;
+        
+        // If we got a match from regex, use that, otherwise parse
+        let promptText = "";
+        if (typeof promptMatch === "string") {
+          // Unescape the matched string
+          promptText = promptMatch.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        } else {
+          try {
+            promptText = JSON.parse(storedImagePrompt).imagePrompt;
+          } catch {
+            promptText = storedImagePrompt;
+          }
+        }
+        
+        setImagePromptText(promptText);
+      } catch (e) {
+        // If it's not valid JSON, assume it's plain text
+        setImagePromptText(String(storedImagePrompt));
+      }
+      setImageGenerationType("ai_prompt_used");
+      setShowImagePromptDialog(true);
+      push({
+        title: "Prompt Ready",
+        description: "Click refresh to regenerate a new prompt!",
+        variant: "info",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Ensure draftId is a string or null
+      const draftIdStr = currentDraftId ? String(currentDraftId) : null;
+      
+      const response = await fetch("/api/ai/generate-image-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postContent: contentText,
+          draftId: draftIdStr,
+          regenerate: Boolean(regenerate),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle service overload (503) gracefully
+        if (response.status === 503) {
+          push({
+            title: "Service Busy",
+            description: "The AI service is temporarily overloaded. Please try again in a few moments.",
+            variant: "info",
+          });
+          return;
+        }
+        
+        throw new Error(
+          errorData.details || errorData.error || "Failed to generate prompt"
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.imagePrompt) {
+        // API always returns full JSON object
+        const promptObject = typeof data.imagePrompt === "object" 
+          ? data.imagePrompt 
+          : JSON.parse(data.imagePrompt);
+        
+        const promptJsonString = JSON.stringify(promptObject, null, 2);
+        const promptText = promptObject.imagePrompt;
+        
+        setImagePromptText(promptText);
+        setStoredImagePrompt(promptJsonString); // Save full JSON to state
+        setImageGenerationType("ai_prompt_used");
+        setShowImagePromptDialog(true);
+        push({
+          title: regenerate ? "Prompt Regenerated" : "Prompt Ready",
+          description: "Copy and use the prompt in any free AI image tool!",
+          variant: "success",
+        });
+      } else {
+        throw new Error("No prompt data received");
+      }
+    } catch (error) {
+      console.error("Error generating prompt:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      push({
+        title: "Generation Failed",
+        description: `Failed to generate prompt: ${errorMessage}`,
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update image select to track generation type
+  const handleImageSelectWithType = (file: File) => {
+    handleImageSelectFromFile(file);
+    setImageGenerationType("user_uploaded");
   };
 
   // Hashtag handling
@@ -242,6 +568,9 @@ export function DraftModal({
 
     setLoading(true);
     try {
+      // Determine if we should generate image based on user's choice
+      const shouldGenerateImage = imageGenerationType === "ai_generated";
+
       const response = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,7 +578,7 @@ export function DraftModal({
           prompt: aiPrompt,
           tone,
           length,
-          generateImage: true,
+          generateImage: shouldGenerateImage,
         }),
       });
 
@@ -290,18 +619,34 @@ export function DraftModal({
         }
       }
 
-      if (data.image?.base64) {
+      // Handle AI-generated image
+      if (data.image?.base64 && imageGenerationType === "ai_generated") {
         setImagePreview(data.image.base64);
+        setMediaType("image");
+        setIsNewImage(true); // Mark as new image requiring upload
       }
 
+      // Handle image prompt
       if (data.imagePrompt) {
-        const promptToStore =
-          typeof data.imagePrompt === "object"
-            ? JSON.stringify(data.imagePrompt, null, 2)
-            : data.imagePrompt;
-        setImagePromptText(promptToStore);
+        // API always returns full JSON object
+        const promptObject = typeof data.imagePrompt === "object" 
+          ? data.imagePrompt 
+          : JSON.parse(data.imagePrompt);
+        
+        const promptJsonString = JSON.stringify(promptObject, null, 2);
+        const promptText = promptObject.imagePrompt;
+        
+        setImagePromptText(promptText);
+        setStoredImagePrompt(promptJsonString); // Save full JSON
 
-        if (!data.image?.base64) {
+        // Show prompt dialog if user chose "Give Me a Prompt" option
+        if (imageGenerationType === "ai_prompt_used") {
+          setShowImagePromptDialog(true);
+        } else if (
+          !data.image?.base64 &&
+          imageGenerationType === "ai_generated"
+        ) {
+          // Fallback: show prompt if generation failed
           setShowImagePromptDialog(true);
         }
       }
@@ -311,7 +656,11 @@ export function DraftModal({
         error instanceof Error
           ? error.message
           : "Failed to generate content. Please try again.";
-      push({ title: "AI Error", description: `AI Generation Error: ${errorMessage}. Please check that your GEMINI_API_KEY is valid.`, variant: "error" });
+      push({
+        title: "AI Error",
+        description: `AI Generation Error: ${errorMessage}. Please check that your GEMINI_API_KEY is valid.`,
+        variant: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -320,7 +669,11 @@ export function DraftModal({
   // Save Draft
   const handleSaveDraft = async (): Promise<string | null> => {
     if (!content.trim()) {
-      push({ title: "Validation", description: "Please enter some content", variant: "info" });
+      push({
+        title: "Validation",
+        description: "Please enter some content",
+        variant: "info",
+      });
       return null;
     }
 
@@ -330,7 +683,8 @@ export function DraftModal({
     try {
       let uploadedImageUrl = null;
 
-      if (imagePreview) {
+      // Only upload if this is a new image (base64) that was just selected/generated
+      if (imagePreview && isNewImage) {
         const uploadResponse = await fetch("/api/upload/image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -340,7 +694,15 @@ export function DraftModal({
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           uploadedImageUrl = uploadData.imageUrl;
+        } else {
+          const errorData = await uploadResponse
+            .json()
+            .catch(() => ({ error: "Unknown error" }));
+          throw new Error(`Image upload failed: ${errorData.error}`);
         }
+      } else if (imagePreview && !isNewImage) {
+        // This is an existing image URL from database, keep it as-is
+        uploadedImageUrl = imagePreview;
       }
 
       let response;
@@ -391,7 +753,13 @@ export function DraftModal({
       );
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      push({ title: "Save Failed", description: `Failed to ${mode === "edit" ? "update" : "create"} draft. Error: ${errorMessage}`, variant: "error" });
+      push({
+        title: "Save Failed",
+        description: `Failed to ${
+          mode === "edit" ? "update" : "create"
+        } draft. Error: ${errorMessage}`,
+        variant: "error",
+      });
       return null;
     } finally {
       setLoading(false);
@@ -401,7 +769,11 @@ export function DraftModal({
   // Handle Schedule
   const handleSchedule = async () => {
     if (!scheduledDate || !scheduledTime) {
-      push({ title: "Schedule", description: "Please select both date and time", variant: "info" });
+      push({
+        title: "Schedule",
+        description: "Please select both date and time",
+        variant: "info",
+      });
       return;
     }
 
@@ -409,7 +781,11 @@ export function DraftModal({
     const now = new Date();
 
     if (scheduledDateTime <= now) {
-      push({ title: "Schedule", description: "Scheduled time must be in the future", variant: "error" });
+      push({
+        title: "Schedule",
+        description: "Scheduled time must be in the future",
+        variant: "error",
+      });
       return;
     }
 
@@ -444,8 +820,12 @@ export function DraftModal({
         );
       }
 
-  const data = await response.json();
-  push({ title: "Scheduled", description: data.message || "Post scheduled successfully!", variant: "success" });
+      const data = await response.json();
+      push({
+        title: "Scheduled",
+        description: data.message || "Post scheduled successfully!",
+        variant: "success",
+      });
       setShowScheduleDialog(false);
       onDraftSaved();
       handleClose();
@@ -453,19 +833,31 @@ export function DraftModal({
       console.error("Error scheduling post:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      push({ title: "Schedule Error", description: `Failed to schedule post. Error: ${errorMessage}`, variant: "error" });
+      push({
+        title: "Schedule Error",
+        description: `Failed to schedule post. Error: ${errorMessage}`,
+        variant: "error",
+      });
     } finally {
       setScheduling(false);
     }
   };
 
-  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-  const charCount = content.length;
+  // adding the hashtag and word/char count calculations
+  const contentWithHashtags = insertHashtagsIntoContent(content);
+  const wordCount = contentWithHashtags
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const charCount = contentWithHashtags.length;
 
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="!max-w-[80vw] !w-[70vw] max-h-[95vh] p-0 gap-0 border-0 shadow-2xl overflow-hidden">
+          <DialogTitle className="sr-only">
+            {mode === "edit" ? "Edit Draft" : "Create New Post"}
+          </DialogTitle>
           {fetchingDraft ? (
             <div className="flex flex-col items-center justify-center py-20 px-6">
               <div className="relative mb-6">
@@ -747,48 +1139,20 @@ export function DraftModal({
                               )}
                             </div>
 
-                            {/* Image Section */}
+                            {/* Media Upload Section */}
                             <div>
                               <label className="text-sm font-semibold text-gray-700 mb-3 block">
-                                Post Image
+                                Post Media
                               </label>
-                              {!imagePreview ? (
-                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-400 transition-colors">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageSelect}
-                                    className="hidden"
-                                    id="image-upload-ai"
-                                  />
-                                  <label
-                                    htmlFor="image-upload-ai"
-                                    className="cursor-pointer"
-                                  >
-                                    <Upload className="w-10 h-10 mx-auto mb-3 text-gray-400" />
-                                    <p className="text-sm font-medium text-gray-700">
-                                      Upload an image
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      PNG, JPG up to 10MB
-                                    </p>
-                                  </label>
-                                </div>
-                              ) : (
-                                <div className="relative rounded-xl overflow-hidden">
-                                  <img
-                                    src={imagePreview}
-                                    alt="Preview"
-                                    className="w-full h-64 object-cover"
-                                  />
-                                  <button
-                                    onClick={handleRemoveImage}
-                                    className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 shadow-lg transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              )}
+                              <MediaUpload
+                                onImageSelect={handleImageSelectWithType}
+                                onVideoSelect={handleVideoSelect}
+                                onAIImageRequest={handleAIImageRequest}
+                                imagePreview={imagePreview}
+                                videoPreview={videoPreview}
+                                onRemoveMedia={handleRemoveMedia}
+                                disabled={loading}
+                              />
                             </div>
 
                             {/* Hashtags Section */}
@@ -857,8 +1221,14 @@ export function DraftModal({
                               onClick={async () => {
                                 const savedId = await handleSaveDraft();
                                 if (savedId) {
+                                  push({
+                                    title: "Success",
+                                    description: "Draft saved successfully!",
+                                    variant: "success",
+                                  });
                                   onDraftSaved();
-                                  handleClose();
+                                  resetModal();
+                                  onOpenChange(false);
                                 }
                               }}
                               disabled={loading || !content.trim()}
@@ -914,66 +1284,43 @@ export function DraftModal({
                       </button>
                     )}
 
-                    <div className="mb-6">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-4 shadow-lg">
-                        <Edit3 className="w-6 h-6 text-white" />
+                    <div className="relative w-full mb-4">
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-14 h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10">
+                        <Edit3 className="w-6 h-6 text-green-600" />
                       </div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        {mode === "edit" ? "Edit Draft" : "Write Post"}
-                      </h2>
-                      <p className="text-sm text-gray-600">
-                        Craft your message with full control
-                      </p>
+
+                      <div className="ml-16">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {mode === "edit" ? "Edit Draft" : "Compose Post"}
+                        </h2>
+                        <p className="text-[0.7rem] text-gray-500">
+                          {mode === "edit"
+                            ? "Make changes to your saved draft before publishing or scheduling."
+                            : "Write a concise, professional update to share with your network."}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="space-y-5">
-                      {/* Image Upload */}
+                      {/* Media Upload */}
                       <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-3 block">
-                          Post Image
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                          Media
                         </label>
-                        {!imagePreview ? (
-                          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-400 transition-colors">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleImageSelect}
-                              className="hidden"
-                              id="image-upload-manual"
-                            />
-                            <label
-                              htmlFor="image-upload-manual"
-                              className="cursor-pointer"
-                            >
-                              <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                              <p className="text-xs font-medium text-gray-700">
-                                Upload image
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                PNG, JPG up to 10MB
-                              </p>
-                            </label>
-                          </div>
-                        ) : (
-                          <div className="relative rounded-xl overflow-hidden">
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="w-full h-40 object-cover"
-                            />
-                            <button
-                              onClick={handleRemoveImage}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-lg"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                        <MediaUpload
+                          onImageSelect={handleImageSelectWithType}
+                          onVideoSelect={handleVideoSelect}
+                          onAIImageRequest={handleAIImageRequest}
+                          imagePreview={imagePreview}
+                          videoPreview={videoPreview}
+                          onRemoveMedia={handleRemoveMedia}
+                          disabled={loading}
+                        />
                       </div>
 
                       {/* Hashtags */}
                       <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
                           Hashtags
                         </label>
                         <div className="flex gap-2 mb-3">
@@ -1018,7 +1365,7 @@ export function DraftModal({
 
                       {/* Stats */}
                       <div className="bg-white rounded-xl p-4 border-2 border-gray-200">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
                           Content Stats
                         </h4>
                         <div className="space-y-2">
@@ -1097,8 +1444,14 @@ export function DraftModal({
                           onClick={async () => {
                             const savedId = await handleSaveDraft();
                             if (savedId) {
+                              push({
+                                title: "Success",
+                                description: "Draft saved successfully!",
+                                variant: "success",
+                              });
                               onDraftSaved();
-                              handleClose();
+                              resetModal();
+                              onOpenChange(false);
                             }
                           }}
                           disabled={loading || !content.trim()}
@@ -1138,58 +1491,56 @@ export function DraftModal({
         onSchedule={handleSchedule}
       />
 
-      {/* Image Prompt Fallback Dialog */}
-      <Dialog
+      {/* AI Image Options Dialog */}
+      <AIImageOptionsDialog
+        open={showAIImageOptions}
+        onOpenChange={setShowAIImageOptions}
+        onGenerateForMe={handleGenerateForMe}
+        onGiveMePrompt={handleGiveMePrompt}
+        loading={loading}
+      />
+
+      {/* Image Prompt Dialog */}
+      <ImagePromptDialog
         open={showImagePromptDialog}
         onOpenChange={setShowImagePromptDialog}
-      >
-        <DialogContent className="max-w-2xl">
+        imagePrompt={imagePromptText}
+        onRefresh={() => handleGiveMePrompt(true)}
+        isRefreshing={loading}
+      />
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-blue-500" />
-              Image Generation Unavailable
-            </DialogTitle>
+            <DialogTitle>Unsaved Changes</DialogTitle>
             <DialogDescription>
-              We couldn't generate an image due to API rate limits, but we've
-              created a perfect prompt for you!
+              You have unsaved changes. What would you like to do?
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="relative">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-[200px] overflow-y-auto">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {imagePromptText}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute top-2 right-2"
-                onClick={() => {
-                  navigator.clipboard.writeText(imagePromptText);
-                }}
-              >
-                Copy
-              </Button>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-sm text-blue-900 mb-2">
-                Suggested Tools:
-              </h4>
-              <ul className="space-y-1 text-sm text-blue-800">
-                <li>• Google AI Studio (Free)</li>
-                <li>• Bing Image Creator (Free)</li>
-                <li>• Leonardo AI (Free tier)</li>
-                <li>• Craiyon (Free)</li>
-              </ul>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button onClick={() => setShowImagePromptDialog(false)}>
-              Got it!
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handleDiscardChanges}
+              disabled={loading}
+            >
+              Discard Changes
+            </Button>
+            <Button
+              onClick={handleSaveAndClose}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save & Close
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

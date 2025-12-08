@@ -8,7 +8,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/common/Footer";
 
 export default function SupportPage() {
@@ -17,7 +16,6 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-purple-50 text-gray-800">
-      <Navbar />
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20">
         <DashboardContainer
           title="Help & Support"

@@ -10,7 +10,7 @@ export default function Footer() {
   return (
     <footer className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-slate-300 border-t border-white/10 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur">
             <Logo className="w-6 h-6 text-white" />
           </div>
@@ -18,7 +18,7 @@ export default function Footer() {
             <p className="font-semibold text-white text-lg">Postlin</p>
             <p className="text-xs text-slate-400">Schedule. Publish. Grow.</p>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex items-center gap-5 text-sm">
           <Link href="/docs" className="hover:text-white transition">
