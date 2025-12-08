@@ -7,7 +7,6 @@
  * See: https://www.prisma.io/docs/orm/reference/prisma-config-reference
  */
 
-// prisma.config.js
 require("dotenv").config();
 
 module.exports = {

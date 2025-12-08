@@ -12,7 +12,7 @@ generator client {
 // Use MongoDB as the datasource for this project
 datasource db {
   provider = "mongodb"
-  // In Prisma v7+, the URL is moved to prisma.config.ts
+  // In Prisma v7+, the URL is moved to prisma.config.js
   // For now, we keep it here for v6 compatibility
   url      = env("DATABASE_URL")
 }
