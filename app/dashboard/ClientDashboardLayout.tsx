@@ -44,7 +44,7 @@ export default function ClientDashboardLayout({
               {/* left accent like LinkedIn cards */}
               <div className="hidden lg:block w-1 bg-blue-400" />
 
-              <div className="flex-1 rounded-xl bg-white/50 border border-gray-100 p-6 shadow-sm max-w-7xl mx-auto min-h-[95vh] overflow-visible flex flex-col w-full">
+              <div className="flex-1 rounded-xl bg-white/50 border border-gray-100 p-6 shadow-sm max-w-7xl mx-auto min-h-[95vh]  max-h-[95vh] overflow-scroll flex flex-col w-full">
                 {children}
               </div>
             </div>

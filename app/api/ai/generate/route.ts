@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     
     // Generate content - using Gemini 2.5 Flash with JSON mode for structured responses
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-preview-05-20',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: "application/json",
       },
@@ -258,7 +258,7 @@ async function generatePostImage(prompt: string, postContent: string): Promise<{
   try {
     // Extract the main topic from the post for better image generation using JSON mode
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-preview-05-20',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: "application/json",
       },

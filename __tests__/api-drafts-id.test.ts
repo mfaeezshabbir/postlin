@@ -51,7 +51,7 @@ describe('API /api/drafts/[id]', () => {
     const nextAuth = require('next-auth');
     const route = require('@/app/api/drafts/[id]/route');
     const mockUser = { id: 'u1', email: 'a@b.com' };
-    const mockDraft = { id: 'd1', userId: 'u1', draftText: 'hello' };
+    const mockDraft = { id: 'd1', userId: 'u1', draftText: 'hello', imageUrl: null, videoUrl: null };
     nextAuth.getServerSession.mockResolvedValue({ user: { email: 'a@b.com' } });
     prismaMock.user.findUnique.mockResolvedValue(mockUser);
     prismaMock.post.findFirst.mockResolvedValue(mockDraft);

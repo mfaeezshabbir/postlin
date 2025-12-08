@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { getAuthOptions } from '@/modules/auth';
 import prisma from '@/lib/prisma';
 import { log } from '@/lib/logger';
+import { constructPostsUrls } from '@/lib/url-helper';
 
 /**
  * GET /api/drafts
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      drafts,
+      drafts: constructPostsUrls(drafts),
       stats,
     });
   } catch (error) {

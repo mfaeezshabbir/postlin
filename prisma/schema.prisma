@@ -12,6 +12,8 @@ generator client {
 // Use MongoDB as the datasource for this project
 datasource db {
   provider = "mongodb"
+  // In Prisma v7+, the URL is moved to prisma.config.js
+  // For now, we keep it here for v6 compatibility
   url      = env("DATABASE_URL")
 }
 
@@ -22,6 +24,20 @@ enum PostStatus {
   APPROVED
   PUBLISHED
   DISCARDED
+}
+
+// Enum for media type
+enum MediaType {
+  NONE
+  IMAGE
+  VIDEO
+}
+
+// Enum for image generation type
+enum ImageGenerationType {
+  AI_GENERATED      // Generated automatically by our system
+  AI_PROMPT_USED    // User got prompt and generated elsewhere
+  USER_UPLOADED     // User uploaded their own image
 }
 
 model User {
@@ -38,25 +54,35 @@ model User {
   posts        Post[]
   preferences  Preference?
   activities   Activity[]
+  media        Media[]
 }
 
 model Post {
-  id             String     @id @map("_id") @default(auto()) @db.ObjectId
-  userId         String     @db.ObjectId
-  user           User       @relation(fields: [userId], references: [id])
-  draftText      String
-  finalText      String?
-  status         PostStatus @default(DRAFT)
-  linkedInPostId String?
-  imageUrl       String?    // URL to stored image (Cloudinary, S3, or local)
-  imagePrompt    String?    // AI-generated image prompt for regeneration
-  hashtags       String[]   @default([]) // Array of hashtags
-  isAIGenerated  Boolean    @default(false) // Track if post was AI-generated
-  scheduledAt    DateTime?  // When the post is scheduled to be published
-  createdAt      DateTime   @default(now())
-  publishedAt    DateTime?
+  id                  String               @id @map("_id") @default(auto()) @db.ObjectId
+  userId              String               @db.ObjectId
+  user                User                 @relation(fields: [userId], references: [id])
+  draftText           String
+  finalText           String?
+  status              PostStatus           @default(DRAFT)
+  linkedInPostId      String?
+  
+  // Media fields
+  mediaType           MediaType            @default(NONE)
+  imageUrl            String?              // URL to stored image
+  videoUrl            String?              // URL to stored video
+  imagePrompt         String?              // AI-generated image prompt for regeneration
+  imageGenerationType ImageGenerationType? // How the image was obtained
+  
+  // Content metadata
+  hashtags            String[]             @default([]) // Array of hashtags
+  isAIGenerated       Boolean              @default(false) // Track if post was AI-generated
+  
+  // Scheduling
+  scheduledAt         DateTime?            // When the post is scheduled to be published
+  createdAt           DateTime             @default(now())
+  publishedAt         DateTime?
 
-  analytics      Analytics?
+  analytics           Analytics?
 }
 
 model Preference {
@@ -88,4 +114,23 @@ model Analytics {
   comments    Int     @default(0)
   shares      Int     @default(0)
   fetchedAt   DateTime @default(now())
+}
+
+model Media {
+  id          String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id])
+  fileName    String
+  fileUrl     String    // Public or signed URL from R2
+  fileType    String    // MIME type (image/jpeg, video/mp4, etc.)
+  fileSize    Int       // Size in bytes
+  width       Int?      // For images/videos
+  height      Int?      // For images/videos
+  duration    Float?    // For videos (in seconds)
+  mediaType   MediaType @default(NONE) // 'image' or 'video'
+  uploadedAt  DateTime  @default(now())
+  expiresAt   DateTime? // Optional: for temporary files
+  
+  @@index([userId])
+  @@index([mediaType])
 }

@@ -35,7 +35,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 px-6 bg-gradient-to-b from-gray-50 to-white/80">
+    <section id="how" className="relative overflow-hidden py-16 sm:py-20 px-6 bg-gradient-to-b from-gray-50 to-white/80">
       <div className="absolute inset-0 -z-10 blur-3xl opacity-30">
         <div className="hidden sm:block absolute -left-40 top-0 w-[420px] h-[360px] bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-3xl rotate-12 opacity-60" />
         <div className="hidden sm:block absolute -right-40 bottom-0 w-[400px] h-[300px] bg-gradient-to-br from-pink-400 to-yellow-300 rounded-3xl -rotate-6 opacity-50" />

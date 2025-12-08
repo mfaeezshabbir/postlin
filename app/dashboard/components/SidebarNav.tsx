@@ -13,9 +13,11 @@ interface NavItem {
 export default function SidebarNav({
   items,
   isCollapsed,
+  onClose,
 }: {
   items: NavItem[];
   isCollapsed: boolean;
+  onClose?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,7 +32,10 @@ export default function SidebarNav({
           <button
             key={item.name}
             onClick={() => {
-              if (!isActive) router.push(item.href);
+              if (!isActive) {
+                router.push(item.href);
+                onClose?.();
+              }
             }}
             aria-current={isActive ? "page" : undefined}
             title={isCollapsed ? item.name : undefined}
