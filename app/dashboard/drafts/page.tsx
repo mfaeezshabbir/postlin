@@ -228,14 +228,6 @@ export default function DraftsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
-  }
-
   const drafts = draftsData?.drafts || [];
   const stats = draftsData?.stats || { total: 0, aiGenerated: 0, manual: 0 };
 
@@ -247,7 +239,7 @@ export default function DraftsPage() {
         stats={[
           {
             title: "Total Drafts",
-            value: stats.total,
+            value: loading ? 0 : stats.total,
           },
           {
             title: "AI Generated",
@@ -275,8 +267,13 @@ export default function DraftsPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
-            {drafts.length === 0 ? (
+        <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
+          {loading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading drafts...</p>
+            </div>
+          ) : drafts.length === 0 ? (
               <div className="text-center flex flex-col items-center justify-center mx-auto h-full">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                   <FileText className="h-8 w-8 text-gray-400" />

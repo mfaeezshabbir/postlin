@@ -101,14 +101,6 @@ export default function HistoryPage() {
     fetchPublishedPosts();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
-  }
-
   const posts = postsData?.posts || [];
   const stats = postsData?.stats || { total: 0, thisMonth: 0 };
 
@@ -117,10 +109,10 @@ export default function HistoryPage() {
       title="History"
       description="View your published LinkedIn posts"
       stats={[
-        { title: "Total Posts", value: stats.total },
+        { title: "Total Posts", value: loading ? 0 : stats.total },
         {
           title: "This Month",
-          value: stats.thisMonth,
+          value: loading ? 0 : stats.thisMonth,
         },
         {
           title: "Analytics",
@@ -136,7 +128,12 @@ export default function HistoryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
-          {posts.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading published posts...</p>
+            </div>
+          ) : posts.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                 <History className="h-8 w-8 text-gray-400" />
