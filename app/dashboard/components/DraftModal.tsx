@@ -578,6 +578,9 @@ export function DraftModal({
     <>
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="!max-w-[80vw] !w-[70vw] max-h-[95vh] p-0 gap-0 border-0 shadow-2xl overflow-hidden">
+          <DialogTitle className="sr-only">
+            {mode === "edit" ? "Edit Draft" : "Create New Post"}
+          </DialogTitle>
           {fetchingDraft ? (
             <div className="flex flex-col items-center justify-center py-20 px-6">
               <div className="relative mb-6">
