@@ -22,7 +22,7 @@ export default function SidebarMobile({
   const router = useRouter();
   return (
     <div className="flex flex-col h-full">
-      <SidebarNav items={items} isCollapsed={false} />
+      <SidebarNav items={items} isCollapsed={false} onClose={onClose} />
       <SidebarProfile user={user} />
       <SidebarFooter
         isCollapsed={false}
