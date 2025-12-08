@@ -74,15 +74,12 @@ export function getAuthOptions(): NextAuthOptions {
           // Handle Google OAuth
           if (provider === "google") {
             const googleId = account?.providerAccountId;
-            
+
             // Try to find existing user by googleId or email
             let dbUser = await prisma.user
               .findFirst({
                 where: {
-                  OR: [
-                    { googleId: googleId },
-                    { email: email },
-                  ],
+                  OR: [{ googleId: googleId }, { email: email }],
                 },
               })
               .catch(() => null);
@@ -117,7 +114,7 @@ export function getAuthOptions(): NextAuthOptions {
                   log.error("create user failed", e);
                   return null;
                 });
-              
+
               if (newUser) {
                 log.info("Google user created", { userId: newUser.id });
               }
@@ -219,23 +216,48 @@ export function getAuthOptions(): NextAuthOptions {
           return false;
         }
       },
-      // Attach database id, linkedInId, and access token to the session object
+      // Attach database id, googleId, linkedInId, and access token to the session object
       async session({ session, token }) {
         try {
           const email =
             session.user && session.user.email ? session.user.email : null;
-          if (!email) return session;
+          if (!email) {
+            log.warn("Session callback: No email in session");
+            return session;
+          }
+
+          log.info("Session callback: Looking up user", { email });
+
           const dbUser = await prisma.user
             .findUnique({ where: { email } })
-            .catch(() => null);
-          if (!dbUser) return session;
+            .catch((err: Error) => {
+              log.error("Session callback: Error finding user", {
+                email,
+                error: err,
+              });
+              return null;
+            });
+
+          if (!dbUser) {
+            log.warn("Session callback: User not found in database", { email });
+            return session;
+          }
+
+          log.info("Session callback: User found", {
+            userId: dbUser.id,
+            email,
+          });
+
           session.user = {
             id: dbUser.id,
             name: dbUser.name || (session.user ? session.user.name : undefined),
             email:
               dbUser.email || (session.user ? session.user.email : undefined),
+            googleId: dbUser.googleId || null,
             linkedInId: dbUser.linkedInId || null,
-            image: dbUser.image || (session.user ? (session.user as any).image : undefined),
+            image:
+              dbUser.image ||
+              (session.user ? (session.user as any).image : undefined),
           } as any;
           // Add access token to session
           (session as any).accessToken = token.accessToken;
@@ -251,7 +273,7 @@ export function getAuthOptions(): NextAuthOptions {
         if (url.startsWith("/")) return `${baseUrl}${url}`;
         // Allows callback URLs on the same origin
         else if (new URL(url).origin === baseUrl) return url;
-        
+
         // Default redirect for all sign-ins
         return `${baseUrl}/dashboard/drafts`;
       },

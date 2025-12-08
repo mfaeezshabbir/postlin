@@ -31,8 +31,9 @@ export default async function SettingsPage() {
   }
 
   // Fetch full user profile including connection status
+  // Use email as fallback if id is not available
   const fullProfile = await prisma.user.findUnique({
-    where: { id: user.id },
+    where: user.id ? { id: user.id } : { email: user.email! },
     select: {
       id: true,
       email: true,
