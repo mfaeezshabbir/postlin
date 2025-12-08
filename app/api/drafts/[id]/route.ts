@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { getAuthOptions } from '@/modules/auth';
 import prisma from '@/lib/prisma';
 import { log } from '@/lib/logger';
+import { constructPostUrls } from '@/lib/url-helper';
 
 /**
  * GET /api/drafts/[id]
@@ -51,7 +52,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      draft,
+      draft: constructPostUrls(draft),
     });
   } catch (error) {
     log.error('Error fetching draft:', error);

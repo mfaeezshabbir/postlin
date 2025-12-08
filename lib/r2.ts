@@ -45,6 +45,8 @@ export function generateFileName(userId: string, originalName: string, type: 'im
 
 /**
  * Upload file to R2
+ * Returns only the object key (not full URL)
+ * Full URL is constructed at runtime using R2_PUBLIC_URL env var
  */
 export async function uploadToR2(
   fileBuffer: Buffer,
@@ -61,18 +63,24 @@ export async function uploadToR2(
       })
     );
 
-    // Return the file URL
-    // If public URL is configured, use it; otherwise, we'll generate signed URLs on demand
-    if (R2_PUBLIC_URL) {
-      return `${R2_PUBLIC_URL}/${fileName}`;
-    }
-    
-    // Store the key; we'll generate signed URLs when needed
-    return `r2://${R2_BUCKET_NAME}/${fileName}`;
+    // Return only the object key
+    // The full URL will be constructed using R2_PUBLIC_URL env var at runtime
+    return fileName;
   } catch (error) {
     console.error('Error uploading to R2:', error);
     throw new Error('Failed to upload file to cloud storage');
   }
+}
+
+/**
+ * Construct full URL from object key
+ * Uses R2_PUBLIC_URL environment variable
+ */
+export function getFileUrl(objectKey: string): string {
+  if (!R2_PUBLIC_URL) {
+    throw new Error('R2_PUBLIC_URL is not configured');
+  }
+  return `${R2_PUBLIC_URL}/${objectKey}`;
 }
 
 /**
