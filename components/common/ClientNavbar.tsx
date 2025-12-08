@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import Logo from "../brand/Logo";
 
-export default function ClientNavbar({ user }: { user: any }) {
+export default function ClientNavbar({ user, isDashboard = false }: { user: any; isDashboard?: boolean }) {
   const [open, setOpen] = useState(false);
 
   const navLinks = [
@@ -14,7 +14,7 @@ export default function ClientNavbar({ user }: { user: any }) {
   ];
 
   return (
-    <nav id="global-navbar" className="sticky top-4 z-50 px-4">
+    <nav id="global-navbar" className={`sticky top-4 z-50 px-4 ${isDashboard ? "hidden" : ""}`}>
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-white/60 backdrop-blur-md border border-gray-200/40 shadow-sm">
           <Link href="/" className="flex items-center gap-3">

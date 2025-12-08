@@ -23,7 +23,10 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  // Set pathname in response headers for server components to read
+  response.headers.set('x-pathname', pathname);
+  return response;
 }
 
 export const config = {
