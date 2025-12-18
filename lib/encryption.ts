@@ -11,6 +11,11 @@ const TAG_LENGTH = 16; // 128 bits (authentication tag)
  */
 let cachedKey: Buffer | null = null;
 
+// Helper to reset cache for testing
+export const resetKeyCache = () => {
+  cachedKey = null;
+};
+
 /**
  * Get encryption key from environment variable
  * The key should be a base64-encoded 32-byte string

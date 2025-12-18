@@ -3,6 +3,7 @@ import {
   decryptApiKey,
   validateEncryption,
   generateEncryptionKey,
+  resetKeyCache,
 } from "@/lib/encryption";
 
 // Set up test encryption key
@@ -15,6 +16,7 @@ describe("Encryption", () => {
 
   afterAll(() => {
     delete process.env.GEMINI_KEYS_ENCRYPTION_KEY;
+    resetKeyCache();
   });
 
   describe("generateEncryptionKey", () => {
@@ -99,12 +101,14 @@ describe("Encryption", () => {
       const originalKey = process.env.GEMINI_KEYS_ENCRYPTION_KEY;
       const wrongKey = generateEncryptionKey();
       process.env.GEMINI_KEYS_ENCRYPTION_KEY = wrongKey;
+      resetKeyCache(); // Force reload of key
 
       try {
         expect(() => decryptApiKey(encrypted)).toThrow(/authentication failed/);
       } finally {
         // Restore key
         process.env.GEMINI_KEYS_ENCRYPTION_KEY = originalKey;
+        resetKeyCache(); // Ensure original key is reloaded
       }
     });
 
@@ -135,11 +139,13 @@ describe("Encryption", () => {
   describe("encryption without key", () => {
     it("should throw error when encryption key is not set", () => {
       delete process.env.GEMINI_KEYS_ENCRYPTION_KEY;
+      resetKeyCache(); // Force reload to see missing key
 
       expect(() => encryptApiKey("test")).toThrow(/GEMINI_KEYS_ENCRYPTION_KEY/);
 
       // Restore for other tests
       process.env.GEMINI_KEYS_ENCRYPTION_KEY = TEST_ENCRYPTION_KEY;
+      resetKeyCache();
     });
   });
 
