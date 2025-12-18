@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { getAuthOptions } from '@/modules/auth';
-import prisma from '@/lib/prisma';
-import { encryptApiKey, decryptApiKey } from '@/lib/encryption';
-import { log } from '@/lib/logger';
-import { GEMINI_API_KEY_MIN_LENGTH } from '@/lib/constants';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { getAuthOptions } from "@/modules/auth";
+import prisma from "@/lib/prisma";
+import { encryptApiKey, decryptApiKey } from "@/lib/encryption";
+import { log } from "@/lib/logger";
+import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
 
 /**
  * GET /api/gemini-key
@@ -15,10 +15,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(getAuthOptions());
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
@@ -31,10 +28,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -42,9 +36,9 @@ export async function GET(request: NextRequest) {
       geminiKeyAddedAt: user.geminiKeyAddedAt,
     });
   } catch (error) {
-    log.error('Error in GET /api/gemini-key:', error);
+    log.error("Error in GET /api/gemini-key:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -59,18 +53,15 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(getAuthOptions());
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     const { apiKey } = body;
 
-    if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
+    if (!apiKey || typeof apiKey !== "string" || apiKey.trim().length === 0) {
       return NextResponse.json(
-        { error: 'API key is required' },
+        { error: "API key is required" },
         { status: 400 }
       );
     }
@@ -79,7 +70,9 @@ export async function POST(request: NextRequest) {
     const trimmedKey = apiKey.trim();
     if (trimmedKey.length < GEMINI_API_KEY_MIN_LENGTH) {
       return NextResponse.json(
-        { error: `API key must be at least ${GEMINI_API_KEY_MIN_LENGTH} characters` },
+        {
+          error: `API key must be at least ${GEMINI_API_KEY_MIN_LENGTH} characters`,
+        },
         { status: 400 }
       );
     }
@@ -89,9 +82,9 @@ export async function POST(request: NextRequest) {
     try {
       encryptedKey = encryptApiKey(trimmedKey);
     } catch (error) {
-      log.error('Failed to encrypt API key:', error);
+      log.error("Failed to encrypt API key:", error);
       return NextResponse.json(
-        { error: 'Failed to encrypt API key. Check server configuration.' },
+        { error: "Failed to encrypt API key. Check server configuration." },
         { status: 500 }
       );
     }
@@ -109,17 +102,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    log.info('Gemini API key added/updated', { userId: user.id });
+    log.info("Gemini API key added/updated", { userId: user.id });
 
     return NextResponse.json({
       success: true,
-      message: 'Gemini API key saved successfully',
+      message: "Gemini API key saved successfully",
       geminiKeyAddedAt: user.geminiKeyAddedAt,
     });
   } catch (error) {
-    log.error('Error in POST /api/gemini-key:', error);
+    log.error("Error in POST /api/gemini-key:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -134,10 +127,7 @@ export async function DELETE(request: NextRequest) {
     const session = await getServerSession(getAuthOptions());
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await prisma.user.update({
@@ -151,39 +141,17 @@ export async function DELETE(request: NextRequest) {
       },
     });
 
-    log.info('Gemini API key deleted', { userId: user.id });
+    log.info("Gemini API key deleted", { userId: user.id });
 
     return NextResponse.json({
       success: true,
-      message: 'Gemini API key removed successfully',
+      message: "Gemini API key removed successfully",
     });
   } catch (error) {
-    log.error('Error in DELETE /api/gemini-key:', error);
+    log.error("Error in DELETE /api/gemini-key:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
-  }
-}
-
-/**
- * Helper function to get decrypted Gemini API key for a user
- * This should be used by other API endpoints that need the key
- */
-export async function getUserGeminiKey(userId: string): Promise<string | null> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { geminiApiKeyEncrypted: true },
-    });
-
-    if (!user?.geminiApiKeyEncrypted) {
-      return null;
-    }
-
-    return decryptApiKey(user.geminiApiKeyEncrypted);
-  } catch (error) {
-    log.error('Error getting user Gemini key:', error);
-    return null;
   }
 }
