@@ -4,15 +4,23 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import Logo from "@/components/brand/Logo";
 import { CheckCircle, Linkedin, Key, Loader2, AlertCircle } from "lucide-react";
 import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
 
 export default function OnboardingPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
-  const [step, setStep] = useState<"welcome" | "linkedin" | "gemini">("welcome");
+  const [step, setStep] = useState<"welcome" | "linkedin" | "gemini">(
+    "welcome"
+  );
   const [geminiKey, setGeminiKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,15 +40,21 @@ export default function OnboardingPage() {
         if (response.ok) {
           const data = await response.json();
           setProfile(data);
-          
+
           // Skip to appropriate step based on existing setup
           if (!data.linkedInConnected && step === "welcome") {
             // Stay on welcome or move to LinkedIn step
-          } else if (data.linkedInConnected && !data.hasGeminiKey && step === "welcome") {
+          } else if (
+            data.linkedInConnected &&
+            !data.hasGeminiKey &&
+            step === "welcome"
+          ) {
             setStep("gemini");
           } else if (data.hasGeminiKey) {
             // Already fully onboarded, redirect to dashboard
             router.push("/dashboard/drafts");
+          } else if (data.linkedInConnected && !data.hasGeminiKey) {
+            setStep("gemini");
           }
         }
       } catch (err) {
@@ -51,7 +65,7 @@ export default function OnboardingPage() {
     if (status === "authenticated") {
       fetchProfile();
     }
-  }, [status, router, step]);
+  }, [status, router]);
 
   const handleSkipLinkedIn = () => {
     setStep("gemini");
@@ -65,7 +79,9 @@ export default function OnboardingPage() {
 
   const handleSaveGeminiKey = async () => {
     if (!geminiKey || geminiKey.trim().length < GEMINI_API_KEY_MIN_LENGTH) {
-      setError(`Please enter a valid Gemini API key (minimum ${GEMINI_API_KEY_MIN_LENGTH} characters)`);
+      setError(
+        `Please enter a valid Gemini API key (minimum ${GEMINI_API_KEY_MIN_LENGTH} characters)`
+      );
       return;
     }
 
@@ -87,7 +103,8 @@ export default function OnboardingPage() {
         // Success! Redirect to dashboard
         router.push("/dashboard/drafts");
       } else {
-        setError(data.error || "Failed to save API key");
+        // Avoid displaying raw server error messages to the user to prevent leaking internal details.
+        setError("We couldn't save your Gemini API key. Please try again.");
         setLoading(false);
       }
     } catch (err) {
@@ -122,25 +139,63 @@ export default function OnboardingPage() {
 
         {/* Progress indicators */}
         <div className="flex items-center justify-center gap-4 mb-8">
-          <div className={`flex items-center gap-2 ${step === "welcome" ? "text-blue-600" : "text-gray-400"}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "welcome" ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
+          <div
+            className={`flex items-center gap-2 ${
+              step === "welcome" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                step === "welcome" ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
               1
             </div>
-            <span className="text-sm font-medium hidden sm:inline">Welcome</span>
+            <span className="text-sm font-medium hidden sm:inline">
+              Welcome
+            </span>
           </div>
           <div className="w-12 h-0.5 bg-gray-300"></div>
-          <div className={`flex items-center gap-2 ${step === "linkedin" ? "text-blue-600" : "text-gray-400"}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "linkedin" ? "bg-blue-600 text-white" : step === "gemini" ? "bg-green-500 text-white" : "bg-gray-200"}`}>
-              {step === "gemini" || (profile?.linkedInConnected) ? <CheckCircle className="w-5 h-5" /> : "2"}
+          <div
+            className={`flex items-center gap-2 ${
+              step === "linkedin" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                step === "linkedin"
+                  ? "bg-blue-600 text-white"
+                  : step === "gemini"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              {step === "gemini" || profile?.linkedInConnected ? (
+                <CheckCircle className="w-5 h-5" />
+              ) : (
+                "2"
+              )}
             </div>
-            <span className="text-sm font-medium hidden sm:inline">LinkedIn</span>
+            <span className="text-sm font-medium hidden sm:inline">
+              LinkedIn
+            </span>
           </div>
           <div className="w-12 h-0.5 bg-gray-300"></div>
-          <div className={`flex items-center gap-2 ${step === "gemini" ? "text-blue-600" : "text-gray-400"}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "gemini" ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
+          <div
+            className={`flex items-center gap-2 ${
+              step === "gemini" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                step === "gemini" ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
               3
             </div>
-            <span className="text-sm font-medium hidden sm:inline">AI Setup</span>
+            <span className="text-sm font-medium hidden sm:inline">
+              AI Setup
+            </span>
           </div>
         </div>
 
@@ -162,7 +217,8 @@ export default function OnboardingPage() {
                       You're signed in with Google
                     </h3>
                     <p className="text-sm text-blue-700 mt-1">
-                      Your account is ready. Now let's connect the services you need.
+                      Your account is ready. Now let's connect the services you
+                      need.
                     </p>
                   </div>
                 </div>
@@ -188,7 +244,8 @@ export default function OnboardingPage() {
                 Connect LinkedIn (Optional)
               </CardTitle>
               <CardDescription>
-                Connect your LinkedIn account to publish posts directly from Postlin
+                Connect your LinkedIn account to publish posts directly from
+                Postlin
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -225,8 +282,9 @@ export default function OnboardingPage() {
                   </ul>
                   <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
                     <p className="text-sm text-amber-800">
-                      <strong>Note:</strong> You can skip this step and connect LinkedIn later
-                      from settings. You'll still be able to create posts and copy them manually.
+                      <strong>Note:</strong> You can skip this step and connect
+                      LinkedIn later from settings. You'll still be able to
+                      create posts and copy them manually.
                     </p>
                   </div>
                 </div>
@@ -261,10 +319,7 @@ export default function OnboardingPage() {
                   </Button>
                 )}
                 {profile?.linkedInConnected && (
-                  <Button
-                    onClick={() => setStep("gemini")}
-                    className="flex-1"
-                  >
+                  <Button onClick={() => setStep("gemini")} className="flex-1">
                     Continue
                   </Button>
                 )}
@@ -292,8 +347,9 @@ export default function OnboardingPage() {
                     Why do I need a Gemini API key?
                   </h3>
                   <p className="text-sm text-blue-700">
-                    Postlin uses Google's Gemini AI to help you generate high-quality
-                    LinkedIn posts. You'll need your own API key to use these features.
+                    Postlin uses Google's Gemini AI to help you generate
+                    high-quality LinkedIn posts. You'll need your own API key to
+                    use these features.
                   </p>
                 </div>
 
@@ -302,7 +358,17 @@ export default function OnboardingPage() {
                     How to get a Gemini API key:
                   </h3>
                   <ol className="space-y-2 text-sm text-gray-700 list-decimal list-inside">
-                    <li>Visit <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a></li>
+                    <li>
+                      Visit{" "}
+                      <a
+                        href="https://makersuite.google.com/app/apikey"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Google AI Studio
+                      </a>
+                    </li>
                     <li>Sign in with your Google account</li>
                     <li>Click "Get API Key" or "Create API Key"</li>
                     <li>Copy your API key and paste it below</li>
@@ -310,7 +376,10 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="geminiKey" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="geminiKey"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Gemini API Key *
                   </label>
                   <input
@@ -321,9 +390,11 @@ export default function OnboardingPage() {
                     placeholder="AIzaSy..."
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={loading}
+                    autoComplete="off"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Your API key is encrypted and stored securely. We never share it.
+                    Your API key is encrypted and stored securely. We never
+                    share it.
                   </p>
                 </div>
 
@@ -356,7 +427,10 @@ export default function OnboardingPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-500 mt-6">
-          Need help? <a href="/support" className="text-blue-600 hover:underline">Contact Support</a>
+          Need help?{" "}
+          <a href="/support" className="text-blue-600 hover:underline">
+            Contact Support
+          </a>
         </p>
       </div>
     </div>

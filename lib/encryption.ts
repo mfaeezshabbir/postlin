@@ -7,10 +7,19 @@ const NONCE_LENGTH = 12; // 96 bits (recommended for GCM)
 const TAG_LENGTH = 16; // 128 bits (authentication tag)
 
 /**
+ * Cached encryption key to avoid re-parsing on every operation
+ */
+let cachedKey: Buffer | null = null;
+
+/**
  * Get encryption key from environment variable
  * The key should be a base64-encoded 32-byte string
  */
 function getEncryptionKey(): Buffer {
+  if (cachedKey) {
+    return cachedKey;
+  }
+
   const keyEnv = process.env.GEMINI_KEYS_ENCRYPTION_KEY;
 
   if (!keyEnv) {
@@ -24,12 +33,13 @@ function getEncryptionKey(): Buffer {
         `Encryption key must be ${KEY_LENGTH} bytes (base64-encoded)`
       );
     }
+    cachedKey = key;
     return key;
   } catch (error) {
-    // Log original error for debugging but don't expose sensitive details
+    // Log a generic error to avoid leaking sensitive details
     console.error(
-      "Error loading encryption key:",
-      error instanceof Error ? error.message : "Unknown error"
+      "Error loading encryption key. Please verify GEMINI_KEYS_ENCRYPTION_KEY is correctly configured.",
+      error instanceof Error ? error.name : "UnknownError"
     );
     throw new Error(
       "Invalid GEMINI_KEYS_ENCRYPTION_KEY format. Must be base64-encoded 32 bytes."

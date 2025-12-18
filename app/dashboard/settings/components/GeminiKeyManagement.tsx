@@ -1,18 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Key, Loader2, CheckCircle, XCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
+import {
+  Key,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface GeminiKeyManagementProps {
   initialHasKey: boolean;
   initialKeyAddedAt?: Date | null;
 }
 
-export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }: GeminiKeyManagementProps) {
+export default function GeminiKeyManagement({
+  initialHasKey,
+  initialKeyAddedAt,
+}: GeminiKeyManagementProps) {
   const [hasKey, setHasKey] = useState(initialHasKey);
   const [keyAddedAt, setKeyAddedAt] = useState(initialKeyAddedAt);
   const [isEditing, setIsEditing] = useState(false);
@@ -21,10 +46,13 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleSave = async () => {
     if (!apiKey || apiKey.trim().length < GEMINI_API_KEY_MIN_LENGTH) {
-      setError(`Please enter a valid Gemini API key (minimum ${GEMINI_API_KEY_MIN_LENGTH} characters)`);
+      setError(
+        `Please enter a valid Gemini API key (minimum ${GEMINI_API_KEY_MIN_LENGTH} characters)`
+      );
       return;
     }
 
@@ -48,9 +76,23 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
         setKeyAddedAt(data.geminiKeyAddedAt);
         setIsEditing(false);
         setApiKey("");
-        setSuccess(hasKey ? "Gemini API key updated successfully" : "Gemini API key added successfully");
+        setSuccess(
+          hasKey
+            ? "Gemini API key updated successfully"
+            : "Gemini API key added successfully"
+        );
       } else {
-        setError(data.error || "Failed to save API key");
+        // Sanitize error messages to avoid exposing technical details
+        const isTechnicalError =
+          data.error?.toLowerCase().includes("encrypt") ||
+          data.error?.toLowerCase().includes("server") ||
+          data.error?.toLowerCase().includes("database");
+
+        setError(
+          isTechnicalError
+            ? "An unexpected system error occurred. Please try again later."
+            : data.error || "Failed to save API key"
+        );
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
@@ -59,11 +101,12 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to remove your Gemini API key? AI-powered features will be disabled until you add a new key.")) {
-      return;
-    }
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    setShowDeleteDialog(false);
     setLoading(true);
     setError("");
     setSuccess("");
@@ -133,7 +176,10 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
                       )}
                     </>
                   ) : (
-                    <Badge variant="outline" className="text-amber-600 border-amber-300">
+                    <Badge
+                      variant="outline"
+                      className="text-amber-600 border-amber-300"
+                    >
                       <AlertCircle className="w-3 h-3 mr-1" />
                       Not configured
                     </Badge>
@@ -143,7 +189,7 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
               <div className="flex gap-2">
                 {hasKey && (
                   <Button
-                    onClick={handleDelete}
+                    onClick={handleDeleteClick}
                     variant="outline"
                     size="sm"
                     disabled={loading}
@@ -176,7 +222,10 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
           <>
             <div className="space-y-4">
               <div>
-                <label htmlFor="geminiKey" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="geminiKey"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Gemini API Key *
                 </label>
                 <div className="relative">
@@ -188,17 +237,23 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
                     placeholder="AIzaSy..."
                     className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={loading}
+                    autoComplete="off"
                   />
                   <button
                     type="button"
                     onClick={() => setShowKey(!showKey)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showKey ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Your API key is encrypted and stored securely. We never share it with third parties.
+                  Your API key is encrypted and stored securely. We never share
+                  it with third parties.
                 </p>
               </div>
 
@@ -261,12 +316,48 @@ export default function GeminiKeyManagement({ initialHasKey, initialKeyAddedAt }
         {hasKey && !isEditing && (
           <div className="p-4 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">
-              Your Gemini API key is configured and AI-powered features are enabled.
-              You can generate content, optimize posts, and more.
+              Your Gemini API key is configured and AI-powered features are
+              enabled. You can generate content, optimize posts, and more.
             </p>
           </div>
         )}
       </CardContent>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Gemini API Key?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove your Gemini API key? AI-powered
+              features will be disabled until you add a new key.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                "Remove Key"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

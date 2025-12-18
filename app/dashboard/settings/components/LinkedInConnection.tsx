@@ -2,7 +2,22 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Linkedin, Loader2, CheckCircle, XCircle } from "lucide-react";
 
@@ -11,11 +26,16 @@ interface LinkedInConnectionProps {
   linkedInId?: string | null;
 }
 
-export default function LinkedInConnection({ initialConnected, linkedInId }: LinkedInConnectionProps) {
+export default function LinkedInConnection({
+  initialConnected,
+  linkedInId,
+}: LinkedInConnectionProps) {
   const [connected, setConnected] = useState(initialConnected);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const [success, setSuccess] = useState("");
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   const handleConnect = () => {
     setLoading(true);
@@ -23,10 +43,12 @@ export default function LinkedInConnection({ initialConnected, linkedInId }: Lin
     window.location.href = "/api/linkedin/connect";
   };
 
-  const handleDisconnect = async () => {
-    if (!confirm("Are you sure you want to disconnect your LinkedIn account? You won't be able to auto-publish posts until you reconnect.")) {
-      return;
-    }
+  const handleDisconnectClick = () => {
+    setShowDisconnectDialog(true);
+  };
+
+  const handleDisconnectConfirm = async () => {
+    setShowDisconnectDialog(false);
 
     setLoading(true);
     setError("");
@@ -96,7 +118,7 @@ export default function LinkedInConnection({ initialConnected, linkedInId }: Lin
           <div>
             {connected ? (
               <Button
-                onClick={handleDisconnect}
+                onClick={handleDisconnectClick}
                 variant="outline"
                 disabled={loading}
                 className="text-red-600 border-red-300 hover:bg-red-50"
@@ -154,6 +176,45 @@ export default function LinkedInConnection({ initialConnected, linkedInId }: Lin
           </p>
         </div>
       </CardContent>
+
+      <Dialog
+        open={showDisconnectDialog}
+        onOpenChange={setShowDisconnectDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Disconnect LinkedIn Account?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to disconnect your LinkedIn account? You
+              won't be able to auto-publish posts until you reconnect.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDisconnectDialog(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDisconnectConfirm}
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Disconnecting...
+                </>
+              ) : (
+                "Disconnect"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

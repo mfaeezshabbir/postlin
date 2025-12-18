@@ -52,7 +52,9 @@ export function DraftModal({
   draftId,
 }: DraftModalProps) {
   const { push } = useToasts();
-  const { profile } = useUserProfile();
+  const { profile, loading: profileLoading } = useUserProfile();
+
+  const isGeminiEnabled = !profileLoading && !!profile?.features?.canUseGemini;
 
   // Main states
   const [creationMode, setCreationMode] = useState<"choose" | "manual" | "ai">(
@@ -903,19 +905,19 @@ export function DraftModal({
                     {/* AI Generation Card */}
                     <button
                       onClick={() => setCreationMode("ai")}
-                      disabled={!profile?.features.canUseGemini}
+                      disabled={!isGeminiEnabled}
                       title={
-                        !profile?.features.canUseGemini
+                        !isGeminiEnabled
                           ? "Add your Gemini API key in settings to unlock AI features"
                           : ""
                       }
                       className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
-                        profile?.features.canUseGemini
+                        isGeminiEnabled
                           ? "border-gray-200 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"
                           : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
                       }`}
                     >
-                      {!profile?.features.canUseGemini && (
+                      {!isGeminiEnabled && (
                         <div className="absolute top-4 right-4 bg-amber-100 rounded-full p-2">
                           <Lock className="w-4 h-4 text-amber-600" />
                         </div>
