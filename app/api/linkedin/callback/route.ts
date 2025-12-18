@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { getAuthOptions } from "@/modules/auth";
 import { log } from "@/lib/logger";
 import prisma from "@/lib/prisma";
+import { decryptApiKey } from "@/lib/encryption";
 
 /**
  * GET /api/linkedin/callback
@@ -42,9 +43,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify state to prevent CSRF
-    if (!storedState || storedState !== returnedState) {
+    // The stored state is encrypted, so we must decrypt it first
+    let decryptedStoredState: string | null = null;
+    try {
+      if (storedState) {
+        decryptedStoredState = decryptApiKey(storedState);
+      }
+    } catch (e) {
+      log.error("Failed to decrypt stored LinkedIn state cookie", e);
+      // If decryption fails, the cookie is invalid/tampered
+    }
+
+    if (!decryptedStoredState || decryptedStoredState !== returnedState) {
       log.error("LinkedIn OAuth state mismatch", {
-        expected: storedState,
+        expected: decryptedStoredState
+          ? "valid_state"
+          : "invalid/missing_state",
         received: returnedState,
         userId: session.user.email,
       });
@@ -156,6 +170,10 @@ export async function GET(request: NextRequest) {
 
       // If we fail to get profile, we can still save the token!
       log.warn("Proceeding with token save despite profile fetch failure");
+      // Previously we proceeded despite profile fetch failure, which could silently
+      // create partially linked accounts. Now we treat this as a fatal error so that
+      // the outer handler can surface an appropriate error state to the user.
+      throw new Error("Failed to fetch LinkedIn profile");
     }
 
     // If we didn't get linkedInId, we can't update that specific field, but we can save the token.

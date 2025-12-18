@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { getAuthOptions } from "@/modules/auth";
 import { log } from "@/lib/logger";
 import { randomBytes } from "crypto";
+import { encryptApiKey } from "@/lib/encryption";
 
 /**
  * GET /api/linkedin/connect
@@ -47,8 +48,12 @@ export async function GET(request: NextRequest) {
     // Create response with redirect
     const response = NextResponse.redirect(linkedInAuthUrl.toString());
 
-    // Store state and callback URL in secure HTTP-only cookies
-    response.cookies.set("linkedin_oauth_state", state, {
+    // Store encrypted state and callback URL in secure HTTP-only cookies
+    // We use encryptApiKey as a generic secure encryption utility here to ensure
+    // the state cookie cannot be tampered with (authenticity check via GCM auth tag)
+    const encryptedState = encryptApiKey(state);
+
+    response.cookies.set("linkedin_oauth_state", encryptedState, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
