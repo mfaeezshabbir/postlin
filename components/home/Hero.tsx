@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 interface HeroProps {
   isAuthenticated?: boolean;
@@ -7,161 +7,136 @@ interface HeroProps {
 
 export default function Hero({ isAuthenticated }: HeroProps) {
   return (
-    <section className="relative overflow-hidden px-4 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 -z-10 blur-3xl opacity-30">
-        {/* large decorative accents hidden on very small screens */}
-        <div className="hidden sm:block absolute -left-40 top-0 w-[520px] h-[420px] bg-gradient-to-tr from-blue-600 to-purple-600 rounded-3xl transform rotate-12 opacity-70"></div>
-        <div className="hidden sm:block absolute -right-40 bottom-0 w-[420px] h-[320px] bg-gradient-to-br from-rose-400 to-yellow-300 rounded-3xl transform -rotate-6 opacity-60"></div>
-
-        {/* small decorative accent for XS */}
-        <div className="sm:hidden absolute left-0 top-0 w-40 h-32 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-2xl opacity-40 transform rotate-6"></div>
+    <section className="relative overflow-hidden px-4 sm:px-6 lg:px-8 pt-32 pb-24 lg:pt-40 lg:pb-32 bg-[#FFFDF5]">
+      {/* Sunrise Background Gradients */}
+      <div className="absolute inset-0 z-0 bg-[#FFFDF5]">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-yellow-200/40 via-orange-100/30 to-transparent rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
+        <div className="absolute top-[10%] left-[-10%] w-[600px] h-[600px] bg-gradient-to-tr from-cyan-200/40 via-blue-100/30 to-transparent rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-[-10%] left-[30%] w-[700px] h-[700px] bg-gradient-to-t from-pink-200/40 via-rose-100/30 to-transparent rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="container mx-auto px-6 max-w-7xl">
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-10">
-          {/* Left: Content */}
-          <div className="w-full lg:w-1/2 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <span className="px-3 py-1 rounded-full bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 text-sm font-medium">
-                New · AI-first LinkedIn toolkit
-              </span>
-              <span className="text-sm text-gray-400 hidden sm:inline">
-                No credit card • Easy setup
-              </span>
+      <div className="container mx-auto max-w-7xl text-center relative z-10">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 mb-8 px-5 py-2 rounded-full bg-white border border-yellow-200 shadow-[0_2px_10px_rgba(250,204,21,0.15)] backdrop-blur-sm animate-fade-in-up hover:scale-105 transition-transform cursor-default">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+          </span>
+          <span className="text-sm font-bold text-slate-800 tracking-wide">
+            Experience Your First Win with Postlin.
+          </span>
+        </div>
+
+        {/* Headlines */}
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-8 animate-fade-in-up delay-100 drop-shadow-sm">
+          Stop Scrolling, <br className="hidden sm:block" />
+          <span className="relative inline-block">
+            <span className="relative z-10">Start Growing on LinkedIn</span>
+            {/* Highlight Decoration */}
+            <div className="absolute -inset-1 top-auto h-4 bg-yellow-200/60 -skew-y-2 -z-0 rounded-full"></div>
+          </span>
+        </h1>
+
+        <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto mb-16 leading-relaxed animate-fade-in-up delay-200 font-medium">
+          Your audience is waiting for your authentic voice. Let Postlin amplify
+          it and turn views into inbound opportunities.
+        </p>
+
+        {/* 3-Step Process Visualization with Sunrise Palette */}
+        <div className="relative max-w-6xl mx-auto mb-16 animate-fade-in-up delay-300 perspective-1000">
+          {/* Connecting Arrows (Desktop) */}
+          <div className="hidden md:flex absolute top-1/2 left-0 right-0 -translate-y-1/2 justify-between px-[20%] pointer-events-none z-20">
+            <ArrowRight className="w-6 h-6 text-slate-300/80" />
+            <ArrowRight className="w-6 h-6 text-slate-300/80" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            {/* Step 1: Share Idea (Green/Teal for "Go") */}
+            <div className="group relative bg-[#F0FDF4] rounded-[2.5rem] p-8 hover:-translate-y-2 transition-all duration-300 border border-transparent hover:border-green-100 hover:shadow-[0_20px_40px_-15px_rgba(22,163,74,0.1)]">
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  1. Share Your Idea
+                </h3>
+              </div>
+
+              {/* Visual */}
+              <div className="bg-white rounded-3xl p-6 h-48 flex flex-col justify-center items-center text-center shadow-sm relative overflow-hidden">
+                <div className="w-full h-full bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-4 flex flex-col items-start gap-2 relative">
+                  <span className="text-xs text-slate-400 font-medium">
+                    Enter your idea as text...
+                  </span>
+                  <div className="w-16 h-1 bg-slate-200 rounded-full"></div>
+                  <div className="w-full h-1 bg-slate-100 rounded-full"></div>
+                  <div className="w-2/3 h-1 bg-slate-100 rounded-full"></div>
+
+                  <div className="absolute bottom-3 right-3 w-8 h-8 bg-green-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-green-400/30">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-              Write smarter. Schedule easier.
-              <br />
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                The modern LinkedIn assistant
-              </span>
-            </h1>
+            {/* Step 2: Generate & Refine (Blue/Sky for "Intelligence") - Sunrise Style */}
+            <div className="group relative bg-[#F0F9FF] rounded-[2.5rem] p-8 hover:-translate-y-2 transition-all duration-300 border border-transparent hover:border-sky-100 hover:shadow-[0_20px_40px_-15px_rgba(2,132,199,0.1)]">
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  2. Generate & Refine
+                </h3>
+              </div>
 
-            <p className="mt-6 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0">
-              Generate engaging post ideas, polish your voice with AI, and
-              automate publishing — all with deep analytics and LinkedIn-native
-              workflows.
-            </p>
-
-            <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start w-full">
-              <Link
-                href={isAuthenticated ? "/dashboard/drafts" : "/login"}
-                className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold shadow-lg hover:scale-[1.02] transition-transform justify-center w-full sm:w-auto"
-                aria-label={
-                  isAuthenticated ? "Go to Dashboard" : "Get Started Free"
-                }
-              >
-                <span>
-                  {isAuthenticated
-                    ? "Open Dashboard"
-                    : "Get Started — it's free"}
-                </span>
-                <ArrowRight className="w-4 h-4 opacity-90" />
-              </Link>
-
-              <a
-                href="#features"
-                className="inline-flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-slate-800 rounded-full font-medium shadow-sm hover:shadow-md transition justify-center w-full sm:w-auto"
-                aria-label="Learn more"
-              >
-                Learn more
-                <ChevronDown className="w-4 h-4" />
-              </a>
+              {/* Visual */}
+              <div className="bg-white rounded-3xl p-4 h-48 flex items-center justify-center gap-2 shadow-sm relative overflow-hidden">
+                <div className="flex-1 flex flex-col items-center gap-2 bg-slate-50 p-2 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    Before
+                  </span>
+                  <div className="w-full h-16 bg-white border border-slate-100 rounded-lg shadow-sm"></div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-sky-400" />
+                <div className="flex-1 flex flex-col items-center gap-2 bg-sky-50 p-2 rounded-xl border border-sky-100">
+                  <span className="text-[10px] font-bold text-sky-600 uppercase">
+                    Predicted
+                  </span>
+                  <div className="flex items-end gap-1 h-16 pb-1">
+                    <div className="w-2 bg-sky-300 h-6 rounded-t-sm"></div>
+                    <div className="w-2 bg-sky-500 h-10 rounded-t-sm"></div>
+                    <div className="w-2 bg-sky-400 h-8 rounded-t-sm"></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3 justify-center lg:justify-start text-sm text-gray-500">
-              <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur rounded-full px-3 py-1 border border-gray-100 shadow-sm">
-                <strong className="text-slate-800">AI Drafts</strong>
-                <span className="text-xs text-gray-400">Polish your voice</span>
+            {/* Step 3: Publish (Warm Orange/Pink for "Celebration") */}
+            <div className="group relative bg-[#FFF7ED] rounded-[2.5rem] p-8 hover:-translate-y-2 transition-all duration-300 border border-transparent hover:border-orange-100 hover:shadow-[0_20px_40px_-15px_rgba(234,88,12,0.1)]">
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  3. Publish & Celebrate
+                </h3>
               </div>
-              <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur rounded-full px-3 py-1 border border-gray-100 shadow-sm">
-                <strong className="text-slate-800">Scheduler</strong>
-                <span className="text-xs text-gray-400">
-                  Auto-post at peak times
+
+              {/* Visual */}
+              <div className="bg-white rounded-3xl p-6 h-48 flex flex-col justify-center items-center text-center shadow-sm relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/confetti-doodles.png')] opacity-10"></div>
+                <div className="w-16 h-16 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/20 mb-3 transform rotate-3 transition-transform group-hover:rotate-12">
+                  <Sparkles className="w-8 h-8" />
+                </div>
+                <p className="font-bold text-slate-800">Post Published!</p>
+                <span className="text-xs text-orange-500 font-medium mt-1">
+                  View Live
                 </span>
-              </div>
-              <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur rounded-full px-3 py-1 border border-gray-100 shadow-sm">
-                <strong className="text-slate-800">Analytics</strong>
-                <span className="text-xs text-gray-400">Understand growth</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right: Mockup / Visual */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative z-50">
-            <div
-              className="relative w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[520px] rounded-2xl bg-gradient-to-b from-white/80 to-white/60 border border-gray-100 shadow-2xl p-4"
-              aria-hidden
-            >
-              {/* Header of mockup */}
-              <div className="flex items-center justify-between px-3 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-red-400 rounded-full"></span>
-                  <span className="w-3 h-3 bg-yellow-400 rounded-full"></span>
-                  <span className="w-3 h-3 bg-green-400 rounded-full"></span>
-                </div>
-                <div className="text-xs text-gray-400">Post Preview</div>
-              </div>
-
-              {/* Post card */}
-              <div className="p-4 rounded-xl bg-gradient-to-b from-slate-50 to-white shadow-inner">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 flex items-center justify-center text-white font-bold">
-                    AI
-                  </div>
-                  <div className="flex-1">
-                    <div className="h-3 bg-slate-200 rounded-full w-3/4 mb-3"></div>
-                    <div className="h-2 bg-slate-100 rounded-full w-full mb-2"></div>
-                    <div className="h-2 bg-slate-100 rounded-full w-5/6"></div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
-                  <div>Scheduled • Tomorrow · 9:00 AM</div>
-                  <div className="inline-flex items-center gap-2 bg-white/50 px-2 py-1 rounded-full border text-slate-600">
-                    <svg
-                      className="w-3 h-3"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M7 7h10M7 12h6"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Edit
-                  </div>
-                </div>
-              </div>
-
-              {/* small stats */}
-              <div className="mt-4 grid grid-cols-3 gap-3 text-xs text-gray-500">
-                <div className="text-center">
-                  <div className="text-sm font-semibold text-slate-800">
-                    1.2k
-                  </div>
-                  <div className="mt-1">Impressions</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm font-semibold text-slate-800">
-                    240
-                  </div>
-                  <div className="mt-1">Engagements</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm font-semibold text-slate-800">18</div>
-                  <div className="mt-1">Comments</div>
-                </div>
-              </div>
-            </div>
-
-            {/* subtle floating accent */}
-            <div className="hidden lg:block absolute right-6 lg:right-24 top-12 lg:top-16 w-36 h-24 bg-white/40 rounded-2xl blur-md opacity-60 transform rotate-6"></div>
-          </div>
+        {/* CTA Button */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-500">
+          <Link
+            href={isAuthenticated ? "/dashboard" : "/register"}
+            className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#4B6BFB] text-white rounded-2xl font-bold text-lg shadow-[0_10px_30px_-10px_rgba(75,107,251,0.4)] hover:shadow-[0_20px_40px_-15px_rgba(75,107,251,0.5)] hover:-translate-y-1 transition-all w-full sm:w-auto"
+          >
+            {isAuthenticated ? "Go to Dashboard" : "Get Started for Free"}
+          </Link>
         </div>
       </div>
     </section>

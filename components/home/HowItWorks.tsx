@@ -1,77 +1,207 @@
 "use client";
 
-import { Link2, Sparkles, Edit3, BarChart3 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export default function HowItWorks() {
-  const steps = [
-    {
-      id: 1,
-      title: "Connect LinkedIn",
-      desc: "Sign in securely and give posting access with one click.",
-      icon: Link2,
-      gradient: "from-blue-500 to-indigo-500",
-    },
-    {
-      id: 2,
-      title: "AI Generate Drafts",
-      desc: "Get AI-powered ideas and tailored post variants instantly.",
-      icon: Sparkles,
-      gradient: "from-emerald-400 to-green-500",
-    },
-    {
-      id: 3,
-      title: "Review & Edit",
-      desc: "Polish your drafts, add hashtags, or schedule for later.",
-      icon: Edit3,
-      gradient: "from-amber-400 to-orange-500",
-    },
-    {
-      id: 4,
-      title: "Publish & Analyze",
-      desc: "Post or schedule while tracking engagement in real time.",
-      icon: BarChart3,
-      gradient: "from-pink-500 to-rose-600",
-    },
-  ];
-
   return (
-    <section id="how" className="relative overflow-hidden py-16 sm:py-20 px-6 bg-gradient-to-b from-gray-50 to-white/80">
-      <div className="absolute inset-0 -z-10 blur-3xl opacity-30">
-        <div className="hidden sm:block absolute -left-40 top-0 w-[420px] h-[360px] bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-3xl rotate-12 opacity-60" />
-        <div className="hidden sm:block absolute -right-40 bottom-0 w-[400px] h-[300px] bg-gradient-to-br from-pink-400 to-yellow-300 rounded-3xl -rotate-6 opacity-50" />
-      </div>
-
-      <div className="max-w-6xl mx-auto text-center">
-        <header className="mb-12">
-          <p className="text-sm font-medium uppercase tracking-wider text-indigo-600 mb-2">
-            Simple, powerful workflow
-          </p>
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900">
-            How it works — craft and publish in minutes
+    <section id="how" className="relative py-24 bg-white overflow-hidden">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-4">
+            How it works
           </h2>
-          <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
-            Connect your account, let AI generate posts, refine them, and
-            publish or schedule — all while tracking performance.
+          <p className="text-slate-600 max-w-2xl mx-auto text-lg">
+            From raw idea to viral post in four simple steps.
           </p>
-        </header>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
-          {steps.map(({ id, title, desc, icon: Icon, gradient }) => (
-            <div
-              key={id}
-              className="group bg-white/60 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1"
+        <div className="relative">
+          {/* Connecting Line (Snake) for Desktop */}
+          <div className="hidden lg:block absolute top-[40%] left-[10%] right-[10%] h-0.5 pointer-events-none -z-10">
+            <svg
+              className="w-full h-full overflow-visible"
+              preserveAspectRatio="none"
             >
-              <div
-                className={`w-14 h-14 mx-auto mb-4 flex items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-white shadow`}
-              >
-                <Icon className="w-7 h-7" />
+              {/* Dashed Snake Path */}
+              <path
+                d="M 0 0 C 150 50, 250 50, 400 0 S 650 -50, 800 0 S 1050 50, 1200 0"
+                fill="none"
+                stroke="#E2E8F0"
+                strokeWidth="2"
+                strokeDasharray="8 6"
+                className="opacity-50"
+              />
+            </svg>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 relative z-10">
+            {/* Step 1: Share Vision */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
+                {/* Blob Backing */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full blur-xl opacity-60"></div>
+                {/* Icon Construction */}
+                <div className="relative w-full h-full bg-white rounded-full border border-blue-100 shadow-xl flex items-center justify-center overflow-hidden">
+                  {/* Avatar */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-end justify-center overflow-hidden mb-[-20px] relative z-10">
+                    <div className="w-10 h-10 bg-indigo-300 rounded-full opacity-50 mb-[-15px]"></div>
+                  </div>
+                  {/* Floating Bulbs */}
+                  <div className="absolute top-5 left-1/4 animate-bounce hover:scale-110 transition">
+                    <div className="w-6 h-8 bg-yellow-300 rounded-full shadow-[0_0_15px_rgba(253,224,71,0.6)] flex items-center justify-center">
+                      <div className="w-2 h-3 bg-white/60 rounded-full transform -rotate-12 translate-x-[1px]"></div>
+                    </div>
+                    <div className="w-3 h-2 bg-slate-400 mx-auto mt-[-1px]"></div>
+                  </div>
+                  <div className="absolute top-3 right-1/3 animate-bounce delay-300 hover:scale-110 transition">
+                    <div className="w-4 h-6 bg-yellow-300 rounded-full shadow-[0_0_15px_rgba(253,224,71,0.6)]"></div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                {title}
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                1. Share Your Vision <br />
+                <span className="text-sm font-medium text-slate-500">
+                  (AI Brainstorming)
+                </span>
               </h3>
-              <p className="text-sm text-gray-600">{desc}</p>
+              <p className="text-sm text-slate-500 leading-relaxed max-w-[200px] mx-auto">
+                Easily turn your scattered thoughts into clear content drafts.
+              </p>
             </div>
-          ))}
+
+            {/* Arrow visual for mobile/tablet flow */}
+            <div className="lg:hidden flex justify-center -my-6">
+              <ArrowRight className="w-6 h-6 text-slate-300 rotate-90 md:rotate-0" />
+            </div>
+
+            {/* Step 2: Generate */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-xl opacity-60"></div>
+                <div className="relative w-full h-full bg-white rounded-full border border-indigo-100 shadow-xl flex items-center justify-center p-8">
+                  <div className="w-20 h-24 bg-slate-50 border border-slate-200 rounded-lg relative flex flex-col p-2 shadow-sm">
+                    <div className="w-full h-1.5 bg-slate-200 rounded mb-1.5"></div>
+                    <div className="w-full h-1.5 bg-slate-200 rounded mb-1.5"></div>
+                    <div className="w-2/3 h-1.5 bg-slate-200 rounded mb-1.5"></div>
+
+                    {/* Magic Wand / Cursor */}
+                    <div className="absolute -right-3 -bottom-3 w-8 h-8 pointer-events-none">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="w-full h-full text-indigo-500 drop-shadow-md"
+                      >
+                        <path
+                          d="M3 21l1.9-5.7a8.5 8.5 0 1114.8-8.2L21 3"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    {/* Sparkles */}
+                    <div className="absolute -top-2 -right-2 text-yellow-400 text-xl animate-pulse">
+                      ✨
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                2. Generate & Optimize <br />
+                <span className="text-sm font-medium text-slate-500">
+                  (Smart AI Drafting)
+                </span>
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed max-w-[200px] mx-auto">
+                AI crafts refined, keyword-optimized content instantly.
+              </p>
+            </div>
+
+            <div className="lg:hidden flex justify-center -my-6">
+              <ArrowRight className="w-6 h-6 text-slate-300 rotate-90 md:rotate-0" />
+            </div>
+
+            {/* Step 3: Schedule */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full blur-xl opacity-60"></div>
+                <div className="relative w-full h-full bg-white rounded-full border border-purple-100 shadow-xl flex items-center justify-center">
+                  {/* Calendar */}
+                  <div className="w-20 h-20 bg-white border-2 border-slate-100 rounded-xl relative shadow-md">
+                    <div className="h-6 w-full bg-indigo-500 rounded-t-lg"></div>
+                    <div className="p-2 grid grid-cols-4 gap-1">
+                      <div className="aspect-square bg-slate-100 rounded-sm"></div>
+                      <div className="aspect-square bg-indigo-100 rounded-sm relative">
+                        <div className="absolute inset-0.5 bg-indigo-500 rounded-full"></div>
+                      </div>
+                      <div className="aspect-square bg-slate-100 rounded-sm"></div>
+                      <div className="aspect-square bg-slate-100 rounded-sm"></div>
+                    </div>
+                  </div>
+                  {/* Clock */}
+                  <div className="absolute -right-1 -bottom-1 w-12 h-12 bg-white rounded-full border-2 border-slate-200 shadow-lg flex items-center justify-center">
+                    <div className="w-1 h-3 bg-slate-800 rounded-full absolute top-2 left-1/2 -translate-x-1/2 transform origin-bottom rotate-45"></div>
+                    <div className="w-0.5 h-4 bg-red-400 rounded-full absolute top-2 left-1/2 -translate-x-1/2 transform origin-bottom -rotate-12"></div>
+                  </div>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                3. Schedule for Impact <br />
+                <span className="text-sm font-medium text-slate-500">
+                  (Peak Timing)
+                </span>
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed max-w-[200px] mx-auto">
+                Post when your audience is awake and active.
+              </p>
+            </div>
+
+            <div className="lg:hidden flex justify-center -my-6">
+              <ArrowRight className="w-6 h-6 text-slate-300 rotate-90 md:rotate-0" />
+            </div>
+
+            {/* Step 4: Growth */}
+            <div className="flex flex-col items-center text-center group">
+              <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-blue-100 rounded-full blur-xl opacity-60"></div>
+                <div className="relative w-full h-full bg-white rounded-full border border-pink-100 shadow-xl flex items-center justify-center">
+                  <div className="w-24 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-lg relative overflow-hidden flex items-end px-2 pb-2 gap-1">
+                    <div className="w-1/4 h-1/3 bg-white/20 rounded-t-sm"></div>
+                    <div className="w-1/4 h-1/2 bg-white/40 rounded-t-sm"></div>
+                    <div className="w-1/4 h-3/4 bg-white/60 rounded-t-sm"></div>
+                    <div className="w-1/4 h-full bg-white rounded-t-sm"></div>
+
+                    {/* Graphic Arrow */}
+                    <div className="absolute top-2 right-2 text-white">
+                      <svg
+                        className="w-8 h-8"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <path
+                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                4. Publish & Convert <br />
+                <span className="text-sm font-medium text-slate-500">
+                  (Growth & Analytics)
+                </span>
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed max-w-[200px] mx-auto">
+                Watch your meaningful engagement and networks grow.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
