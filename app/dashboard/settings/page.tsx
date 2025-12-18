@@ -70,7 +70,7 @@ export default async function SettingsPage() {
                   <Linkedin className="mr-2 h-4 w-4" />
                   LinkedIn Account
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
+                {/* <Button variant="ghost" className="w-full justify-start">
                   <Palette className="mr-2 h-4 w-4" />
                   Preferences
                 </Button>
@@ -81,7 +81,7 @@ export default async function SettingsPage() {
                 <Button variant="ghost" className="w-full justify-start">
                   <Shield className="mr-2 h-4 w-4" />
                   Privacy & Security
-                </Button>
+                </Button> */}
               </nav>
             </CardContent>
           </Card>
@@ -93,9 +93,7 @@ export default async function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Your basic account information
-              </CardDescription>
+              <CardDescription>Your basic account information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -122,12 +120,18 @@ export default async function SettingsPage() {
                 </label>
                 <div className="mt-1 flex items-center gap-2">
                   {fullProfile.googleId && (
-                    <Badge variant="outline" className="text-blue-600 border-blue-300">
+                    <Badge
+                      variant="outline"
+                      className="text-blue-600 border-blue-300"
+                    >
                       Google
                     </Badge>
                   )}
                   {fullProfile.linkedInConnected && (
-                    <Badge variant="outline" className="text-[#0A66C2] border-blue-300">
+                    <Badge
+                      variant="outline"
+                      className="text-[#0A66C2] border-blue-300"
+                    >
                       LinkedIn
                     </Badge>
                   )}
@@ -137,7 +141,7 @@ export default async function SettingsPage() {
           </Card>
 
           {/* LinkedIn Connection Management */}
-          <LinkedInConnection 
+          <LinkedInConnection
             initialConnected={fullProfile.linkedInConnected}
             linkedInId={fullProfile.linkedInId}
           />
@@ -149,7 +153,7 @@ export default async function SettingsPage() {
           />
 
           {/* AI Preferences */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>AI Content Preferences</CardTitle>
               <CardDescription>
@@ -199,10 +203,10 @@ export default async function SettingsPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Posting Schedule */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Posting Schedule</CardTitle>
               <CardDescription>
@@ -238,7 +242,7 @@ export default async function SettingsPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Placeholder notice */}
           <Card className="border-blue-200 bg-blue-50">
@@ -250,9 +254,8 @@ export default async function SettingsPage() {
                     Settings Coming Soon
                   </h3>
                   <p className="text-sm text-blue-700 mt-1">
-                    Full settings functionality including preferences,
-                    notifications, and integrations will be available soon. This
-                    is a preview of what's coming.
+                    Full settings including preferences, notifications, and
+                    integrations will be available soon.
                   </p>
                 </div>
               </div>
