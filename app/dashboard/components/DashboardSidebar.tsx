@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SidebarProfile from "./SidebarProfile";
 import Image from "next/image";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface User {
   id: string;
@@ -38,7 +39,7 @@ export default function DashboardSidebar({
   const navigation = [
     {
       name: "All Posts",
-      href: "/dashboard/all",
+      href: "/dashboard/posts",
       icon: LayoutGrid,
       count: stats.drafts + stats.scheduled + stats.published || undefined,
       filter: null,
@@ -162,15 +163,16 @@ export default function DashboardSidebar({
           </div>
 
           {/* Bottom: Settings */}
-          <div className="p-4 border-t border-sidebar-border">
+          <div className="p-4 border-t border-sidebar-border flex items-center justify-between gap-2">
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors flex-1"
               onClick={() => setIsMobileOpen(false)}
             >
               <Settings className="h-5 w-5 text-gray-500" />
               Settings
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </aside>

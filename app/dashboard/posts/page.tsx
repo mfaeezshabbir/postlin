@@ -97,7 +97,7 @@ export default function AllPostsPage() {
     } else {
       params.set("status", value);
     }
-    router.replace(`/dashboard/all?${params.toString()}`);
+    router.replace(`/dashboard/posts?${params.toString()}`);
   };
 
   const [stats, setStats] = useState({ drafts: 0, scheduled: 0, published: 0 });
