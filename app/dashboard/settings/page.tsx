@@ -30,10 +30,14 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
+  // Ensure we have a stable user identifier before querying
+  if (!user.id) {
+    redirect("/login");
+  }
+
   // Fetch full user profile including connection status
-  // Use email as fallback if id is not available
   const fullProfile = await prisma.user.findUnique({
-    where: user.id ? { id: user.id } : { email: user.email! },
+    where: { id: user.id },
     select: {
       id: true,
       email: true,
