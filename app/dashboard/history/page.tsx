@@ -1,17 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import DashboardContainer from "../components/DashboardContainer";
 import { History, Eye, Loader2 } from "lucide-react";
 import PostCard from "../components/PostCard";
 import PostActions from "../components/PostActions";
+import PageHeader from "../components/PageHeader";
 
 interface PublishedPost {
   id: string;
@@ -35,6 +28,7 @@ export default function HistoryPage() {
   const [postsData, setPostsData] = useState<PublishedPostsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [revertingPostId, setRevertingPostId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchPublishedPosts = async () => {
     try {
@@ -76,14 +70,12 @@ export default function HistoryPage() {
 
       const data = await response.json();
 
-      // Show success message
       push({
         title: "Reverted",
         description: data.message || "Post reverted to draft successfully!",
         variant: "success",
       });
 
-      // Refresh the published posts list
       await fetchPublishedPosts();
     } catch (error) {
       console.error("Error reverting post:", error);
@@ -102,95 +94,78 @@ export default function HistoryPage() {
   }, []);
 
   const posts = postsData?.posts || [];
-  const stats = postsData?.stats || { total: 0, thisMonth: 0 };
+  const filteredPosts = posts.filter((p) =>
+    p.finalText.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <DashboardContainer
-      title="History"
-      description="View your published LinkedIn posts"
-      stats={[
-        { title: "Total Posts", value: loading ? 0 : stats.total },
-        {
-          title: "This Month",
-          value: loading ? 0 : stats.thisMonth,
-        },
-        {
-          title: "Analytics",
-          value: "Coming Soon",
-        },
-      ]}
-    >
-      <Card className="h-full flex flex-col w-full">
-        <CardHeader>
-          <CardTitle>Published Posts</CardTitle>
-          <CardDescription>
-            All your posts that have been published to LinkedIn
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
-          {loading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Loading published posts...</p>
+    <div className="flex flex-col h-full gap-8">
+      <PageHeader
+        title="Published History"
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+
+      <div className="flex-1">
+        {loading ? (
+          <div className="flex items-center justify-center h-64 text-gray-500">
+            <Loader2 className="w-8 h-8 animate-spin mr-3" /> Loading...
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-20 bg-card/30 rounded-3xl border border-white/5 border-dashed">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-full mb-4">
+              <History className="h-8 w-8 text-gray-400" />
             </div>
-          ) : posts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                <History className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No published posts yet
-              </h3>
-              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                Once you publish drafts to LinkedIn, they'll appear here with
-                engagement metrics.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  id={post.id}
-                  content={post.finalText}
-                  status="published"
-                  createdAt={post.publishedAt}
-                  meta={
-                    <>
-                      <span>
-                        {post.finalText.split(/\s+/).filter(Boolean).length}{" "}
-                        words
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" /> -
-                      </span>
-                    </>
-                  }
-                  actions={
-                    <PostActions
-                      id={post.id}
-                      status="published"
-                      onView={() => {
-                        const linkedId = post.linkedInPostId;
-                        if (!linkedId) {
-                          alert("No LinkedIn link available for this post.");
-                          return;
-                        }
-                        const url = linkedId.startsWith("http")
-                          ? linkedId
-                          : `https://www.linkedin.com/feed/update/${post.linkedInPostId}`;
-                        window.open(url, "_blank");
-                      }}
-                      onRevert={() => handleRevertToDraft(post.id)}
-                      loading={{ deleting: revertingPostId }}
-                    />
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </DashboardContainer>
+            <h3 className="text-lg font-medium text-white mb-2">
+              No published posts
+            </h3>
+            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+              Your published history will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredPosts.map((post) => (
+              <PostCard
+                key={post.id}
+                id={post.id}
+                content={post.finalText}
+                status="published"
+                createdAt={post.publishedAt}
+                meta={
+                  <>
+                    <span>
+                      {post.finalText.split(/\s+/).filter(Boolean).length} words
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3 h-3" /> -
+                    </span>
+                  </>
+                }
+                actions={
+                  <PostActions
+                    id={post.id}
+                    status="published"
+                    onView={() => {
+                      const linkedId = post.linkedInPostId;
+                      if (!linkedId) {
+                        alert("No LinkedIn link available for this post.");
+                        return;
+                      }
+                      const url = linkedId.startsWith("http")
+                        ? linkedId
+                        : `https://www.linkedin.com/feed/update/${post.linkedInPostId}`;
+                      window.open(url, "_blank");
+                    }}
+                    onRevert={() => handleRevertToDraft(post.id)}
+                    loading={{ deleting: revertingPostId }}
+                  />
+                }
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

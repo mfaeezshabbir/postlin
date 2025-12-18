@@ -1,37 +1,19 @@
 import getCurrentUser from "@/lib/auth";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import DashboardContainer from "../components/DashboardContainer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  User,
-  Settings as SettingsIcon,
-  Bell,
-  Palette,
-  Shield,
-  Linkedin,
-} from "lucide-react";
+import { User, Settings as SettingsIcon, Linkedin } from "lucide-react";
 import LinkedInConnection from "./components/LinkedInConnection";
 import GeminiKeyManagement from "./components/GeminiKeyManagement";
 import prisma from "@/lib/prisma";
+import PageHeader from "../components/PageHeader";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  // Ensure we have a stable user identifier before querying
-  if (!user.id) {
+  if (!user || !user.id) {
     redirect("/login");
   }
 
@@ -56,217 +38,121 @@ export default async function SettingsPage() {
   }
 
   return (
-    <DashboardContainer
-      title="Settings"
-      description="Manage your account settings and preferences"
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sidebar navigation */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardContent className="p-4">
-              <nav className="space-y-1">
-                <Button variant="ghost" className="w-full justify-start">
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Linkedin className="mr-2 h-4 w-4" />
-                  LinkedIn Account
-                </Button>
-                {/* <Button variant="ghost" className="w-full justify-start">
-                  <Palette className="mr-2 h-4 w-4" />
-                  Preferences
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Bell className="mr-2 h-4 w-4" />
-                  Notifications
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Privacy & Security
-                </Button> */}
-              </nav>
-            </CardContent>
-          </Card>
+    <div className="flex flex-col h-full gap-8">
+      <PageHeader title="Settings" showSearch={false} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Settings Navigation */}
+        <div className="lg:col-span-3">
+          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl overflow-hidden sticky top-8">
+            <nav className="flex flex-col p-2 space-y-1">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-white bg-white/10 hover:bg-white/10"
+              >
+                <User className="mr-3 h-4 w-4 text-blue-400" />
+                My Profile
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-gray-400 hover:text-white hover:bg-white/5"
+              >
+                <Linkedin className="mr-3 h-4 w-4" />
+                Integrations
+              </Button>
+            </nav>
+          </div>
         </div>
 
-        {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Profile section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Your basic account information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Name
+        {/* Main Content */}
+        <div className="lg:col-span-9 space-y-6">
+          {/* Profile Card */}
+          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-6">
+              Profile Information
+            </h2>
+            <div className="space-y-6">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-gray-400">
+                  Display Name
                 </label>
-                <p className="mt-1 text-sm text-gray-900">
+                <div className="p-3 rounded-lg bg-[#0F1222] border border-white/5 text-white">
                   {fullProfile.name || "Not set"}
-                </p>
+                </div>
               </div>
-              <Separator />
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Email
+
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-gray-400">
+                  Email Address
                 </label>
-                <p className="mt-1 text-sm text-gray-900">
+                <div className="p-3 rounded-lg bg-[#0F1222] border border-white/5 text-white">
                   {fullProfile.email || "Not set"}
-                </p>
+                </div>
               </div>
-              <Separator />
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Authentication
+
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-gray-400">
+                  Connected Accounts
                 </label>
-                <div className="mt-1 flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {fullProfile.googleId && (
                     <Badge
                       variant="outline"
-                      className="text-blue-600 border-blue-300"
+                      className="bg-white/5 border-white/10 text-white hover:bg-white/10"
                     >
-                      Google
+                      Google Connected
                     </Badge>
                   )}
                   {fullProfile.linkedInConnected && (
                     <Badge
                       variant="outline"
-                      className="text-[#0A66C2] border-blue-300"
+                      className="bg-[#0A66C2]/20 border-[#0A66C2]/50 text-blue-400 hover:bg-[#0A66C2]/30"
                     >
-                      LinkedIn
+                      LinkedIn Connected
                     </Badge>
                   )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* LinkedIn Connection Management */}
-          <LinkedInConnection
-            initialConnected={fullProfile.linkedInConnected}
-            linkedInId={fullProfile.linkedInId}
-          />
+          {/* LinkedIn Integration */}
+          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-6">
+              LinkedIn Connection
+            </h2>
+            <LinkedInConnection
+              initialConnected={fullProfile.linkedInConnected}
+              linkedInId={fullProfile.linkedInId}
+            />
+          </div>
 
-          {/* Gemini API Key Management */}
-          <GeminiKeyManagement
-            initialHasKey={!!fullProfile.geminiApiKeyEncrypted}
-            initialKeyAddedAt={fullProfile.geminiKeyAddedAt}
-          />
+          {/* Gemini keys */}
+          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-6">
+              AI Configuration
+            </h2>
+            <GeminiKeyManagement
+              initialHasKey={!!fullProfile.geminiApiKeyEncrypted}
+              initialKeyAddedAt={fullProfile.geminiKeyAddedAt}
+            />
+          </div>
 
-          {/* AI Preferences */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>AI Content Preferences</CardTitle>
-              <CardDescription>
-                Customize how AI generates content for you
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Tone of Voice
-                </label>
-                <p className="mt-1 text-sm text-gray-600">
-                  Professional, casual, inspirational, or custom
-                </p>
-                <div className="mt-2">
-                  <Button variant="outline" size="sm">
-                    Configure Tone
-                  </Button>
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Content Length
-                </label>
-                <p className="mt-1 text-sm text-gray-600">
-                  Preferred post length: short, medium, or long
-                </p>
-                <div className="mt-2">
-                  <Button variant="outline" size="sm">
-                    Set Preference
-                  </Button>
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Topics to Avoid
-                </label>
-                <p className="mt-1 text-sm text-gray-600">
-                  Specify topics you don't want to post about
-                </p>
-                <div className="mt-2">
-                  <Button variant="outline" size="sm">
-                    Manage Topics
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card> */}
-
-          {/* Posting Schedule */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Posting Schedule</CardTitle>
-              <CardDescription>
-                Set your preferred posting times for automatic scheduling
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Preferred Posting Times
-                </label>
-                <p className="mt-1 text-sm text-gray-600">
-                  Monday - Friday, 9:00 AM and 3:00 PM
-                </p>
-                <div className="mt-2">
-                  <Button variant="outline" size="sm">
-                    Edit Schedule
-                  </Button>
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Time Zone
-                </label>
-                <p className="mt-1 text-sm text-gray-600">
-                  (UTC+00:00) Coordinated Universal Time
-                </p>
-                <div className="mt-2">
-                  <Button variant="outline" size="sm">
-                    Change Time Zone
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card> */}
-
-          {/* Placeholder notice */}
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <SettingsIcon className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                  <h3 className="font-medium text-blue-900">
-                    Settings Coming Soon
-                  </h3>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Full settings including preferences, notifications, and
-                    integrations will be available soon.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Coming Soon */}
+          <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6 flex items-start gap-4">
+            <SettingsIcon className="h-6 w-6 text-blue-400 mt-1" />
+            <div>
+              <h3 className="text-lg font-medium text-blue-400">
+                More Settings Coming Soon
+              </h3>
+              <p className="text-sm text-blue-300/70 mt-1">
+                We are working on adding granular notification controls, custom
+                AI personas, and more.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-    </DashboardContainer>
+    </div>
   );
 }

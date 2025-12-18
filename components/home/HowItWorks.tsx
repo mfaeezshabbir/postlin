@@ -46,40 +46,34 @@ export default function HowItWorks() {
                 className="opacity-50"
               />
 
-              {/* Floating Arrows on the path */}
-              {/* Arrow 1: Step 1 -> 2 */}
-              <g transform="translate(250, 150) rotate(35)">
-                <path
-                  d="M0 0 L12 6 L0 12"
-                  fill="none"
-                  stroke="#8B5CF6"
+              {/* Floating Arrows on the path - LARGE and VISIBLE */}
+              {/* Arrow 1: Step 1 -> 2 (pointing down-right) */}
+              <g transform="translate(280, 120)">
+                <polygon
+                  points="0,0 50,25 0,50"
+                  fill="#8B5CF6"
+                  stroke="white"
                   strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                 />
               </g>
 
-              {/* Arrow 2: Step 2 -> 3 */}
-              <g transform="translate(550, 150) rotate(-35)">
-                <path
-                  d="M0 0 L12 6 L0 12"
-                  fill="none"
-                  stroke="#A855F7"
+              {/* Arrow 2: Step 2 -> 3 (pointing up-right) */}
+              <g transform="translate(550, 180) rotate(180)">
+                <polygon
+                  points="0,0 50,25 0,50"
+                  fill="#A855F7"
+                  stroke="white"
                   strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                 />
               </g>
 
-              {/* Arrow 3: Step 3 -> 4 */}
-              <g transform="translate(850, 150) rotate(35)">
-                <path
-                  d="M0 0 L12 6 L0 12"
-                  fill="none"
-                  stroke="#EC4899"
+              {/* Arrow 3: Step 3 -> 4 (pointing down-right) */}
+              <g transform="translate(820, 120)">
+                <polygon
+                  points="0,0 50,25 0,50"
+                  fill="#EC4899"
+                  stroke="white"
                   strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                 />
               </g>
             </svg>

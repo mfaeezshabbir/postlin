@@ -1,24 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import DashboardContainer from "../components/DashboardContainer";
+import { Clock, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Clock,
-  Calendar,
-  XCircle,
-  Image as ImageIcon,
-  RefreshCw,
-  Loader2,
-} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +14,7 @@ import {
 import PostCard from "../components/PostCard";
 import PostActions from "../components/PostActions";
 import ScheduleDialog from "../components/ScheduleDialog";
+import PageHeader from "../components/PageHeader";
 
 interface ScheduledPost {
   id: string;
@@ -57,6 +42,9 @@ export default function ScheduledPage() {
   const [newScheduledDate, setNewScheduledDate] = useState("");
   const [newScheduledTime, setNewScheduledTime] = useState("");
   const [rescheduling, setRescheduling] = useState(false);
+
+  // Search
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchScheduledPosts();
@@ -204,90 +192,61 @@ export default function ScheduledPage() {
     }
   };
 
-  // Calculate stats
-  const now = new Date();
-  const thisWeek = scheduledPosts.filter((post) => {
-    const scheduledDate = new Date(post.scheduledAt);
-    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    return scheduledDate <= weekFromNow;
-  }).length;
-
-  const thisMonth = scheduledPosts.filter((post) => {
-    const scheduledDate = new Date(post.scheduledAt);
-    const monthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    return scheduledDate <= monthFromNow;
-  }).length;
+  const filteredPosts = scheduledPosts.filter((p) =>
+    p.draftText.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <DashboardContainer
-      title="Scheduled Posts"
-      description="Posts scheduled for automatic publishing"
-      stats={[
-        {
-          title: "Total Scheduled",
-          value: scheduledPosts.length,
-        },
-        { title: "This Week", value: thisWeek },
-        {
-          title: "This Month",
-          value: thisMonth,
-        },
-      ]}
-    >
-      <Card className="h-full flex flex-col w-full">
-        <CardHeader>
-          <CardTitle>Upcoming Posts</CardTitle>
-          <CardDescription>
-            Posts that will be automatically published to LinkedIn at the
-            scheduled time
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 overflow-y-auto max-h-[calc(100vh-300px)]">
-          {loading ? (
-            <div className="text-center py-12">
-              <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Loading scheduled posts...</p>
+    <div className="flex flex-col h-full gap-8">
+      <PageHeader
+        title="Scheduled"
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+
+      <div className="flex-1">
+        {loading ? (
+          <div className="flex items-center justify-center h-64 text-gray-500">
+            <Loader2 className="w-8 h-8 animate-spin mr-3" /> Loading...
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-20 bg-card/30 rounded-3xl border border-white/5 border-dashed">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-full mb-4">
+              <Clock className="h-8 w-8 text-gray-400" />
             </div>
-          ) : scheduledPosts.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                <Clock className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No scheduled posts
-              </h3>
-              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                No posts are scheduled for publishing yet. Create a draft and
-                schedule it to automate your LinkedIn presence.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {scheduledPosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  id={post.id}
-                  content={post.draftText}
-                  status="scheduled"
-                  createdAt={post.createdAt}
-                  meta={<span>{post.hashtags?.length || 0} hashtags</span>}
-                  actions={
-                    <PostActions
-                      id={post.id}
-                      status="scheduled"
-                      onSchedule={() => handleOpenReschedule(post.id)}
-                      scheduledAt={post.scheduledAt}
-                      onEdit={() => {}}
-                      onDelete={() => confirmCancel(post.id)}
-                      loading={{ deleting: cancellingId }}
-                    />
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            <h3 className="text-lg font-medium text-white mb-2">
+              No scheduled posts
+            </h3>
+            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+              Posts scheduled for future publication will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredPosts.map((post) => (
+              <PostCard
+                key={post.id}
+                id={post.id}
+                content={post.draftText}
+                status="scheduled"
+                createdAt={post.createdAt}
+                meta={<span>{post.hashtags?.length || 0} hashtags</span>}
+                actions={
+                  <PostActions
+                    id={post.id}
+                    status="scheduled"
+                    onSchedule={() => handleOpenReschedule(post.id)}
+                    scheduledAt={post.scheduledAt}
+                    onEdit={() => {}}
+                    onDelete={() => confirmCancel(post.id)}
+                    loading={{ deleting: cancellingId }}
+                  />
+                }
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Cancel confirmation dialog */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
@@ -325,7 +284,7 @@ export default function ScheduledPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Reschedule dialog (reusable) */}
+      {/* Reschedule dialog */}
       <ScheduleDialog
         open={showRescheduleDialog}
         onOpenChange={setShowRescheduleDialog}
@@ -336,126 +295,6 @@ export default function ScheduledPage() {
         scheduling={rescheduling}
         onSchedule={handleReschedule}
       />
-    </DashboardContainer>
-  );
-}
-
-interface ScheduledPostCardProps {
-  post: ScheduledPost;
-  onCancel: (postId: string) => void;
-  isCancelling: boolean;
-}
-
-function ScheduledPostCard({
-  post,
-  onCancel,
-  isCancelling,
-}: ScheduledPostCardProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-
-    let timeUntil = "";
-    if (diffDays > 0) {
-      timeUntil = `in ${diffDays} day${diffDays > 1 ? "s" : ""}`;
-    } else if (diffHours > 0) {
-      timeUntil = `in ${diffHours} hour${diffHours > 1 ? "s" : ""}`;
-    } else if (diffMinutes > 0) {
-      timeUntil = `in ${diffMinutes} minute${diffMinutes > 1 ? "s" : ""}`;
-    } else {
-      timeUntil = "soon";
-    }
-
-    return {
-      formatted: date.toLocaleString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      timeUntil,
-    };
-  };
-
-  const { formatted, timeUntil } = formatDate(post.scheduledAt);
-  const preview =
-    post.draftText.substring(0, 150) +
-    (post.draftText.length > 150 ? "..." : "");
-
-  return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <Badge
-              variant="outline"
-              className="text-orange-600 border-orange-300"
-            >
-              <Clock className="h-3 w-3 mr-1" />
-              Scheduled
-            </Badge>
-            {post.isAIGenerated && (
-              <Badge
-                variant="outline"
-                className="text-purple-600 border-purple-300"
-              >
-                AI Generated
-              </Badge>
-            )}
-            {post.imageUrl && (
-              <Badge
-                variant="outline"
-                className="text-blue-600 border-blue-300"
-              >
-                <ImageIcon className="h-3 w-3 mr-1" />
-                Has Image
-              </Badge>
-            )}
-          </div>
-
-          <p className="text-sm text-gray-700 mb-3 whitespace-pre-wrap">
-            {preview}
-          </p>
-
-          {post.hashtags && post.hashtags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {post.hashtags.slice(0, 5).map((tag, idx) => (
-                <span key={idx} className="text-xs text-blue-600">
-                  #{tag}
-                </span>
-              ))}
-              {post.hashtags.length > 5 && (
-                <span className="text-xs text-gray-500">
-                  +{post.hashtags.length - 5} more
-                </span>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1 font-medium text-orange-600">
-              <Calendar className="h-3 w-3" />
-              {formatted}
-            </span>
-            <span className="text-gray-600">({timeUntil})</span>
-          </div>
-        </div>
-
-        <div>
-          <PostActions
-            id={post.id}
-            status="scheduled"
-            onDelete={() => onCancel(post.id)}
-            scheduledAt={post.scheduledAt}
-            loading={{ deleting: isCancelling ? post.id : null }}
-          />
-        </div>
-      </div>
     </div>
   );
 }

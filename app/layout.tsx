@@ -18,7 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Postlin - AI-Powered LinkedIn Content Assistant",
-  description: "Create, schedule, and publish LinkedIn posts with AI-powered content generation. Automate your LinkedIn presence with Postlin.",
+  description:
+    "Create, schedule, and publish LinkedIn posts with AI-powered content generation. Automate your LinkedIn presence with Postlin.",
 };
 
 export default function RootLayout({
@@ -27,15 +28,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
           <ToastProvider>
-              <Navbar />
-              <ConditionalNavbar />
-              {children}
+            <Navbar />
+            <ConditionalNavbar />
+            {children}
           </ToastProvider>
         </AuthProvider>
       </body>
