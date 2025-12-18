@@ -6,7 +6,7 @@ export default function HowItWorks() {
   return (
     <section id="how" className="relative py-24 bg-white overflow-hidden">
       <div className="container mx-auto px-4 max-w-7xl">
-        <div className="text-center mb-20">
+        <div className="text-center mb-12 lg:mb-24">
           <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-4">
             How it works
           </h2>
@@ -16,32 +16,83 @@ export default function HowItWorks() {
         </div>
 
         <div className="relative">
-          {/* Connecting Line (Snake) for Desktop */}
-          <div className="hidden lg:block absolute top-[40%] left-[10%] right-[10%] h-0.5 pointer-events-none -z-10">
+          {/* Connecting Line (Zigzag Snake) for Desktop */}
+          <div className="hidden lg:block absolute top-20 left-[10%] right-[10%] bottom-0 pointer-events-none -z-10 h-[400px]">
             <svg
               className="w-full h-full overflow-visible"
+              viewBox="0 0 1100 300"
               preserveAspectRatio="none"
             >
-              {/* Dashed Snake Path */}
+              <defs>
+                <linearGradient
+                  id="gradientLine"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
+                  <stop offset="0%" stopColor="#3B82F6" />
+                  <stop offset="50%" stopColor="#8B5CF6" />
+                  <stop offset="100%" stopColor="#EC4899" />
+                </linearGradient>
+              </defs>
+              {/* Zigzag Path: Top -> Bottom -> Top -> Bottom */}
               <path
-                d="M 0 0 C 150 50, 250 50, 400 0 S 650 -50, 800 0 S 1050 50, 1200 0"
+                d="M 100 50 C 250 50, 250 250, 400 250 S 550 50, 700 50 S 850 250, 1000 250"
                 fill="none"
-                stroke="#E2E8F0"
+                stroke="url(#gradientLine)"
                 strokeWidth="2"
-                strokeDasharray="8 6"
+                strokeDasharray="8 8"
                 className="opacity-50"
               />
+
+              {/* Floating Arrows on the path */}
+              {/* Arrow 1: Step 1 -> 2 */}
+              <g transform="translate(250, 150) rotate(35)">
+                <path
+                  d="M0 0 L12 6 L0 12"
+                  fill="none"
+                  stroke="#8B5CF6"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
+
+              {/* Arrow 2: Step 2 -> 3 */}
+              <g transform="translate(550, 150) rotate(-35)">
+                <path
+                  d="M0 0 L12 6 L0 12"
+                  fill="none"
+                  stroke="#A855F7"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
+
+              {/* Arrow 3: Step 3 -> 4 */}
+              <g transform="translate(850, 150) rotate(35)">
+                <path
+                  d="M0 0 L12 6 L0 12"
+                  fill="none"
+                  stroke="#EC4899"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
             </svg>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 relative z-10">
-            {/* Step 1: Share Vision */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4 relative z-10">
+            {/* Step 1: Share Vision (TOP) */}
             <div className="flex flex-col items-center text-center group">
               <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
                 {/* Blob Backing */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full blur-xl opacity-60"></div>
                 {/* Icon Construction */}
-                <div className="relative w-full h-full bg-white rounded-full border border-blue-100 shadow-xl flex items-center justify-center overflow-hidden">
+                <div className="relative w-full h-full bg-white rounded-full border-2 border-blue-50 shadow-lg flex items-center justify-center overflow-hidden">
                   {/* Avatar */}
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-end justify-center overflow-hidden mb-[-20px] relative z-10">
                     <div className="w-10 h-10 bg-indigo-300 rounded-full opacity-50 mb-[-15px]"></div>
@@ -74,11 +125,11 @@ export default function HowItWorks() {
               <ArrowRight className="w-6 h-6 text-slate-300 rotate-90 md:rotate-0" />
             </div>
 
-            {/* Step 2: Generate */}
-            <div className="flex flex-col items-center text-center group">
+            {/* Step 2: Generate (BOTTOM - Pushed Down) */}
+            <div className="flex flex-col items-center text-center group lg:mt-32">
               <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-xl opacity-60"></div>
-                <div className="relative w-full h-full bg-white rounded-full border border-indigo-100 shadow-xl flex items-center justify-center p-8">
+                <div className="relative w-full h-full bg-white rounded-full border-2 border-indigo-50 shadow-lg flex items-center justify-center p-8">
                   <div className="w-20 h-24 bg-slate-50 border border-slate-200 rounded-lg relative flex flex-col p-2 shadow-sm">
                     <div className="w-full h-1.5 bg-slate-200 rounded mb-1.5"></div>
                     <div className="w-full h-1.5 bg-slate-200 rounded mb-1.5"></div>
@@ -122,11 +173,11 @@ export default function HowItWorks() {
               <ArrowRight className="w-6 h-6 text-slate-300 rotate-90 md:rotate-0" />
             </div>
 
-            {/* Step 3: Schedule */}
+            {/* Step 3: Schedule (TOP) */}
             <div className="flex flex-col items-center text-center group">
               <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full blur-xl opacity-60"></div>
-                <div className="relative w-full h-full bg-white rounded-full border border-purple-100 shadow-xl flex items-center justify-center">
+                <div className="relative w-full h-full bg-white rounded-full border-2 border-purple-50 shadow-lg flex items-center justify-center">
                   {/* Calendar */}
                   <div className="w-20 h-20 bg-white border-2 border-slate-100 rounded-xl relative shadow-md">
                     <div className="h-6 w-full bg-indigo-500 rounded-t-lg"></div>
@@ -161,11 +212,11 @@ export default function HowItWorks() {
               <ArrowRight className="w-6 h-6 text-slate-300 rotate-90 md:rotate-0" />
             </div>
 
-            {/* Step 4: Growth */}
-            <div className="flex flex-col items-center text-center group">
+            {/* Step 4: Growth (BOTTOM - Pushed Down) */}
+            <div className="flex flex-col items-center text-center group lg:mt-32">
               <div className="w-40 h-40 relative mb-6 transition-transform hover:scale-105 duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-pink-100 to-blue-100 rounded-full blur-xl opacity-60"></div>
-                <div className="relative w-full h-full bg-white rounded-full border border-pink-100 shadow-xl flex items-center justify-center">
+                <div className="relative w-full h-full bg-white rounded-full border-2 border-pink-50 shadow-lg flex items-center justify-center">
                   <div className="w-24 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-lg relative overflow-hidden flex items-end px-2 pb-2 gap-1">
                     <div className="w-1/4 h-1/3 bg-white/20 rounded-t-sm"></div>
                     <div className="w-1/4 h-1/2 bg-white/40 rounded-t-sm"></div>
