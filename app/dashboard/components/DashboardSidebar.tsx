@@ -10,6 +10,7 @@ import {
   Plus,
   Menu,
   X,
+  BarChart2,
 } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
@@ -17,6 +18,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SidebarProfile from "./SidebarProfile";
+import Image from "next/image";
 
 interface User {
   id: string;
@@ -27,23 +29,48 @@ interface User {
 
 interface DashboardSidebarProps {
   user: User;
+  stats?: {
+    drafts: number;
+    scheduled: number;
+    published: number;
+  };
+  onCreateClick?: () => void;
 }
 
-const navigation = [
-  { name: "All Posts", href: "/dashboard", icon: LayoutGrid },
-  { name: "Drafts", href: "/dashboard/drafts", icon: FileText, count: 5 }, // Mock count
-  { name: "Scheduled", href: "/dashboard/scheduled", icon: Calendar, count: 2 },
-  {
-    name: "Published",
-    href: "/dashboard/history",
-    icon: CheckCircle,
-    count: 17,
-  },
-];
-
-export default function DashboardSidebar({ user }: DashboardSidebarProps) {
+export default function DashboardSidebar({
+  user,
+  stats = { drafts: 0, scheduled: 0, published: 0 },
+  onCreateClick,
+}: DashboardSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
+
+  const navigation = [
+    {
+      name: "All Posts",
+      href: "/dashboard/all",
+      icon: LayoutGrid,
+      count: stats.drafts + stats.scheduled + stats.published || undefined,
+    },
+    {
+      name: "Drafts",
+      href: "/dashboard/drafts",
+      icon: FileText,
+      count: stats.drafts || undefined,
+    },
+    {
+      name: "Scheduled",
+      href: "/dashboard/scheduled",
+      icon: Calendar,
+      count: stats.scheduled || undefined,
+    },
+    {
+      name: "Published",
+      href: "/dashboard/history",
+      icon: CheckCircle,
+      count: stats.published || undefined,
+    },
+  ];
 
   return (
     <>
@@ -59,9 +86,13 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="text-sidebar-foreground hover:bg-sidebar-accent"
+          className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
-          {isMobileOpen ? <X /> : <Menu />}
+          {isMobileOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </Button>
       </div>
 
@@ -82,42 +113,24 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
       >
         <div className="flex flex-col h-full bg-sidebar">
           {/* Top: Profile */}
-          <div className="p-4 border-b border-white/5">
-            <div className="flex items-center gap-3">
-              {/* Use standard img or Avatar component if available. Using simple div for now */}
-              <div className="h-10 w-10 rounded-full bg-indigo-500 overflow-hidden">
-                {user.image ? (
-                  <img
-                    src={user.image}
-                    alt={user.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-white font-semibold">
-                    {user.name?.[0] || "U"}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {user.name}
-                </p>
-                <p className="text-xs text-gray-400 truncate">Pro Workspace</p>
-              </div>
-            </div>
+          <div className="p-4 border-b border-sidebar-border">
+            <SidebarProfile user={user} />
           </div>
 
           <div className="p-4 flex flex-col gap-6 flex-1 overflow-y-auto">
             {/* Create Button */}
-            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20 py-6 text-base font-medium rounded-xl">
+            <Button
+              onClick={onCreateClick}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20 py-6 text-base font-medium rounded-xl transition-all active:scale-[0.98]"
+            >
               <Plus className="mr-2 h-5 w-5" />
               Create New Post
             </Button>
 
-            {/* Library */}
+            {/* Content Library */}
             <div>
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
-                Library
+                Content Library
               </h3>
               <nav className="space-y-1">
                 {navigation.map((item) => {
@@ -129,8 +142,8 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
                       className={cn(
                         "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-accent/10 text-primary"
-                          : "text-gray-400 hover:text-white hover:bg-white/5"
+                          ? "bg-sidebar-accent text-sidebar-primary"
+                          : "text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                       )}
                       onClick={() => setIsMobileOpen(false)}
                     >
@@ -138,7 +151,7 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
                         <item.icon
                           className={cn(
                             "h-5 w-5",
-                            isActive ? "text-blue-400" : "text-gray-500"
+                            isActive ? "text-sidebar-primary" : "text-gray-500"
                           )}
                         />
                         {item.name}
@@ -146,8 +159,10 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
                       {item.count !== undefined && (
                         <span
                           className={cn(
-                            "text-xs",
-                            isActive ? "text-blue-400" : "text-gray-600"
+                            "text-xs px-2 py-0.5 rounded-full bg-white/5",
+                            isActive
+                              ? "text-sidebar-primary bg-sidebar-primary/10"
+                              : "text-gray-600"
                           )}
                         >
                           {item.count}
@@ -158,13 +173,26 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
                 })}
               </nav>
             </div>
+
+            {/* Analytics Section */}
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
+                Analytics
+              </h3>
+              <nav className="space-y-1">
+                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 cursor-pointer disabled opacity-50">
+                  <BarChart2 className="h-5 w-5 text-gray-500" />
+                  Performance
+                </div>
+              </nav>
+            </div>
           </div>
 
           {/* Bottom: Settings */}
-          <div className="p-4 border-t border-white/5">
+          <div className="p-4 border-t border-sidebar-border">
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
               onClick={() => setIsMobileOpen(false)}
             >
               <Settings className="h-5 w-5 text-gray-500" />
