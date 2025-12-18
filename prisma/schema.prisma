@@ -48,9 +48,9 @@ model User {
   googleId                String?   @unique // Google OAuth ID for primary auth
   linkedInId              String?   @unique // LinkedIn OAuth ID
   linkedInConnected       Boolean   @default(false) // Whether LinkedIn is connected
-  linkedInOauthData       Json?     // LinkedIn OAuth tokens and data
-  accessToken             String?   // LinkedIn OAuth access token (legacy, consider migrating to linkedInOauthData)
-  refreshToken            String?   // LinkedIn OAuth refresh token (legacy, consider migrating to linkedInOauthData)
+  linkedInOauthData       Json?     // LinkedIn OAuth tokens and data (primary storage for new LinkedIn integrations)
+  accessToken             String?   // LinkedIn OAuth access token (kept for backwards compatibility; data is also stored in linkedInOauthData)
+  refreshToken            String?   // LinkedIn OAuth refresh token (kept for backwards compatibility; data is also stored in linkedInOauthData)
   geminiApiKeyEncrypted   String?   // Encrypted Gemini API key (AES-256-GCM with nonce)
   geminiKeyAddedAt        DateTime? // When the Gemini API key was added
   createdAt               DateTime  @default(now())
