@@ -1,58 +1,77 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { getAuthOptions } from '@/modules/auth';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { log } from '@/lib/logger';
-
-// Initialize Gemini for text generation - check if API key exists
-if (!process.env.GEMINI_API_KEY) {
-  console.error('GEMINI_API_KEY is not set in environment variables');
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const imageApiKey = process.env.GEMINI_IMAGE_API_KEY || '';
-if (!process.env.GEMINI_IMAGE_API_KEY) {
-  log.warn('⚠️  GEMINI_IMAGE_API_KEY not set, using GEMINI_API_KEY for images');
-  log.warn('💡 Set a separate key to avoid rate limit conflicts between text and image generation');
-}
-const genAI_Image = new GoogleGenerativeAI(imageApiKey);
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { getAuthOptions } from "@/modules/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { log } from "@/lib/logger";
+import { getUserGeminiKey } from "@/lib/gemini";
+import prisma from "@/lib/prisma";
 
 /**
  * POST /api/ai/generate
- * Generate LinkedIn post content using Gemini AI with hashtags and image
+ * Generate LinkedIn post content using user's personal Gemini API key
  */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(getAuthOptions());
 
     if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get user from database to retrieve their user ID
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Get user's Gemini API key
+    const userApiKey = await getUserGeminiKey(user.id);
+    if (!userApiKey) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        {
+          error: "Gemini API key not configured",
+          message:
+            "Please add your Gemini API key in settings to use AI features.",
+          requiresSetup: true,
+        },
+        { status: 403 }
       );
     }
 
     const body = await request.json();
-    const { prompt, tone = 'professional', length = 'medium', generateImage = false } = body;
+    const {
+      prompt,
+      tone = "professional",
+      length = "medium",
+      generateImage = false,
+    } = body;
 
     if (!prompt || prompt.trim().length === 0) {
       return NextResponse.json(
-        { error: 'Prompt is required' },
+        { error: "Prompt is required" },
         { status: 400 }
       );
     }
 
+    // Initialize Gemini with user's API key
+    const genAI = new GoogleGenerativeAI(userApiKey);
+    const genAI_Image = new GoogleGenerativeAI(userApiKey);
+
     // Build system prompt based on preferences (now uses JSON format)
     const systemPrompt = buildSystemPrompt(tone, length);
-    
+
     // Generate content - using Gemini 2.5 Flash with JSON mode for structured responses
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
       },
     });
-    
+
     const fullPrompt = `${systemPrompt}
 
 User request: ${prompt}
@@ -70,16 +89,16 @@ You MUST respond with valid JSON in this exact format:
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     const jsonText = response.text();
-    
+
     // Parse JSON response
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(jsonText);
     } catch (parseError) {
-      log.error('Failed to parse JSON response:', jsonText);
-      throw new Error('AI returned invalid JSON format');
+      log.error("Failed to parse JSON response:", jsonText);
+      throw new Error("AI returned invalid JSON format");
     }
-    
+
     const generatedContent = parsedResponse.content;
     const aiHashtags = parsedResponse.hashtags || [];
 
@@ -89,30 +108,42 @@ You MUST respond with valid JSON in this exact format:
     let imageUrl = null;
     let imageBase64 = null;
     let imagePrompt = null; // Store the prompt for user to use manually
-    
+
     if (generateImage) {
       try {
-        log.info('Generating AI image for post...');
-        const imageData = await generatePostImage(prompt, generatedContent);
+        log.info("Generating AI image for post...");
+        const imageData = await generatePostImage(
+          prompt,
+          generatedContent,
+          genAI,
+          genAI_Image
+        );
         imageUrl = imageData.url;
         imageBase64 = imageData.base64;
         imagePrompt = imageData.prompt; // Save the prompt
-        log.info('AI image generated successfully');
+        log.info("AI image generated successfully");
       } catch (imageError: any) {
-        log.error('Failed to generate image:', imageError);
-        
+        log.error("Failed to generate image:", imageError);
+
         // Check if it's a rate limit error
-        if (imageError.message?.includes('429') || imageError.message?.includes('quota')) {
-          log.warn('⚠️  Rate limit hit for image generation. Content will be generated without image.');
-          log.warn('💡 Tip: Wait a few minutes or reduce image generation frequency.');
+        if (
+          imageError.message?.includes("429") ||
+          imageError.message?.includes("quota")
+        ) {
+          log.warn(
+            "⚠️  Rate limit hit for image generation. Content will be generated without image."
+          );
+          log.warn(
+            "💡 Tip: Wait a few minutes or reduce image generation frequency."
+          );
         }
-        
+
         // Extract the image prompt if it was generated before the failure
         if (imageError.prompt) {
           imagePrompt = imageError.prompt;
-          log.info('💡 Image prompt available for manual generation');
+          log.info("💡 Image prompt available for manual generation");
         }
-        
+
         // Continue without image if generation fails - graceful degradation
       }
     }
@@ -122,57 +153,65 @@ You MUST respond with valid JSON in this exact format:
       content: generatedContent,
       hashtags: aiHashtags, // Return structured hashtags from JSON
       prompt,
-      image: imageBase64 ? {
-        url: imageUrl,
-        base64: imageBase64,
-        aspectRatio: '1:1',
-      } : null,
+      image: imageBase64
+        ? {
+            url: imageUrl,
+            base64: imageBase64,
+            aspectRatio: "1:1",
+          }
+        : null,
       imagePrompt: imagePrompt, // Always return the prompt if available, even if image generation failed
       metadata: {
         tone,
         length,
-        wordCount: parsedResponse.wordCount || generatedContent.split(/\s+/).length,
+        wordCount:
+          parsedResponse.wordCount || generatedContent.split(/\s+/).length,
         hasImage: !!imageBase64,
         summary: parsedResponse.summary || null, // Include AI-generated summary
       },
     });
   } catch (error) {
     // Log the full error for debugging
-    console.error('Error generating AI content:', error);
-    log.error('AI Generation Error Details:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    console.error("Error generating AI content:", error);
+    log.error("AI Generation Error Details:", {
+      error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
-    
+
     // Handle specific Gemini API errors
     if (error instanceof Error) {
       // More detailed error messages
-      if (error.message.includes('API key') || error.message.includes('API_KEY')) {
+      if (
+        error.message.includes("API key") ||
+        error.message.includes("API_KEY")
+      ) {
         return NextResponse.json(
-          { error: 'AI service configuration error. Please check your API key.' },
+          {
+            error: "AI service configuration error. Please check your API key.",
+          },
           { status: 500 }
         );
       }
-      
-      if (error.message.includes('quota') || error.message.includes('limit')) {
+
+      if (error.message.includes("quota") || error.message.includes("limit")) {
         return NextResponse.json(
-          { error: 'API quota exceeded. Please try again later.' },
+          { error: "API quota exceeded. Please try again later." },
           { status: 429 }
         );
       }
 
       // Return the actual error message for debugging
       return NextResponse.json(
-        { 
-          error: 'Failed to generate content',
-          details: error.message // Include error details for debugging
+        {
+          error: "Failed to generate content",
+          details: error.message, // Include error details for debugging
         },
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Failed to generate content' },
+      { error: "Failed to generate content" },
       { status: 500 }
     );
   }
@@ -183,17 +222,24 @@ You MUST respond with valid JSON in this exact format:
  */
 function buildSystemPrompt(tone: string, length: string): string {
   const toneInstructions: Record<string, string> = {
-    professional: 'Use a professional, business-appropriate tone. Be clear, confident, and authoritative.',
-    casual: 'Use a friendly, conversational tone. Be approachable and personable while maintaining professionalism.',
-    enthusiastic: 'Use an energetic, passionate tone. Show excitement and positivity while remaining credible.',
-    informative: 'Use an educational, fact-based tone. Focus on providing value and insights.',
-    inspirational: 'Use a motivational, uplifting tone. Inspire and encourage your audience.',
+    professional:
+      "Use a professional, business-appropriate tone. Be clear, confident, and authoritative.",
+    casual:
+      "Use a friendly, conversational tone. Be approachable and personable while maintaining professionalism.",
+    enthusiastic:
+      "Use an energetic, passionate tone. Show excitement and positivity while remaining credible.",
+    informative:
+      "Use an educational, fact-based tone. Focus on providing value and insights.",
+    inspirational:
+      "Use a motivational, uplifting tone. Inspire and encourage your audience.",
   };
 
   const lengthInstructions: Record<string, string> = {
-    short: 'Keep it brief and punchy (100-150 words). Get straight to the point.',
-    medium: 'Write a moderate length post (150-250 words). Balance detail with readability.',
-    long: 'Write a comprehensive post (250-400 words). Provide depth and thorough explanation.',
+    short:
+      "Keep it brief and punchy (100-150 words). Get straight to the point.",
+    medium:
+      "Write a moderate length post (150-250 words). Balance detail with readability.",
+    long: "Write a comprehensive post (250-400 words). Provide depth and thorough explanation.",
   };
 
   return `You are an expert LinkedIn content creator specializing in human-like, authentic writing that avoids AI detection.
@@ -251,19 +297,24 @@ IMPORTANT: Review your response to ensure no markdown formatting, no em dashes, 
 /**
  * Generate an image for the post using Google's Imagen 3
  */
-async function generatePostImage(prompt: string, postContent: string): Promise<{ url: string | null; base64: string; prompt: any }> {
+async function generatePostImage(
+  prompt: string,
+  postContent: string,
+  genAI: GoogleGenerativeAI,
+  genAI_Image: GoogleGenerativeAI
+): Promise<{ url: string | null; base64: string; prompt: any }> {
   let imagePromptObject: any = null;
-  let imagePromptText = '';
-  
+  let imagePromptText = "";
+
   try {
     // Extract the main topic from the post for better image generation using JSON mode
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
       },
     });
-    
+
     const imagePromptResult = await model.generateContent(`
 Based on this LinkedIn post, create a DETAILED, STRUCTURED image generation prompt that would create a professional, 
 visually appealing image suitable for LinkedIn. The image should be relevant, eye-catching, and enhance the post.
@@ -297,36 +348,42 @@ Make the imagePrompt field extremely detailed and comprehensive for best AI imag
     const imagePromptJson = (await imagePromptResult.response).text();
     imagePromptObject = JSON.parse(imagePromptJson);
     imagePromptText = imagePromptObject.imagePrompt;
-    
-    log.info('Generated structured image prompt:', imagePromptObject);
-    log.info('🎨 Attempting to generate image with Gemini 2.5 Flash Image...');
-    log.info(`📌 Using ${process.env.GEMINI_IMAGE_API_KEY ? 'separate' : 'shared'} API key for images`);
-    
+
+    log.info("Generated structured image prompt:", imagePromptObject);
+    log.info("🎨 Attempting to generate image with Gemini 2.5 Flash Image...");
+    log.info(
+      `📌 Using ${
+        process.env.GEMINI_IMAGE_API_KEY ? "separate" : "shared"
+      } API key for images`
+    );
+
     // Use Gemini 2.5 Flash Image model for image generation
     // Using genAI_Image instance which has separate API key (if configured)
     // Reference: https://ai.google.dev/gemini-api/docs/image-generation
-    const imageModel = genAI_Image.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-image'
+    const imageModel = genAI_Image.getGenerativeModel({
+      model: "gemini-2.5-flash-image",
     });
-    
+
     // Generate image with the detailed text prompt
     const imageResult = await imageModel.generateContent(imagePromptText);
 
     const response = imageResult.response;
-    
+
     // Extract image data from response
     // Response contains parts with inlineData containing the image
     if (response.candidates && response.candidates[0]?.content?.parts) {
       const parts = response.candidates[0].content.parts;
-      
+
       // Find the image part (could be text + image or just image)
       for (const part of parts) {
-        if ('inlineData' in part && part.inlineData) {
+        if ("inlineData" in part && part.inlineData) {
           const base64Data = part.inlineData.data;
-          const mimeType = part.inlineData.mimeType || 'image/png';
-          
-          log.info('✅ Successfully generated image with Gemini 2.5 Flash Image');
-          
+          const mimeType = part.inlineData.mimeType || "image/png";
+
+          log.info(
+            "✅ Successfully generated image with Gemini 2.5 Flash Image"
+          );
+
           return {
             url: null, // Returns base64, not URL
             base64: `data:${mimeType};base64,${base64Data}`,
@@ -335,13 +392,15 @@ Make the imagePrompt field extremely detailed and comprehensive for best AI imag
         }
       }
     }
-    
+
     // If we reach here, image wasn't generated but we have the prompt
-    const error: any = new Error('Gemini image generation did not return image data. Please ensure your GEMINI_API_KEY has image generation enabled and is in a supported region.');
+    const error: any = new Error(
+      "Gemini image generation did not return image data. Please ensure your GEMINI_API_KEY has image generation enabled and is in a supported region."
+    );
     error.prompt = imagePromptObject; // Attach structured prompt to error for fallback
     throw error;
   } catch (error) {
-    log.error('Image generation error:', error);
+    log.error("Image generation error:", error);
     // Attach the structured prompt to the error so it can be used as fallback
     if (imagePromptObject && error instanceof Error) {
       (error as any).prompt = imagePromptObject;
@@ -349,5 +408,3 @@ Make the imagePrompt field extremely detailed and comprehensive for best AI imag
     throw error;
   }
 }
-
-

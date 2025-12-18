@@ -19,11 +19,39 @@ import {
   Shield,
   Linkedin,
 } from "lucide-react";
+import LinkedInConnection from "./components/LinkedInConnection";
+import GeminiKeyManagement from "./components/GeminiKeyManagement";
+import prisma from "@/lib/prisma";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
 
   if (!user) {
+    redirect("/login");
+  }
+
+  // Ensure we have a stable user identifier before querying
+  if (!user.id) {
+    redirect("/login");
+  }
+
+  // Fetch full user profile including connection status
+  const fullProfile = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      image: true,
+      googleId: true,
+      linkedInId: true,
+      linkedInConnected: true,
+      geminiApiKeyEncrypted: true,
+      geminiKeyAddedAt: true,
+    },
+  });
+
+  if (!fullProfile) {
     redirect("/login");
   }
 
@@ -46,7 +74,7 @@ export default async function SettingsPage() {
                   <Linkedin className="mr-2 h-4 w-4" />
                   LinkedIn Account
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
+                {/* <Button variant="ghost" className="w-full justify-start">
                   <Palette className="mr-2 h-4 w-4" />
                   Preferences
                 </Button>
@@ -57,7 +85,7 @@ export default async function SettingsPage() {
                 <Button variant="ghost" className="w-full justify-start">
                   <Shield className="mr-2 h-4 w-4" />
                   Privacy & Security
-                </Button>
+                </Button> */}
               </nav>
             </CardContent>
           </Card>
@@ -69,9 +97,7 @@ export default async function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Your basic account information from LinkedIn
-              </CardDescription>
+              <CardDescription>Your basic account information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -79,7 +105,7 @@ export default async function SettingsPage() {
                   Name
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {user.name || "Not set"}
+                  {fullProfile.name || "Not set"}
                 </p>
               </div>
               <Separator />
@@ -88,30 +114,29 @@ export default async function SettingsPage() {
                   Email
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {user.email || "Not set"}
+                  {fullProfile.email || "Not set"}
                 </p>
               </div>
               <Separator />
               <div>
                 <label className="text-sm font-medium text-gray-700">
-                  LinkedIn Account
+                  Authentication
                 </label>
                 <div className="mt-1 flex items-center gap-2">
-                  {user.linkedInId ? (
-                    <>
-                      <Badge
-                        variant="outline"
-                        className="text-green-600 border-green-300"
-                      >
-                        Connected
-                      </Badge>
-                      <span className="text-xs text-gray-500">
-                        ID: {user.linkedInId.substring(0, 10)}...
-                      </span>
-                    </>
-                  ) : (
-                    <Badge variant="outline" className="text-gray-600">
-                      Not connected
+                  {fullProfile.googleId && (
+                    <Badge
+                      variant="outline"
+                      className="text-blue-600 border-blue-300"
+                    >
+                      Google
+                    </Badge>
+                  )}
+                  {fullProfile.linkedInConnected && (
+                    <Badge
+                      variant="outline"
+                      className="text-[#0A66C2] border-blue-300"
+                    >
+                      LinkedIn
                     </Badge>
                   )}
                 </div>
@@ -119,8 +144,20 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
 
+          {/* LinkedIn Connection Management */}
+          <LinkedInConnection
+            initialConnected={fullProfile.linkedInConnected}
+            linkedInId={fullProfile.linkedInId}
+          />
+
+          {/* Gemini API Key Management */}
+          <GeminiKeyManagement
+            initialHasKey={!!fullProfile.geminiApiKeyEncrypted}
+            initialKeyAddedAt={fullProfile.geminiKeyAddedAt}
+          />
+
           {/* AI Preferences */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>AI Content Preferences</CardTitle>
               <CardDescription>
@@ -170,10 +207,10 @@ export default async function SettingsPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Posting Schedule */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Posting Schedule</CardTitle>
               <CardDescription>
@@ -209,7 +246,7 @@ export default async function SettingsPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Placeholder notice */}
           <Card className="border-blue-200 bg-blue-50">
@@ -221,9 +258,8 @@ export default async function SettingsPage() {
                     Settings Coming Soon
                   </h3>
                   <p className="text-sm text-blue-700 mt-1">
-                    Full settings functionality including preferences,
-                    notifications, and integrations will be available soon. This
-                    is a preview of what's coming.
+                    Full settings including preferences, notifications, and
+                    integrations will be available soon.
                   </p>
                 </div>
               </div>

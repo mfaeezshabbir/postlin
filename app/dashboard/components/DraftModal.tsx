@@ -14,6 +14,8 @@ import {
   Wand2,
   Edit3,
   ArrowLeft,
+  AlertCircle,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +29,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import ScheduleDialog from "./ScheduleDialog";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import Link from "next/link";
 import { AIImageOptionsDialog } from "./AIImageOptionsDialog";
 import { ImagePromptDialog } from "./ImagePromptDialog";
 import { MediaUpload } from "./MediaUpload";
+import { useToasts } from "@/components/ToastProvider";
 
 interface DraftModalProps {
   open: boolean;
@@ -46,9 +51,11 @@ export function DraftModal({
   mode,
   draftId,
 }: DraftModalProps) {
-  const { push } = require("@/components/ToastProvider").useToasts?.() || {
-    push: (t: any) => "",
-  };
+  const { push } = useToasts();
+  const { profile, loading: profileLoading } = useUserProfile();
+
+  const isGeminiEnabled = !profileLoading && !!profile?.features?.canUseGemini;
+
   // Main states
   const [creationMode, setCreationMode] = useState<"choose" | "manual" | "ai">(
     "choose"
@@ -143,7 +150,9 @@ export function DraftModal({
 
       const hashtagRegex = /#[\w]+/g;
       const foundHashtags = data.draft.draftText.match(hashtagRegex) || [];
-      const extractedHashtags = foundHashtags.map((tag: string) => tag.substring(1));
+      const extractedHashtags = foundHashtags.map((tag: string) =>
+        tag.substring(1)
+      );
       setHashtags(extractedHashtags);
       setOriginalHashtags([...extractedHashtags]);
 
@@ -201,17 +210,19 @@ export function DraftModal({
   const hasUnsavedChanges = () => {
     // Only check for changes if we're in manual or AI mode (not in choose mode)
     if (creationMode === "choose") return false;
-    
+
     const contentChanged = content.trim() !== originalContent.trim();
     const imageChanged = imagePreview !== originalImage;
-    const hashtagsChanged = JSON.stringify(hashtags.sort()) !== JSON.stringify(originalHashtags.sort());
-    
+    const hashtagsChanged =
+      JSON.stringify(hashtags.sort()) !==
+      JSON.stringify(originalHashtags.sort());
+
     return contentChanged || imageChanged || hashtagsChanged;
   };
 
   const handleClose = () => {
     if (loading) return;
-    
+
     if (hasUnsavedChanges()) {
       setShowUnsavedDialog(true);
     } else {
@@ -336,17 +347,18 @@ export function DraftModal({
 
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         // Handle service overload (503) gracefully
         if (response.status === 503) {
           push({
             title: "Service Busy",
-            description: "The AI service is temporarily overloaded. Please try again in a few moments.",
+            description:
+              "The AI service is temporarily overloaded. Please try again in a few moments.",
             variant: "info",
           });
           return;
         }
-        
+
         throw new Error(
           errorData.details || errorData.error || "Failed to generate image"
         );
@@ -365,24 +377,27 @@ export function DraftModal({
           description: "Your AI-generated image is ready!",
           variant: "success",
         });
-      } 
+      }
       // Fallback: quota exceeded but prompt available
       else if (data.imagePrompt) {
         // API always returns full JSON object
-        const promptObject = typeof data.imagePrompt === "object" 
-          ? data.imagePrompt 
-          : JSON.parse(data.imagePrompt);
-        
+        const promptObject =
+          typeof data.imagePrompt === "object"
+            ? data.imagePrompt
+            : JSON.parse(data.imagePrompt);
+
         const promptJsonString = JSON.stringify(promptObject, null, 2);
         const promptText = promptObject.imagePrompt;
-        
+
         setImagePromptText(promptText);
         setStoredImagePrompt(promptJsonString); // Save full JSON for later
         setImageGenerationType("ai_prompt_used");
         setShowImagePromptDialog(true);
         push({
           title: "Quota Limit Reached",
-          description: data.message || "Use the prompt with free AI tools to generate your image!",
+          description:
+            data.message ||
+            "Use the prompt with free AI tools to generate your image!",
           variant: "info",
         });
       } else {
@@ -404,9 +419,9 @@ export function DraftModal({
 
   const handleGiveMePrompt = async (regenerate: boolean = false) => {
     setShowAIImageOptions(false);
-    
+
     // Ensure content is a string
-    const contentText = String(content || '').trim();
+    const contentText = String(content || "").trim();
     if (!contentText) return;
 
     // If we have a saved prompt and not regenerating, show it immediately
@@ -414,15 +429,18 @@ export function DraftModal({
       try {
         // Just extract the imagePrompt field directly without full parsing
         // storedImagePrompt is a JSON string like: {"imagePrompt": "...", "style": "..."}
-        const promptMatch = storedImagePrompt.match(/"imagePrompt"\s*:\s*"((?:\\.|[^"\\])*)"/) || 
-                           storedImagePrompt.match(/"imagePrompt"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/) ||
-                           JSON.parse(storedImagePrompt)?.imagePrompt;
-        
+        const promptMatch =
+          storedImagePrompt.match(/"imagePrompt"\s*:\s*"((?:\\.|[^"\\])*)"/) ||
+          storedImagePrompt.match(
+            /"imagePrompt"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/
+          ) ||
+          JSON.parse(storedImagePrompt)?.imagePrompt;
+
         // If we got a match from regex, use that, otherwise parse
         let promptText = "";
         if (typeof promptMatch === "string") {
           // Unescape the matched string
-          promptText = promptMatch.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+          promptText = promptMatch.replace(/\\"/g, '"').replace(/\\\\/g, "\\");
         } else {
           try {
             promptText = JSON.parse(storedImagePrompt).imagePrompt;
@@ -430,7 +448,7 @@ export function DraftModal({
             promptText = storedImagePrompt;
           }
         }
-        
+
         setImagePromptText(promptText);
       } catch (e) {
         // If it's not valid JSON, assume it's plain text
@@ -450,7 +468,7 @@ export function DraftModal({
     try {
       // Ensure draftId is a string or null
       const draftIdStr = currentDraftId ? String(currentDraftId) : null;
-      
+
       const response = await fetch("/api/ai/generate-image-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -463,17 +481,18 @@ export function DraftModal({
 
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         // Handle service overload (503) gracefully
         if (response.status === 503) {
           push({
             title: "Service Busy",
-            description: "The AI service is temporarily overloaded. Please try again in a few moments.",
+            description:
+              "The AI service is temporarily overloaded. Please try again in a few moments.",
             variant: "info",
           });
           return;
         }
-        
+
         throw new Error(
           errorData.details || errorData.error || "Failed to generate prompt"
         );
@@ -483,13 +502,14 @@ export function DraftModal({
 
       if (data.imagePrompt) {
         // API always returns full JSON object
-        const promptObject = typeof data.imagePrompt === "object" 
-          ? data.imagePrompt 
-          : JSON.parse(data.imagePrompt);
-        
+        const promptObject =
+          typeof data.imagePrompt === "object"
+            ? data.imagePrompt
+            : JSON.parse(data.imagePrompt);
+
         const promptJsonString = JSON.stringify(promptObject, null, 2);
         const promptText = promptObject.imagePrompt;
-        
+
         setImagePromptText(promptText);
         setStoredImagePrompt(promptJsonString); // Save full JSON to state
         setImageGenerationType("ai_prompt_used");
@@ -578,6 +598,19 @@ export function DraftModal({
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Handle missing Gemini key specifically
+        if (errorData.requiresSetup) {
+          push({
+            title: "Gemini API Key Required",
+            description:
+              errorData.message ||
+              "Please add your Gemini API key in settings to use AI features.",
+            variant: "error",
+          });
+          throw new Error(errorData.message);
+        }
+
         throw new Error(
           errorData.details || errorData.error || "Failed to generate content"
         );
@@ -612,13 +645,14 @@ export function DraftModal({
       // Handle image prompt
       if (data.imagePrompt) {
         // API always returns full JSON object
-        const promptObject = typeof data.imagePrompt === "object" 
-          ? data.imagePrompt 
-          : JSON.parse(data.imagePrompt);
-        
+        const promptObject =
+          typeof data.imagePrompt === "object"
+            ? data.imagePrompt
+            : JSON.parse(data.imagePrompt);
+
         const promptJsonString = JSON.stringify(promptObject, null, 2);
         const promptText = promptObject.imagePrompt;
-        
+
         setImagePromptText(promptText);
         setStoredImagePrompt(promptJsonString); // Save full JSON
 
@@ -871,12 +905,34 @@ export function DraftModal({
                     {/* AI Generation Card */}
                     <button
                       onClick={() => setCreationMode("ai")}
-                      className="group relative overflow-hidden rounded-2xl border-2 border-gray-200 p-8 text-left transition-all duration-300 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"
+                      disabled={!isGeminiEnabled}
+                      title={
+                        !isGeminiEnabled
+                          ? "Add your Gemini API key in settings to unlock AI features"
+                          : ""
+                      }
+                      className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
+                        isGeminiEnabled
+                          ? "border-gray-200 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"
+                          : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                      }`}
                     >
+                      {!isGeminiEnabled && (
+                        <div className="absolute top-4 right-4 bg-amber-100 rounded-full p-2">
+                          <Lock className="w-4 h-4 text-amber-600" />
+                        </div>
+                      )}
+
                       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150" />
 
                       <div className="relative">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30 transition-transform group-hover:scale-110">
+                        <div
+                          className={`w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30 transition-transform ${
+                            profile?.features.canUseGemini
+                              ? "group-hover:scale-110"
+                              : ""
+                          }`}
+                        >
                           <Wand2 className="w-8 h-8 text-white" />
                         </div>
 
@@ -884,21 +940,40 @@ export function DraftModal({
                           AI Assistant
                         </h3>
                         <p className="text-gray-600 mb-4 leading-relaxed">
-                          Describe your idea and let AI create engaging,
-                          professional content with hashtags and images
+                          {profile?.features.canUseGemini
+                            ? "Describe your idea and let AI create engaging, professional content with hashtags and images"
+                            : "Add your Gemini API key in settings to unlock AI-powered content generation"}
                         </p>
 
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-purple-100 text-purple-700 border-0">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            Recommended
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-gray-300 text-gray-600"
-                          >
-                            Fast & Easy
-                          </Badge>
+                          {profile?.features.canUseGemini ? (
+                            <>
+                              <Badge className="bg-purple-100 text-purple-700 border-0">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Recommended
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className="border-gray-300 text-gray-600"
+                              >
+                                Fast & Easy
+                              </Badge>
+                            </>
+                          ) : (
+                            <>
+                              <Badge className="bg-amber-100 text-amber-700 border-0">
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                                Setup Required
+                              </Badge>
+                              <Link
+                                href="/dashboard/settings"
+                                className="text-xs text-blue-600 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Go to Settings
+                              </Link>
+                            </>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -1476,10 +1551,7 @@ export function DraftModal({
             >
               Discard Changes
             </Button>
-            <Button
-              onClick={handleSaveAndClose}
-              disabled={loading}
-            >
+            <Button onClick={handleSaveAndClose} disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
