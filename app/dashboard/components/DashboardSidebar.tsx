@@ -1,17 +1,7 @@
 "use client";
 
 import Logo from "@/components/brand/Logo";
-import {
-  LayoutGrid,
-  FileText,
-  Calendar,
-  CheckCircle,
-  Settings,
-  Plus,
-  Menu,
-  X,
-  BarChart2,
-} from "lucide-react";
+import { LayoutGrid, Settings, Plus, Menu, X, BarChart2 } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -51,24 +41,7 @@ export default function DashboardSidebar({
       href: "/dashboard/all",
       icon: LayoutGrid,
       count: stats.drafts + stats.scheduled + stats.published || undefined,
-    },
-    {
-      name: "Drafts",
-      href: "/dashboard/drafts",
-      icon: FileText,
-      count: stats.drafts || undefined,
-    },
-    {
-      name: "Scheduled",
-      href: "/dashboard/scheduled",
-      icon: Calendar,
-      count: stats.scheduled || undefined,
-    },
-    {
-      name: "Published",
-      href: "/dashboard/history",
-      icon: CheckCircle,
-      count: stats.published || undefined,
+      filter: null,
     },
   ];
 
