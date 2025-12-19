@@ -3,16 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import React from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 interface User {
@@ -30,8 +21,6 @@ export default function SidebarProfile({
   user: User;
   isCollapsed?: boolean;
 }) {
-  const router = useRouter();
-
   const initials = React.useMemo(() => {
     if (!user?.name) return "U";
     return user.name
@@ -45,7 +34,7 @@ export default function SidebarProfile({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 p-4 border-b border-gray-200",
+        "flex flex-col gap-3 p-4 border-b border-sidebar-border",
         isCollapsed ? "items-center" : ""
       )}
     >
@@ -55,47 +44,28 @@ export default function SidebarProfile({
           isCollapsed ? "justify-center" : ""
         )}
       >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="flex items-center gap-3 focus:outline-none"
-              aria-label="Open profile menu"
-            >
-              <Avatar
-                className="w-10 h-10 rounded-lg"
-                title={user?.name || "User"}
-              >
-                {user?.image ? (
-                  <Image
-                    src={user.image}
-                    width={40}
-                    height={40}
-                    alt={user?.name || "User"}
-                  />
-                ) : (
-                  <AvatarFallback>{initials}</AvatarFallback>
-                )}
-              </Avatar>
-              {!isCollapsed && (
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.name || "User"}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {user?.email || ""}
-                  </div>
-                </div>
-              )}
-            </button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent side="right" align="center" sideOffset={8}>
-            <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Avatar className="w-10 h-10 rounded-lg" title={user?.name || "User"}>
+          {user?.image ? (
+            <Image
+              src={user.image}
+              width={40}
+              height={40}
+              alt={user?.name || "User"}
+            />
+          ) : (
+            <AvatarFallback>{initials}</AvatarFallback>
+          )}
+        </Avatar>
+        {!isCollapsed && (
+          <div className="flex-1 text-left">
+            <div className="text-sm font-medium text-sidebar-foreground">
+              {user?.name || "User"}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
+              {user?.email || ""}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

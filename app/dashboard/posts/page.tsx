@@ -302,7 +302,7 @@ export default function AllPostsPage() {
                 className={`h-10 rounded-lg px-4 border ${
                   statusFilter === filter.value
                     ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                    : "bg-[#1A1F37] text-gray-400 border-white/5 hover:bg-white/5 hover:text-gray-300"
+                    : "bg-secondary text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
                 }`}
               >
                 {statusFilter === filter.value && (
@@ -327,7 +327,7 @@ export default function AllPostsPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="hover:text-white hover:bg-white/5 bg-[#1A1F37] border border-white/5 h-10 w-10 rounded-lg"
+            className="hover:text-foreground hover:bg-accent bg-secondary border border-border h-10 w-10 rounded-lg"
           >
             <LayoutGrid className="h-5 w-5" />
           </Button>
@@ -336,14 +336,14 @@ export default function AllPostsPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:text-white hover:bg-white/5 bg-[#1A1F37] border border-white/5 h-10 w-10 rounded-lg"
+                className="hover:text-foreground hover:bg-accent bg-secondary border border-border h-10 w-10 rounded-lg"
               >
                 <Bell className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-64 bg-[#1e2542] border-white/10 text-gray-300"
+              className="w-64 bg-popover border-border text-popover-foreground"
             >
               <DropdownMenuLabel className="font-normal text-xs text-gray-400 uppercase tracking-wider">
                 Notifications

@@ -44,7 +44,7 @@ export default async function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Settings Navigation */}
         <div className="lg:col-span-3">
-          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl overflow-hidden sticky top-8">
+          <div className="bg-card/50 border border-border rounded-2xl overflow-hidden sticky top-8">
             <nav className="flex flex-col p-2 space-y-1">
               <Button
                 variant="ghost"
@@ -67,7 +67,7 @@ export default async function SettingsPage() {
         {/* Main Content */}
         <div className="lg:col-span-9 space-y-6">
           {/* Profile Card */}
-          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl p-6">
+          <div className="bg-card/50 border border-border rounded-2xl p-6">
             <h2 className="text-xl font-semibold text-white mb-6">
               Profile Information
             </h2>
@@ -76,7 +76,7 @@ export default async function SettingsPage() {
                 <label className="text-sm font-medium text-gray-400">
                   Display Name
                 </label>
-                <div className="p-3 rounded-lg bg-[#0F1222] border border-white/5 text-white">
+                <div className="p-3 rounded-lg bg-secondary border border-border text-foreground">
                   {fullProfile.name || "Not set"}
                 </div>
               </div>
@@ -85,7 +85,7 @@ export default async function SettingsPage() {
                 <label className="text-sm font-medium text-gray-400">
                   Email Address
                 </label>
-                <div className="p-3 rounded-lg bg-[#0F1222] border border-white/5 text-white">
+                <div className="p-3 rounded-lg bg-secondary border border-border text-foreground">
                   {fullProfile.email || "Not set"}
                 </div>
               </div>
@@ -117,7 +117,7 @@ export default async function SettingsPage() {
           </div>
 
           {/* LinkedIn Integration */}
-          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl p-6">
+          <div className="bg-card/50 border border-border rounded-2xl p-6">
             <h2 className="text-xl font-semibold text-white mb-6">
               LinkedIn Connection
             </h2>
@@ -128,7 +128,7 @@ export default async function SettingsPage() {
           </div>
 
           {/* Gemini keys */}
-          <div className="bg-[#1A1F37]/50 border border-white/5 rounded-2xl p-6">
+          <div className="bg-card/50 border border-border rounded-2xl p-6">
             <h2 className="text-xl font-semibold text-white mb-6">
               AI Configuration
             </h2>

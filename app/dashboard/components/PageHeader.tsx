@@ -41,14 +41,14 @@ export default function PageHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="hover:text-white hover:bg-white/5 bg-[#1A1F37] border border-white/5 h-10 w-10 rounded-lg"
+          className="hover:text-foreground hover:bg-accent bg-secondary border border-border h-10 w-10 rounded-lg"
         >
           <LayoutGrid className="h-5 w-5" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="hover:text-foreground hover:bg-white/5 bg-card border border-white/5 h-10 w-10 rounded-lg"
+          className="hover:text-foreground hover:bg-accent bg-secondary border border-border h-10 w-10 rounded-lg"
         >
           <Bell className="h-5 w-5" />
         </Button>

@@ -103,7 +103,7 @@ export default function DashboardSidebar({
 
             {/* Content Library */}
             <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">
                 Content Library
               </h3>
               <nav className="space-y-1">
@@ -117,7 +117,7 @@ export default function DashboardSidebar({
                         "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
                           ? "bg-sidebar-accent text-sidebar-primary"
-                          : "text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                          : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                       )}
                       onClick={() => setIsMobileOpen(false)}
                     >
@@ -125,7 +125,9 @@ export default function DashboardSidebar({
                         <item.icon
                           className={cn(
                             "h-5 w-5",
-                            isActive ? "text-sidebar-primary" : "text-gray-500"
+                            isActive
+                              ? "text-sidebar-primary"
+                              : "text-muted-foreground"
                           )}
                         />
                         {item.name}
@@ -133,10 +135,10 @@ export default function DashboardSidebar({
                       {item.count !== undefined && (
                         <span
                           className={cn(
-                            "text-xs px-2 py-0.5 rounded-full bg-white/5",
+                            "text-xs px-2 py-0.5 rounded-full bg-muted",
                             isActive
                               ? "text-sidebar-primary bg-sidebar-primary/10"
-                              : "text-gray-600"
+                              : "text-muted-foreground"
                           )}
                         >
                           {item.count}
@@ -150,12 +152,12 @@ export default function DashboardSidebar({
 
             {/* Analytics Section */}
             <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">
                 Analytics
               </h3>
               <nav className="space-y-1">
-                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 cursor-pointer disabled opacity-50">
-                  <BarChart2 className="h-5 w-5 text-gray-500" />
+                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50 cursor-pointer disabled opacity-50">
+                  <BarChart2 className="h-5 w-5 text-muted-foreground" />
                   Performance
                 </div>
               </nav>
@@ -166,13 +168,39 @@ export default function DashboardSidebar({
           <div className="p-4 border-t border-sidebar-border flex items-center justify-between gap-2">
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors flex-1"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors flex-1"
               onClick={() => setIsMobileOpen(false)}
             >
-              <Settings className="h-5 w-5 text-gray-500" />
+              <Settings className="h-5 w-5 text-muted-foreground" />
               Settings
             </Link>
             <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const { signOut } = require("next-auth/react");
+                signOut({ callbackUrl: "/" });
+              }}
+              className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title="Sign out"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" x2="9" y1="12" y2="12" />
+              </svg>
+            </Button>
           </div>
         </div>
       </aside>
