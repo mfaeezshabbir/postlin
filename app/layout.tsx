@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   title: "Postlin - AI-Powered LinkedIn Content Assistant",
   description:
     "Create, schedule, and publish LinkedIn posts with AI-powered content generation. Automate your LinkedIn presence with Postlin.",
+  verification: {
+    google: "IXowjrIm1s91KjbQVpSKVoNrt7z7bmHuPTZloc8uFiY",
+  },
 };
 
 export default function RootLayout({
