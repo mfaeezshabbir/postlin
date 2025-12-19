@@ -66,14 +66,11 @@ export default function Features() {
                 Sound Like You, Only Better.
               </span>
             </h2>
-            <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+            <p className="text-lg text-slate-600 leading-relaxed">
               Postlin captures your unique tone. You provide the insight; we
               provide the reach. No soulless AI drafts, just your voice
               amplified for maximum impact.
             </p>
-            <button className="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-600/20">
-              Discover Your Amplified Voice
-            </button>
           </div>
         </div>
 
@@ -137,14 +134,11 @@ export default function Features() {
                 Start Timing for Maximum Impact.
               </span>
             </h2>
-            <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+            <p className="text-lg text-slate-600 leading-relaxed">
               Schedule posts for when your audience is *actually* online and
               engaged. Simple insights, better results. It's like having a
               growth mentor for your calendar.
             </p>
-            <button className="bg-sky-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-sky-700 transition shadow-lg shadow-sky-600/20">
-              Optimize Tour Schedule
-            </button>
           </div>
         </div>
 
@@ -205,14 +199,11 @@ export default function Features() {
               Understand *Why* You're Growing. <br />
               <span className="text-purple-600">Replicate Your Success.</span>
             </h2>
-            <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+            <p className="text-lg text-slate-600 leading-relaxed">
               Traditional wisdom packaged with modern data. Simple explanations,
               not overwhelming charts. Learn what works and compound your
               growth.
             </p>
-            <button className="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-purple-700 transition shadow-lg shadow-purple-600/20">
-              See Your Growth Potential
-            </button>
           </div>
         </div>
       </div>
