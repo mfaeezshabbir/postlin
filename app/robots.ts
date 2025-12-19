@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://postlin.com"; // Update with your actual domain
+  const baseUrl = "https://postlin.mfaeezshabbir.me"; // Update with your actual domain
 
   return {
     rules: [

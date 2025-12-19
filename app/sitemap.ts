@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://postlin.com"; // Update with your actual domain
+  const baseUrl = "https://postlin.mfaeezshabbir.me"; // Update with your actual domain
 
   return [
     {
