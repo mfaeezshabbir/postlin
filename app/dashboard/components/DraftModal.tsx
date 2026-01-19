@@ -58,7 +58,7 @@ export function DraftModal({
 
   // Main states
   const [creationMode, setCreationMode] = useState<"choose" | "manual" | "ai">(
-    "choose"
+    "choose",
   );
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -77,7 +77,7 @@ export function DraftModal({
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"none" | "image" | "video">(
-    "none"
+    "none",
   );
 
   // Hashtag states
@@ -103,12 +103,12 @@ export function DraftModal({
 
   // Stored image prompt from draft (for reuse)
   const [storedImagePrompt, setStoredImagePrompt] = useState<string | null>(
-    null
+    null,
   );
 
   // Track the current draft ID (can change when saving a new draft)
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(
-    draftId || null
+    draftId || null,
   );
 
   // Track unsaved changes
@@ -151,7 +151,7 @@ export function DraftModal({
       const hashtagRegex = /#[\w]+/g;
       const foundHashtags = data.draft.draftText.match(hashtagRegex) || [];
       const extractedHashtags = foundHashtags.map((tag: string) =>
-        tag.substring(1)
+        tag.substring(1),
       );
       setHashtags(extractedHashtags);
       setOriginalHashtags([...extractedHashtags]);
@@ -360,7 +360,7 @@ export function DraftModal({
         }
 
         throw new Error(
-          errorData.details || errorData.error || "Failed to generate image"
+          errorData.details || errorData.error || "Failed to generate image",
         );
       }
 
@@ -432,7 +432,7 @@ export function DraftModal({
         const promptMatch =
           storedImagePrompt.match(/"imagePrompt"\s*:\s*"((?:\\.|[^"\\])*)"/) ||
           storedImagePrompt.match(
-            /"imagePrompt"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/
+            /"imagePrompt"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/,
           ) ||
           JSON.parse(storedImagePrompt)?.imagePrompt;
 
@@ -494,7 +494,7 @@ export function DraftModal({
         }
 
         throw new Error(
-          errorData.details || errorData.error || "Failed to generate prompt"
+          errorData.details || errorData.error || "Failed to generate prompt",
         );
       }
 
@@ -612,7 +612,7 @@ export function DraftModal({
         }
 
         throw new Error(
-          errorData.details || errorData.error || "Failed to generate content"
+          errorData.details || errorData.error || "Failed to generate content",
         );
       }
 
@@ -629,7 +629,7 @@ export function DraftModal({
         const hashtagMatches = cleanContent.match(/#[\w]+/g);
         if (hashtagMatches) {
           const extractedHashtags = hashtagMatches.map((tag: string) =>
-            tag.replace("#", "")
+            tag.replace("#", ""),
           );
           setHashtags(extractedHashtags);
         }
@@ -755,7 +755,7 @@ export function DraftModal({
         throw new Error(
           `Failed to ${
             mode === "edit" ? "update" : "create"
-          } draft: ${errorDetails}`
+          } draft: ${errorDetails}`,
         );
       }
 
@@ -766,7 +766,7 @@ export function DraftModal({
     } catch (error) {
       console.error(
         `Error ${mode === "edit" ? "updating" : "creating"} draft:`,
-        error
+        error,
       );
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
@@ -833,7 +833,7 @@ export function DraftModal({
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.details || errorData.error || "Failed to schedule post"
+          errorData.details || errorData.error || "Failed to schedule post",
         );
       }
 
@@ -871,149 +871,147 @@ export function DraftModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="!max-w-[80vw] !w-[70vw] max-h-[95vh] p-0 gap-0 border-0 shadow-2xl overflow-hidden">
+        <DialogContent className="!max-w-[85vw] !w-[85vw] max-h-[95vh] p-0 gap-0 border-border bg-background shadow-2xl overflow-hidden">
           <DialogTitle className="sr-only">
             {mode === "edit" ? "Edit Draft" : "Create New Post"}
           </DialogTitle>
           {fetchingDraft ? (
-            <div className="flex flex-col items-center justify-center py-20 px-6">
+            <div className="flex flex-col items-center justify-center py-20 px-6 bg-card text-card-foreground">
               <div className="relative mb-6">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                   <Loader2 className="w-10 h-10 text-white animate-spin" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Loading your draft...
               </h3>
-              <p className="text-sm text-gray-500">Just a moment</p>
+              <p className="text-sm text-muted-foreground">Just a moment</p>
             </div>
           ) : (
             <>
-              {/* Choose Creation Mode */}
+              {/* Choose Creation Mode - Redesigned */}
               {mode === "create" && creationMode === "choose" && (
-                <div className="p-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-3">
-                      Create New Post
-                    </h2>
-                    <p className="text-gray-600">
-                      Choose how you'd like to craft your LinkedIn content
-                    </p>
-                  </div>
+                <div className="flex flex-col h-full bg-gradient-to-b from-card to-muted/20">
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-12">
+                    <div className="text-center space-y-4 max-w-2xl mx-auto">
+                      <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 text-primary mb-4 transform hover:scale-105 transition-transform duration-300">
+                        <Sparkles className="w-8 h-8" />
+                      </div>
+                      <h2 className="text-4xl font-bold tracking-tight text-foreground">
+                        Create New Post
+                      </h2>
+                      <p className="text-muted-foreground text-lg max-w-lg mx-auto">
+                        How would you like to get started? Choose AI assistance
+                        for speed or Manual for full control.
+                      </p>
+                    </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto">
-                    {/* AI Generation Card */}
-                    <button
-                      onClick={() => setCreationMode("ai")}
-                      disabled={!isGeminiEnabled}
-                      title={
-                        !isGeminiEnabled
-                          ? "Add your Gemini API key in settings to unlock AI features"
-                          : ""
-                      }
-                      className={`group relative overflow-hidden rounded-2xl border-2 p-8 text-left transition-all duration-300 ${
-                        isGeminiEnabled
-                          ? "border-gray-200 hover:border-purple-400 hover:shadow-xl hover:-translate-y-1"
-                          : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-                      }`}
-                    >
-                      {!isGeminiEnabled && (
-                        <div className="absolute top-4 right-4 bg-amber-100 rounded-full p-2">
-                          <Lock className="w-4 h-4 text-amber-600" />
-                        </div>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl px-4">
+                      {/* AI Assistant Card */}
+                      <button
+                        onClick={() => setCreationMode("ai")}
+                        disabled={!isGeminiEnabled}
+                        className={`group relative overflow-hidden rounded-3xl p-8 text-left transition-all duration-300 border hover:shadow-2xl hover:-translate-y-2 ${
+                          isGeminiEnabled
+                            ? "bg-card border-border hover:border-purple-500/50 dark:hover:border-purple-400/50"
+                            : "bg-muted/50 border-border opacity-70 cursor-not-allowed"
+                        }`}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 group-hover:opacity-100 opacity-50 transition-opacity" />
 
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150" />
-
-                      <div className="relative">
-                        <div
-                          className={`w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30 transition-transform ${
-                            profile?.features.canUseGemini
-                              ? "group-hover:scale-110"
-                              : ""
-                          }`}
-                        >
-                          <Wand2 className="w-8 h-8 text-white" />
-                        </div>
-
-                        <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                          AI Assistant
-                        </h3>
-                        <p className="text-gray-600 mb-4 leading-relaxed">
-                          {profile?.features.canUseGemini
-                            ? "Describe your idea and let AI create engaging, professional content with hashtags and images"
-                            : "Add your Gemini API key in settings to unlock AI-powered content generation"}
-                        </p>
-
-                        <div className="flex items-center gap-2">
-                          {profile?.features.canUseGemini ? (
-                            <>
-                              <Badge className="bg-purple-100 text-purple-700 border-0">
-                                <Sparkles className="w-3 h-3 mr-1" />
+                        <div className="relative z-10 flex flex-col h-full">
+                          <div className="flex items-center justify-between mb-8">
+                            <div
+                              className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 duration-500 ${
+                                isGeminiEnabled
+                                  ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              <Wand2 className="w-8 h-8" />
+                            </div>
+                            {!isGeminiEnabled && (
+                              <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1 border border-amber-200 dark:border-amber-800">
+                                <Lock className="w-3 h-3" /> Setup Required
+                              </div>
+                            )}
+                            {isGeminiEnabled && (
+                              <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-0 px-3 py-1">
+                                <Sparkles className="w-3 h-3 mr-1" />{" "}
                                 Recommended
                               </Badge>
-                              <Badge
-                                variant="outline"
-                                className="border-gray-300 text-gray-600"
-                              >
-                                Fast & Easy
-                              </Badge>
-                            </>
-                          ) : (
-                            <>
-                              <Badge className="bg-amber-100 text-amber-700 border-0">
-                                <AlertCircle className="w-3 h-3 mr-1" />
-                                Setup Required
-                              </Badge>
-                              <Link
-                                href="/dashboard/settings"
-                                className="text-xs text-blue-600 hover:underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Go to Settings
-                              </Link>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </button>
+                            )}
+                          </div>
 
-                    {/* Manual Writing Card */}
-                    <button
-                      onClick={() => setCreationMode("manual")}
-                      className="group relative overflow-hidden rounded-2xl border-2 border-gray-200 p-8 text-left transition-all duration-300 hover:border-green-400 hover:shadow-xl hover:-translate-y-1"
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150" />
+                          <h3 className="text-2xl font-bold text-foreground mb-3 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                            AI Assistant
+                          </h3>
+                          <p className="text-muted-foreground leading-relaxed mb-8 flex-1 text-base">
+                            Describe your idea and let AI create engaging,
+                            professional content with tailored hashtags and
+                            visuals.
+                          </p>
 
-                      <div className="relative">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-6 shadow-lg shadow-green-500/30 transition-transform group-hover:scale-110">
-                          <Edit3 className="w-8 h-8 text-white" />
-                        </div>
-
-                        <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                          Write Manually
-                        </h3>
-                        <p className="text-gray-600 mb-4 leading-relaxed">
-                          Craft your message from scratch with full creative
-                          control over every word
-                        </p>
-
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className="border-gray-300 text-gray-600"
+                          <div
+                            className={`flex items-center gap-2 text-sm font-semibold transition-all duration-300 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 ${
+                              isGeminiEnabled
+                                ? "text-purple-600 dark:text-purple-400"
+                                : "text-muted-foreground"
+                            }`}
                           >
-                            Full Control
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-gray-300 text-gray-600"
-                          >
-                            Custom
-                          </Badge>
+                            Start Generating{" "}
+                            <ArrowLeft className="w-4 h-4 rotate-180" />
+                          </div>
                         </div>
+                      </button>
+
+                      {/* Manual Card */}
+                      <button
+                        onClick={() => setCreationMode("manual")}
+                        className="group relative overflow-hidden rounded-3xl p-8 text-left transition-all duration-300 border bg-card border-border hover:border-emerald-500/50 dark:hover:border-emerald-400/50 hover:shadow-2xl hover:-translate-y-2"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5 group-hover:opacity-100 opacity-50 transition-opacity" />
+
+                        <div className="relative z-10 flex flex-col h-full">
+                          <div className="flex items-center justify-between mb-8">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg text-white transition-transform group-hover:scale-110 duration-500">
+                              <Edit3 className="w-8 h-8" />
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="border-border text-muted-foreground px-3 py-1"
+                            >
+                              Classic Editor
+                            </Badge>
+                          </div>
+
+                          <h3 className="text-2xl font-bold text-foreground mb-3 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                            Write Manually
+                          </h3>
+                          <p className="text-muted-foreground leading-relaxed mb-8 flex-1 text-base">
+                            Start with a blank canvas. Perfect for when you have
+                            a specific message or want full creative control.
+                          </p>
+
+                          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 transition-all duration-300 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+                            Start Writing{" "}
+                            <ArrowLeft className="w-4 h-4 rotate-180" />
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+
+                    {!isGeminiEnabled && (
+                      <div className="text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <Link
+                          href="/dashboard/settings"
+                          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors hover:underline underline-offset-4"
+                        >
+                          <Lock className="w-3 h-3" />
+                          Configure AI Keys in Settings to unlock all features
+                        </Link>
                       </div>
-                    </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1022,14 +1020,14 @@ export function DraftModal({
               {creationMode === "ai" && (
                 <div className="flex h-full max-h-[95vh]">
                   {/* Left Sidebar - AI Controls */}
-                  <div className="w-96 bg-gradient-to-br from-purple-50 to-blue-50 p-6 border-r border-gray-200 overflow-y-auto">
+                  <div className="w-96 bg-secondary/30 p-6 border-r border-border overflow-y-auto">
                     <button
                       onClick={() => {
                         setCreationMode("choose");
                         setGeneratedContent("");
                         setContent("");
                       }}
-                      className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       Back to options
@@ -1039,38 +1037,38 @@ export function DraftModal({
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mb-4 shadow-lg">
                         <Wand2 className="w-6 h-6 text-white" />
                       </div>
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      <h2 className="text-2xl font-bold text-foreground mb-2">
                         AI Assistant
                       </h2>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Tell us what you want to write about
                       </p>
                     </div>
 
                     <div className="space-y-5">
                       <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                        <label className="text-sm font-semibold text-foreground mb-2 block">
                           Your Topic
                         </label>
                         <Textarea
                           placeholder="Example: Share insights from launching our new SaaS product, tips for remote team productivity, or thoughts on AI in business..."
                           value={aiPrompt}
                           onChange={(e) => setAiPrompt(e.target.value)}
-                          rows={5}
-                          className="resize-none bg-white border-2 focus:border-purple-400"
+                          rows={6}
+                          className="resize-none bg-background border-border focus:border-purple-400"
                           disabled={loading || !!generatedContent}
                         />
                       </div>
 
                       <div className="grid grid-cols-1 gap-4">
                         <div>
-                          <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                          <label className="text-sm font-semibold text-foreground mb-2 block">
                             Tone of Voice
                           </label>
                           <select
                             value={tone}
                             onChange={(e) => setTone(e.target.value)}
-                            className="w-full px-4 py-2.5 border-2 rounded-lg focus:border-purple-400 focus:outline-none bg-white"
+                            className="w-full px-4 py-2.5 border rounded-lg focus:border-purple-400 focus:outline-none bg-background border-border text-foreground"
                             disabled={loading || !!generatedContent}
                           >
                             <option value="professional">Professional</option>
@@ -1082,13 +1080,13 @@ export function DraftModal({
                         </div>
 
                         <div>
-                          <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                          <label className="text-sm font-semibold text-foreground mb-2 block">
                             Content Length
                           </label>
                           <select
                             value={length}
                             onChange={(e) => setLength(e.target.value)}
-                            className="w-full px-4 py-2.5 border-2 rounded-lg focus:border-purple-400 focus:outline-none bg-white"
+                            className="w-full px-4 py-2.5 border rounded-lg focus:border-purple-400 focus:outline-none bg-background border-border text-foreground"
                             disabled={loading || !!generatedContent}
                           >
                             <option value="short">Short (100-150 words)</option>
@@ -1104,7 +1102,7 @@ export function DraftModal({
                         <Button
                           onClick={handleGenerateAI}
                           disabled={loading || !aiPrompt.trim()}
-                          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg shadow-purple-500/30 h-12"
+                          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg shadow-purple-500/30 h-12 text-white"
                         >
                           {loading ? (
                             <>
@@ -1125,7 +1123,7 @@ export function DraftModal({
                             setContent("");
                           }}
                           variant="outline"
-                          className="w-full h-12 border-2"
+                          className="w-full h-12 border-border"
                         >
                           <ArrowLeft className="w-4 h-4 mr-2" />
                           Start Over
@@ -1135,17 +1133,17 @@ export function DraftModal({
                   </div>
 
                   {/* Right Content Area */}
-                  <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 flex flex-col overflow-hidden bg-background">
                     {generatedContent ? (
                       <>
                         <div className="flex-1 overflow-y-auto p-6">
                           <div className="max-w-3xl mx-auto space-y-6">
                             <div>
                               <div className="flex items-center justify-between mb-3">
-                                <label className="text-sm font-semibold text-gray-700">
+                                <label className="text-sm font-semibold text-foreground">
                                   Generated Content
                                 </label>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-muted-foreground">
                                   {wordCount} words • {charCount}/3000
                                   characters
                                 </span>
@@ -1154,10 +1152,10 @@ export function DraftModal({
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                                 rows={12}
-                                className="resize-none text-base leading-relaxed"
+                                className="resize-none text-base leading-relaxed bg-card text-foreground border-border"
                               />
                               {charCount > 3000 && (
-                                <p className="text-xs text-red-600 mt-2">
+                                <p className="text-xs text-red-500 mt-2">
                                   ⚠️ Content exceeds LinkedIn's 3000 character
                                   limit
                                 </p>
@@ -1166,7 +1164,7 @@ export function DraftModal({
 
                             {/* Media Upload Section */}
                             <div>
-                              <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                              <label className="text-sm font-semibold text-foreground mb-3 block">
                                 Post Media
                               </label>
                               <MediaUpload
@@ -1182,7 +1180,7 @@ export function DraftModal({
 
                             {/* Hashtags Section */}
                             <div>
-                              <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                              <label className="text-sm font-semibold text-foreground mb-3 block">
                                 Hashtags
                               </label>
                               <div className="flex gap-2 mb-3">
@@ -1194,13 +1192,13 @@ export function DraftModal({
                                   }
                                   onKeyDown={handleHashtagKeyDown}
                                   placeholder="Add hashtag"
-                                  className="flex-1 px-4 py-2 border-2 rounded-lg focus:border-purple-400 focus:outline-none"
+                                  className="flex-1 px-4 py-2 border rounded-lg focus:border-purple-400 focus:outline-none bg-background border-border text-foreground"
                                 />
                                 <Button
                                   type="button"
                                   onClick={handleAddHashtag}
                                   variant="outline"
-                                  className="border-2"
+                                  className="border-border"
                                 >
                                   Add
                                 </Button>
@@ -1216,7 +1214,7 @@ export function DraftModal({
                                       #{tag}
                                       <button
                                         onClick={() => handleRemoveHashtag(tag)}
-                                        className="ml-2 hover:bg-gray-300 rounded-full"
+                                        className="ml-2 hover:bg-muted-foreground/20 rounded-full"
                                       >
                                         <X className="w-3 h-3" />
                                       </button>
@@ -1229,7 +1227,7 @@ export function DraftModal({
                         </div>
 
                         {/* Footer Actions */}
-                        <div className="border-t bg-white px-6 py-4 flex items-center justify-between">
+                        <div className="border-t border-border bg-card px-6 py-4 flex items-center justify-between">
                           <Button variant="ghost" onClick={handleClose}>
                             Cancel
                           </Button>
@@ -1237,7 +1235,7 @@ export function DraftModal({
                             <Button
                               variant="outline"
                               onClick={() => setShowScheduleDialog(true)}
-                              className="border-2"
+                              className="border-border"
                             >
                               <Calendar className="w-4 h-4 mr-2" />
                               Schedule
@@ -1257,7 +1255,7 @@ export function DraftModal({
                                 }
                               }}
                               disabled={loading || !content.trim()}
-                              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                             >
                               {loading ? (
                                 <>
@@ -1275,15 +1273,15 @@ export function DraftModal({
                         </div>
                       </>
                     ) : (
-                      <div className="flex-1 flex items-center justify-center p-12">
+                      <div className="flex-1 flex items-center justify-center p-12 bg-background">
                         <div className="text-center max-w-md">
                           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center mx-auto mb-6 shadow-xl">
                             <Sparkles className="w-10 h-10 text-white" />
                           </div>
-                          <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                          <h3 className="text-2xl font-bold text-foreground mb-3">
                             Ready to create?
                           </h3>
-                          <p className="text-gray-600 leading-relaxed">
+                          <p className="text-muted-foreground leading-relaxed">
                             Fill in the details on the left and click "Generate
                             Content" to let AI craft your perfect LinkedIn post
                           </p>
@@ -1298,11 +1296,11 @@ export function DraftModal({
               {creationMode === "manual" && (
                 <div className="flex h-full max-h-[95vh]">
                   {/* Left Sidebar - Meta Controls */}
-                  <div className="w-80 bg-gray-50 p-6 border-r border-gray-200 overflow-y-auto">
+                  <div className="w-80 bg-secondary/30 p-6 border-r border-border overflow-y-auto">
                     {mode === "create" && (
                       <button
                         onClick={() => setCreationMode("choose")}
-                        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
                       >
                         <ArrowLeft className="w-4 h-4" />
                         Back to options
@@ -1310,15 +1308,15 @@ export function DraftModal({
                     )}
 
                     <div className="relative w-full mb-4">
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-14 h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10">
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-14 h-14 rounded-lg bg-background border border-border flex items-center justify-center shadow-sm z-10">
                         <Edit3 className="w-6 h-6 text-green-600" />
                       </div>
 
                       <div className="ml-16">
-                        <h2 className="text-lg font-semibold text-gray-900">
+                        <h2 className="text-lg font-semibold text-foreground">
                           {mode === "edit" ? "Edit Draft" : "Compose Post"}
                         </h2>
-                        <p className="text-[0.7rem] text-gray-500">
+                        <p className="text-[0.7rem] text-muted-foreground">
                           {mode === "edit"
                             ? "Make changes to your saved draft before publishing or scheduling."
                             : "Write a concise, professional update to share with your network."}
@@ -1329,7 +1327,7 @@ export function DraftModal({
                     <div className="space-y-5">
                       {/* Media Upload */}
                       <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                        <label className="text-sm font-semibold text-foreground mb-2 block">
                           Media
                         </label>
                         <MediaUpload
@@ -1345,7 +1343,7 @@ export function DraftModal({
 
                       {/* Hashtags */}
                       <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                        <label className="text-sm font-semibold text-foreground mb-2 block">
                           Hashtags
                         </label>
                         <div className="flex gap-2 mb-3">
@@ -1355,14 +1353,14 @@ export function DraftModal({
                             onChange={(e) => setHashtagInput(e.target.value)}
                             onKeyDown={handleHashtagKeyDown}
                             placeholder="Add hashtag"
-                            className="flex-1 px-3 py-2 border-2 rounded-lg focus:border-green-400 focus:outline-none text-sm"
+                            className="flex-1 px-3 py-2 border rounded-lg focus:border-green-400 focus:outline-none text-sm bg-background border-border text-foreground"
                           />
                           <Button
                             type="button"
                             onClick={handleAddHashtag}
                             size="sm"
                             variant="outline"
-                            className="border-2"
+                            className="border-border"
                           >
                             Add
                           </Button>
@@ -1378,7 +1376,7 @@ export function DraftModal({
                                 #{tag}
                                 <button
                                   onClick={() => handleRemoveHashtag(tag)}
-                                  className="ml-1.5 hover:bg-gray-300 rounded-full"
+                                  className="ml-1.5 hover:bg-muted-foreground/20 rounded-full"
                                 >
                                   <X className="w-3 h-3" />
                                 </button>
@@ -1389,32 +1387,36 @@ export function DraftModal({
                       </div>
 
                       {/* Stats */}
-                      <div className="bg-white rounded-xl p-4 border-2 border-gray-200">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                      <div className="bg-background rounded-xl p-4 border border-border">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
                           Content Stats
                         </h4>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Words</span>
-                            <span className="font-semibold text-gray-900">
+                            <span className="text-muted-foreground">Words</span>
+                            <span className="font-semibold text-foreground">
                               {wordCount}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Characters</span>
+                            <span className="text-muted-foreground">
+                              Characters
+                            </span>
                             <span
                               className={`font-semibold ${
                                 charCount > 3000
-                                  ? "text-red-600"
-                                  : "text-gray-900"
+                                  ? "text-red-500"
+                                  : "text-foreground"
                               }`}
                             >
                               {charCount}/3000
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Hashtags</span>
-                            <span className="font-semibold text-gray-900">
+                            <span className="text-muted-foreground">
+                              Hashtags
+                            </span>
+                            <span className="font-semibold text-foreground">
                               {hashtags.length}
                             </span>
                           </div>
@@ -1424,10 +1426,10 @@ export function DraftModal({
                   </div>
 
                   {/* Right Content Area */}
-                  <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 flex flex-col overflow-hidden bg-background">
                     <div className="flex-1 overflow-y-auto p-8">
                       <div className="max-w-3xl mx-auto">
-                        <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                        <label className="text-sm font-semibold text-foreground mb-3 block">
                           Your Content
                         </label>
                         <Textarea
@@ -1435,11 +1437,11 @@ export function DraftModal({
                           value={content}
                           onChange={(e) => setContent(e.target.value)}
                           rows={20}
-                          className="resize-none text-base leading-relaxed"
+                          className="resize-none text-base leading-relaxed bg-card text-foreground border-border"
                           disabled={loading}
                         />
                         {charCount > 3000 && (
-                          <p className="text-xs text-red-600 mt-2">
+                          <p className="text-xs text-red-500 mt-2">
                             ⚠️ Content exceeds LinkedIn's 3000 character limit
                           </p>
                         )}
@@ -1447,7 +1449,7 @@ export function DraftModal({
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="border-t bg-white px-6 py-4 flex items-center justify-between">
+                    <div className="border-t border-border bg-card px-6 py-4 flex items-center justify-between">
                       <Button
                         variant="ghost"
                         onClick={handleClose}
@@ -1460,7 +1462,7 @@ export function DraftModal({
                           variant="outline"
                           onClick={() => setShowScheduleDialog(true)}
                           disabled={loading || !content.trim()}
-                          className="border-2"
+                          className="border-border"
                         >
                           <Calendar className="w-4 h-4 mr-2" />
                           Schedule
@@ -1480,7 +1482,7 @@ export function DraftModal({
                             }
                           }}
                           disabled={loading || !content.trim()}
-                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
                         >
                           {loading ? (
                             <>

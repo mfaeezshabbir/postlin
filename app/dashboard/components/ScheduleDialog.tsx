@@ -35,7 +35,7 @@ export default function ScheduleDialog({
 }: Props) {
   const minDate = React.useMemo(
     () => new Date().toISOString().split("T")[0],
-    []
+    [],
   );
 
   const formattedDateTime = React.useMemo(() => {
@@ -46,7 +46,7 @@ export default function ScheduleDialog({
     const diffMs = dateTime.getTime() - now.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor(
-      (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
     );
 
     let timeUntil = "";
@@ -85,17 +85,17 @@ export default function ScheduleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg border-0 shadow-2xl">
+      <DialogContent className="sm:max-w-lg border-border bg-background shadow-2xl">
         <DialogHeader className="space-y-3 pb-2">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30">
               <Calendar className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                 Schedule Post
               </DialogTitle>
-              <DialogDescription className="text-sm text-gray-500 mt-1">
+              <DialogDescription className="text-sm text-muted-foreground mt-1">
                 Choose the perfect time to publish on LinkedIn
               </DialogDescription>
             </div>
@@ -105,8 +105,8 @@ export default function ScheduleDialog({
         <div className="space-y-5 py-6">
           {/* Date Input */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-600" />
+            <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
               Date
             </label>
             <div className="relative">
@@ -115,7 +115,7 @@ export default function ScheduleDialog({
                 value={scheduledDate}
                 onChange={(e) => setScheduledDate(e.target.value)}
                 min={minDate}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-700 font-medium disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-foreground font-medium disabled:bg-muted disabled:cursor-not-allowed"
                 disabled={scheduling}
               />
             </div>
@@ -123,8 +123,8 @@ export default function ScheduleDialog({
 
           {/* Time Input */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-600" />
+            <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary" />
               Time
             </label>
             <div className="relative">
@@ -132,7 +132,7 @@ export default function ScheduleDialog({
                 type="time"
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-700 font-medium disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-foreground font-medium disabled:bg-muted disabled:cursor-not-allowed"
                 disabled={scheduling}
               />
             </div>
@@ -140,30 +140,30 @@ export default function ScheduleDialog({
 
           {/* Preview Card */}
           {formattedDateTime && (
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 border-2 border-blue-100 p-5 shadow-sm">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -mr-16 -mt-16" />
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-200/20 rounded-full -ml-12 -mb-12" />
+            <div className="relative overflow-hidden rounded-xl bg-secondary/30 border border-border p-5 shadow-sm">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full -ml-12 -mb-12" />
 
               <div className="relative space-y-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-blue-600" />
-                  <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <p className="text-xs font-bold text-primary uppercase tracking-wider">
                     Scheduled for
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-lg font-bold text-foreground">
                     {formattedDateTime.formatted}
                   </p>
-                  <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     Publishing {formattedDateTime.timeUntil}
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-blue-200/50">
-                  <p className="text-xs text-gray-500">
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
                     Your post will be automatically published at the scheduled
                     time
                   </p>
@@ -178,7 +178,7 @@ export default function ScheduleDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={scheduling}
-            className="flex-1 sm:flex-none border-2 hover:bg-gray-50 font-medium"
+            className="flex-1 sm:flex-none border-border hover:bg-secondary font-medium"
           >
             Cancel
           </Button>

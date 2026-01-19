@@ -118,7 +118,8 @@ export function MediaUpload({
       if (duration < 3 || duration > 600) {
         push({
           title: "Invalid Video Duration",
-          description: "Video duration must be between 3 seconds and 10 minutes",
+          description:
+            "Video duration must be between 3 seconds and 10 minutes",
           variant: "error",
         });
         return;
@@ -188,7 +189,7 @@ export function MediaUpload({
       <button
         onClick={onAIImageRequest}
         disabled={disabled}
-        className="w-full group relative overflow-hidden rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 p-3 text-left transition-all duration-300 hover:border-purple-400 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+        className="w-full group relative overflow-hidden rounded-xl border border-border bg-secondary/30 p-3 text-left transition-all duration-300 hover:border-purple-400 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
       >
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150" />
 
@@ -198,10 +199,10 @@ export function MediaUpload({
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-gray-900 mb-1">
+              <h4 className="font-semibold text-foreground mb-1">
                 Generate Image with AI
               </h4>
-              <p className="text-[11px] text-gray-600">
+              <p className="text-[11px] text-muted-foreground">
                 Let AI create a perfect image for your post
               </p>
             </div>
@@ -216,15 +217,15 @@ export function MediaUpload({
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
           dragOver
-            ? "border-blue-400 bg-blue-50"
-            : "border-gray-300 hover:border-gray-400"
+            ? "border-blue-400 bg-blue-50/10"
+            : "border-border hover:border-gray-400 dark:hover:border-gray-500"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
-        <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-        <p className="text-sm font-medium text-gray-700 mb-2">
+        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+        <p className="text-sm font-medium text-foreground mb-2">
           Drag & drop your media here
         </p>
-        <p className="text-xs text-gray-500 mb-4">or click to browse</p>
+        <p className="text-xs text-muted-foreground mb-4">or click to browse</p>
 
         <div className="flex items-center justify-center gap-3">
           {/* Image Upload */}
@@ -280,7 +281,7 @@ export function MediaUpload({
           </div>
         </div>
 
-        <div className="mt-4 text-xs text-gray-500 space-y-1">
+        <div className="mt-4 text-xs text-muted-foreground space-y-1">
           <p>Images: PNG, JPG up to 10MB</p>
           <p>Videos: MP4, MOV up to 200MB (3s-10min duration)</p>
         </div>
