@@ -82,7 +82,7 @@ export default function DashboardSidebar({
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-72 bg-sidebar border-r border-sidebar-border text-sidebar-foreground transition-transform duration-300 lg:translate-x-0 lg:static lg:block",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full bg-sidebar">
@@ -117,7 +117,7 @@ export default function DashboardSidebar({
                         "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
                           ? "bg-sidebar-accent text-sidebar-primary"
-                          : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                          : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
                       )}
                       onClick={() => setIsMobileOpen(false)}
                     >
@@ -127,7 +127,7 @@ export default function DashboardSidebar({
                             "h-5 w-5",
                             isActive
                               ? "text-sidebar-primary"
-                              : "text-muted-foreground"
+                              : "text-muted-foreground",
                           )}
                         />
                         {item.name}
@@ -138,7 +138,7 @@ export default function DashboardSidebar({
                             "text-xs px-2 py-0.5 rounded-full bg-muted",
                             isActive
                               ? "text-sidebar-primary bg-sidebar-primary/10"
-                              : "text-muted-foreground"
+                              : "text-muted-foreground",
                           )}
                         >
                           {item.count}
@@ -156,10 +156,26 @@ export default function DashboardSidebar({
                 Analytics
               </h3>
               <nav className="space-y-1">
-                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50 cursor-pointer disabled opacity-50">
-                  <BarChart2 className="h-5 w-5 text-muted-foreground" />
+                <Link
+                  href="/dashboard/performance"
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    pathname === "/dashboard/performance"
+                      ? "bg-sidebar-accent text-sidebar-primary"
+                      : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+                  )}
+                  onClick={() => setIsMobileOpen(false)}
+                >
+                  <BarChart2
+                    className={cn(
+                      "h-5 w-5",
+                      pathname === "/dashboard/performance"
+                        ? "text-sidebar-primary"
+                        : "text-muted-foreground",
+                    )}
+                  />
                   Performance
-                </div>
+                </Link>
               </nav>
             </div>
           </div>
