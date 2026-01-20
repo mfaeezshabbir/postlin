@@ -204,6 +204,22 @@ You MUST respond with valid JSON in this exact format:
         );
       }
 
+      // Handle model not found or unsupported
+      if (
+        error.message.includes("model") ||
+        error.message.includes("not found") ||
+        error.message.includes("unsupported") ||
+        error.message.includes("404")
+      ) {
+        return NextResponse.json(
+          {
+            error: "The selected AI model is not available or supported with your API key. Please try a different model in settings.",
+            modelError: true,
+          },
+          { status: 400 }
+        );
+      }
+
       // Return the actual error message for debugging
       return NextResponse.json(
         {
