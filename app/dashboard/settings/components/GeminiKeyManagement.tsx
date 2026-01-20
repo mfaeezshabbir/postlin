@@ -44,6 +44,7 @@ export default function GeminiKeyManagement({
   const [keyAddedAt, setKeyAddedAt] = useState(initialKeyAddedAt);
   const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_GEMINI_MODEL);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingModel, setIsEditingModel] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -140,8 +141,39 @@ export default function GeminiKeyManagement({
 
   const handleCancel = () => {
     setIsEditing(false);
+    setIsEditingModel(false);
     setApiKey("");
     setError("");
+  };
+
+  const handleUpdateModel = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/gemini-key/model", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: selectedModel }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSelectedModel(data.geminiModel || DEFAULT_GEMINI_MODEL);
+        setIsEditingModel(false);
+        setSuccess("AI model updated successfully");
+      } else {
+        setError(data.error || "Failed to update model");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -219,6 +251,87 @@ export default function GeminiKeyManagement({
                   AI-powered content generation features are currently disabled.
                   Add your Gemini API key to unlock these features.
                 </p>
+              </div>
+            )}
+
+            {hasKey && !isEditingModel && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">
+                  AI Model
+                </label>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-blue-600 border-blue-300">
+                      {GEMINI_MODELS.find((m) => m.value === selectedModel)?.label || selectedModel}
+                    </Badge>
+                  </div>
+                  <Button
+                    onClick={() => setIsEditingModel(true)}
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                  >
+                    Change Model
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {hasKey && isEditingModel && (
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="modelSelect"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Select AI Model
+                  </label>
+                  <select
+                    id="modelSelect"
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    disabled={loading}
+                  >
+                    {GEMINI_MODELS.map((model) => (
+                      <option key={model.value} value={model.value}>
+                        {model.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose the AI model for content generation. Different models offer different trade-offs between speed, quality, and cost.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => {
+                      setIsEditingModel(false);
+                      setSelectedModel(initialModel || DEFAULT_GEMINI_MODEL);
+                      setError("");
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUpdateModel}
+                    className="flex-1"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Model"
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </>
@@ -342,14 +455,11 @@ export default function GeminiKeyManagement({
           </div>
         )}
 
-        {hasKey && !isEditing && (
+        {hasKey && !isEditing && !isEditingModel && (
           <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-gray-600">
               Your Gemini API key is configured and AI-powered features are
               enabled. You can generate content, optimize posts, and more.
-            </p>
-            <p className="text-xs text-gray-500">
-              Current model: <span className="font-medium text-gray-700">{selectedModel}</span>
             </p>
           </div>
         )}
