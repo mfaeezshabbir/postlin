@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     log.info(`✅ Found user: ${user.id}`);
 
     const body = await request.json();
-    const { content, imageUrl, imagePrompt, hashtags, isAIGenerated } = body;
+    const { content, imageUrl, imagePrompt, hashtags, isAIGenerated, aiModel } = body;
 
     log.info('📝 Draft data received:', {
       contentLength: content?.length || 0,
@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
       hasImagePrompt: !!imagePrompt,
       hashtagsCount: hashtags?.length || 0,
       isAIGenerated: isAIGenerated || false,
+      aiModel: aiModel || 'none',
     });
 
     if (!content || content.trim().length === 0) {
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
         imagePrompt: imagePrompt || null, // Store the image prompt
         hashtags: hashtags || [],
         isAIGenerated: isAIGenerated || false,
+        aiModel: aiModel || null, // Store the AI model used
       },
     });
 

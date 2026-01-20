@@ -86,6 +86,7 @@ export function DraftModal({
 
   // Track if current content was AI-generated
   const [isAIGenerated, setIsAIGenerated] = useState(false);
+  const [aiModel, setAiModel] = useState<string | null>(null);
 
   // AI Image generation dialogs
   const [showAIImageOptions, setShowAIImageOptions] = useState(false);
@@ -611,6 +612,18 @@ export function DraftModal({
           throw new Error(errorData.message);
         }
 
+        // Handle model errors specifically
+        if (errorData.modelError) {
+          push({
+            title: "AI Model Not Available",
+            description:
+              errorData.error ||
+              "The selected AI model is not available. Please update your model selection in settings.",
+            variant: "error",
+          });
+          throw new Error(errorData.error);
+        }
+
         throw new Error(
           errorData.details || errorData.error || "Failed to generate content",
         );
@@ -622,6 +635,11 @@ export function DraftModal({
       setGeneratedContent(cleanContent);
       setContent(cleanContent);
       setIsAIGenerated(true);
+      
+      // Capture the AI model used from metadata
+      if (data.metadata?.model) {
+        setAiModel(data.metadata.model);
+      }
 
       if (data.hashtags && Array.isArray(data.hashtags)) {
         setHashtags(data.hashtags);
@@ -730,6 +748,7 @@ export function DraftModal({
         imagePrompt: imagePromptText || storedImagePrompt,
         hashtags: hashtags,
         isAIGenerated: isAIGenerated,
+        aiModel: aiModel, // Include the AI model used
       };
 
       if (mode === "edit" && draftId) {
@@ -1140,9 +1159,16 @@ export function DraftModal({
                           <div className="max-w-3xl mx-auto space-y-6">
                             <div>
                               <div className="flex items-center justify-between mb-3">
-                                <label className="text-sm font-semibold text-foreground">
-                                  Generated Content
-                                </label>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm font-semibold text-foreground">
+                                    Generated Content
+                                  </label>
+                                  {aiModel && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {aiModel}
+                                    </Badge>
+                                  )}
+                                </div>
                                 <span className="text-xs text-muted-foreground">
                                   {wordCount} words • {charCount}/3000
                                   characters

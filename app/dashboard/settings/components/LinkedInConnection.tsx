@@ -88,7 +88,7 @@ export default function LinkedInConnection({
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-muted-foreground">
               Connection Status
             </label>
             <div className="mt-1 flex items-center gap-2">
@@ -96,19 +96,22 @@ export default function LinkedInConnection({
                 <>
                   <Badge
                     variant="outline"
-                    className="text-green-600 border-green-300"
+                    className="text-green-500 border-green-500/30 bg-green-500/10 rounded-sm"
                   >
                     <CheckCircle className="w-3 h-3 mr-1" />
                     Connected
                   </Badge>
                   {linkedInId && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       ID: {linkedInId.substring(0, 10)}...
                     </span>
                   )}
                 </>
               ) : (
-                <Badge variant="outline" className="text-gray-600">
+                <Badge
+                  variant="outline"
+                  className="text-muted-foreground rounded-sm"
+                >
                   <XCircle className="w-3 h-3 mr-1" />
                   Not connected
                 </Badge>
@@ -155,21 +158,21 @@ export default function LinkedInConnection({
         </div>
 
         {error && (
-          <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
-            <XCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="flex items-start gap-3 p-3 bg-red-500/10 rounded-md border border-red-500/20">
+            <XCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+            <p className="text-sm text-red-500/90">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-green-700">{success}</p>
+          <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-md border border-green-500/20">
+            <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+            <p className="text-sm text-green-500/90">{success}</p>
           </div>
         )}
 
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600">
+        <div className="p-4 bg-muted/50 rounded-md border border-border">
+          <p className="text-sm text-muted-foreground">
             {connected
               ? "Your LinkedIn account is connected. You can schedule and auto-publish posts directly to your LinkedIn profile."
               : "Connect your LinkedIn account to enable auto-publishing and analytics features. You can still create and copy posts manually without connecting."}

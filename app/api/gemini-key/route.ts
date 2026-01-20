@@ -4,7 +4,7 @@ import { getAuthOptions } from "@/modules/auth";
 import prisma from "@/lib/prisma";
 import { encryptApiKey, decryptApiKey } from "@/lib/encryption";
 import { log } from "@/lib/logger";
-import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
+import { GEMINI_API_KEY_MIN_LENGTH, GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from "@/lib/constants";
 
 /**
  * GET /api/gemini-key
@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         id: true,
         geminiApiKeyEncrypted: true,
         geminiKeyAddedAt: true,
+        geminiModel: true,
       },
     });
 
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       hasGeminiKey: !!user.geminiApiKeyEncrypted,
       geminiKeyAddedAt: user.geminiKeyAddedAt,
+      geminiModel: user.geminiModel || DEFAULT_GEMINI_MODEL,
     });
   } catch (error) {
     log.error("Error in GET /api/gemini-key:", error);
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { apiKey } = body;
+    const { apiKey, model } = body;
 
     if (!apiKey || typeof apiKey !== "string" || apiKey.trim().length === 0) {
       return NextResponse.json(
@@ -77,6 +79,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate model if provided
+    const selectedModel = model || DEFAULT_GEMINI_MODEL;
+    const validModels = GEMINI_MODELS.map((m) => m.value);
+    if (!validModels.includes(selectedModel)) {
+      return NextResponse.json(
+        {
+          error: `Invalid model. Please select one of: ${validModels.join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
+
     // Encrypt the API key
     let encryptedKey: string;
     try {
@@ -89,25 +103,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store encrypted key in database
+    // Store encrypted key and selected model in database
     const user = await prisma.user.update({
       where: { email: session.user.email },
       data: {
         geminiApiKeyEncrypted: encryptedKey,
         geminiKeyAddedAt: new Date(),
+        geminiModel: selectedModel,
       },
       select: {
         id: true,
         geminiKeyAddedAt: true,
+        geminiModel: true,
       },
     });
 
-    log.info("Gemini API key added/updated", { userId: user.id });
+    log.info("Gemini API key and model added/updated", { userId: user.id, model: selectedModel });
 
     return NextResponse.json({
       success: true,
       message: "Gemini API key saved successfully",
       geminiKeyAddedAt: user.geminiKeyAddedAt,
+      geminiModel: user.geminiModel,
     });
   } catch (error) {
     log.error("Error in POST /api/gemini-key:", error);
@@ -135,6 +152,7 @@ export async function DELETE(request: NextRequest) {
       data: {
         geminiApiKeyEncrypted: null,
         geminiKeyAddedAt: null,
+        geminiModel: null,
       },
       select: {
         id: true,

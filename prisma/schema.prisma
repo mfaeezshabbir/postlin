@@ -53,6 +53,7 @@ model User {
   refreshToken            String?   // LinkedIn OAuth refresh token (kept for backwards compatibility; data is also stored in linkedInOauthData)
   geminiApiKeyEncrypted   String?   // Encrypted Gemini API key (AES-256-GCM with nonce)
   geminiKeyAddedAt        DateTime? // When the Gemini API key was added
+  geminiModel             String?   // Selected Gemini model (e.g., "gemini-1.5-flash", "gemini-1.5-pro")
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
@@ -81,6 +82,7 @@ model Post {
   // Content metadata
   hashtags            String[]             @default([]) // Array of hashtags
   isAIGenerated       Boolean              @default(false) // Track if post was AI-generated
+  aiModel             String?              // AI model used for generation (e.g., "gemini-1.5-flash")
   
   // Scheduling
   scheduledAt         DateTime?            // When the post is scheduled to be published
