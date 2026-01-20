@@ -18,9 +18,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXTAUTH_URL ||
+      "http://localhost:3000",
+  ),
   title: "Postlin - AI-Powered LinkedIn Content Assistant",
   description:
     "Create, schedule, and publish LinkedIn posts with AI-powered content generation. Automate your LinkedIn presence with Postlin.",
+  openGraph: {
+    title: "Postlin - AI-Powered LinkedIn Content Assistant",
+    description:
+      "Create, schedule, and publish LinkedIn posts with AI-powered content generation. Automate your LinkedIn presence with Postlin.",
+    url: "/",
+    siteName: "Postlin",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Postlin AI Assistant Dashboard",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Postlin - AI-Powered LinkedIn Content Assistant",
+    description:
+      "Create, schedule, and publish LinkedIn posts with AI-powered content generation.",
+    images: ["/og-image.png"],
+  },
   verification: {
     google: "IXowjrIm1s91KjbQVpSKVoNrt7z7bmHuPTZloc8uFiY",
   },
