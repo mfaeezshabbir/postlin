@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import Logo from "@/components/brand/Logo";
 import { CheckCircle, Linkedin, Key, Loader2, AlertCircle } from "lucide-react";
-import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
+import { GEMINI_API_KEY_MIN_LENGTH, GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from "@/lib/constants";
 
 export default function OnboardingPage() {
   const { status } = useSession();
@@ -22,6 +22,7 @@ export default function OnboardingPage() {
     "welcome"
   );
   const [geminiKey, setGeminiKey] = useState("");
+  const [selectedModel, setSelectedModel] = useState(DEFAULT_GEMINI_MODEL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [profile, setProfile] = useState<any>(null);
@@ -94,7 +95,7 @@ export default function OnboardingPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ apiKey: geminiKey.trim() }),
+        body: JSON.stringify({ apiKey: geminiKey.trim(), model: selectedModel }),
       });
 
       const data = await response.json();
@@ -411,6 +412,31 @@ export default function OnboardingPage() {
                   <p className="text-xs text-slate-500 mt-2 font-medium">
                     Your API key is encrypted and stored securely. We never
                     share it.
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="geminiModel"
+                    className="block text-sm font-bold text-slate-700 mb-2"
+                  >
+                    AI Model *
+                  </label>
+                  <select
+                    id="geminiModel"
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all font-medium bg-white"
+                    disabled={loading}
+                  >
+                    {GEMINI_MODELS.map((model) => (
+                      <option key={model.value} value={model.value}>
+                        {model.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-500 mt-2 font-medium">
+                    Choose the AI model for content generation. Different models offer different trade-offs between speed, quality, and cost.
                   </p>
                 </div>
 

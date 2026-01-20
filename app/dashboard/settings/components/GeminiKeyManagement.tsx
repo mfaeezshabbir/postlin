@@ -19,7 +19,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { GEMINI_API_KEY_MIN_LENGTH } from "@/lib/constants";
+import { GEMINI_API_KEY_MIN_LENGTH, GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from "@/lib/constants";
 import {
   Dialog,
   DialogContent,
@@ -32,14 +32,17 @@ import {
 interface GeminiKeyManagementProps {
   initialHasKey: boolean;
   initialKeyAddedAt?: Date | null;
+  initialModel?: string | null;
 }
 
 export default function GeminiKeyManagement({
   initialHasKey,
   initialKeyAddedAt,
+  initialModel,
 }: GeminiKeyManagementProps) {
   const [hasKey, setHasKey] = useState(initialHasKey);
   const [keyAddedAt, setKeyAddedAt] = useState(initialKeyAddedAt);
+  const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_GEMINI_MODEL);
   const [isEditing, setIsEditing] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
@@ -66,7 +69,7 @@ export default function GeminiKeyManagement({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
+        body: JSON.stringify({ apiKey: apiKey.trim(), model: selectedModel }),
       });
 
       const data = await response.json();
@@ -74,12 +77,13 @@ export default function GeminiKeyManagement({
       if (response.ok) {
         setHasKey(true);
         setKeyAddedAt(data.geminiKeyAddedAt);
+        setSelectedModel(data.geminiModel || DEFAULT_GEMINI_MODEL);
         setIsEditing(false);
         setApiKey("");
         setSuccess(
           hasKey
-            ? "Gemini API key updated successfully"
-            : "Gemini API key added successfully"
+            ? "Gemini API key and model updated successfully"
+            : "Gemini API key and model added successfully"
         );
       } else {
         // Sanitize error messages to avoid exposing technical details
@@ -257,6 +261,31 @@ export default function GeminiKeyManagement({
                 </p>
               </div>
 
+              <div>
+                <label
+                  htmlFor="geminiModel"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  AI Model *
+                </label>
+                <select
+                  id="geminiModel"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  disabled={loading}
+                >
+                  {GEMINI_MODELS.map((model) => (
+                    <option key={model.value} value={model.value}>
+                      {model.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choose the AI model for content generation. Different models offer different trade-offs between speed, quality, and cost.
+                </p>
+              </div>
+
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-700">
                   Get your free API key from{" "}
@@ -315,9 +344,12 @@ export default function GeminiKeyManagement({
 
         {hasKey && !isEditing && (
           <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-2">
               Your Gemini API key is configured and AI-powered features are
               enabled. You can generate content, optimize posts, and more.
+            </p>
+            <p className="text-xs text-gray-500">
+              Current model: <span className="font-medium text-gray-700">{selectedModel}</span>
             </p>
           </div>
         )}

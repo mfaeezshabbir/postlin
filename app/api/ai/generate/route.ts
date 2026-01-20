@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Get user from database to retrieve their user ID
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true },
+      select: { id: true, geminiModel: true },
     });
 
     if (!user) {
@@ -57,6 +57,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use user's selected model or default
+    const selectedModel = user.geminiModel || "gemini-2.5-flash";
+
     // Initialize Gemini with user's API key
     const genAI = new GoogleGenerativeAI(userApiKey);
     const genAI_Image = new GoogleGenerativeAI(userApiKey);
@@ -64,9 +67,9 @@ export async function POST(request: NextRequest) {
     // Build system prompt based on preferences (now uses JSON format)
     const systemPrompt = buildSystemPrompt(tone, length);
 
-    // Generate content - using Gemini 2.5 Flash with JSON mode for structured responses
+    // Generate content - using user's selected model with JSON mode for structured responses
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: selectedModel,
       generationConfig: {
         responseMimeType: "application/json",
       },
@@ -168,6 +171,7 @@ You MUST respond with valid JSON in this exact format:
           parsedResponse.wordCount || generatedContent.split(/\s+/).length,
         hasImage: !!imageBase64,
         summary: parsedResponse.summary || null, // Include AI-generated summary
+        model: selectedModel, // Include the model used for generation
       },
     });
   } catch (error) {

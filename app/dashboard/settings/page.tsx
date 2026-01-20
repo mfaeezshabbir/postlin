@@ -30,6 +30,7 @@ export default async function SettingsPage() {
       linkedInConnected: true,
       geminiApiKeyEncrypted: true,
       geminiKeyAddedAt: true,
+      geminiModel: true,
     },
   });
 
@@ -135,6 +136,7 @@ export default async function SettingsPage() {
             <GeminiKeyManagement
               initialHasKey={!!fullProfile.geminiApiKeyEncrypted}
               initialKeyAddedAt={fullProfile.geminiKeyAddedAt}
+              initialModel={fullProfile.geminiModel}
             />
           </div>
 
