@@ -43,6 +43,7 @@ export default function GeminiKeyManagement({
   const [hasKey, setHasKey] = useState(initialHasKey);
   const [keyAddedAt, setKeyAddedAt] = useState(initialKeyAddedAt);
   const [selectedModel, setSelectedModel] = useState(initialModel || DEFAULT_GEMINI_MODEL);
+  const [tempModel, setTempModel] = useState(initialModel || DEFAULT_GEMINI_MODEL);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingModel, setIsEditingModel] = useState(false);
   const [apiKey, setApiKey] = useState("");
@@ -141,8 +142,12 @@ export default function GeminiKeyManagement({
 
   const handleCancel = () => {
     setIsEditing(false);
-    setIsEditingModel(false);
     setApiKey("");
+    setError("");
+  };
+
+  const handleCancelModelEdit = () => {
+    setIsEditingModel(false);
     setError("");
   };
 
@@ -157,7 +162,7 @@ export default function GeminiKeyManagement({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model: selectedModel }),
+        body: JSON.stringify({ model: tempModel }),
       });
 
       const data = await response.json();
@@ -266,7 +271,10 @@ export default function GeminiKeyManagement({
                     </Badge>
                   </div>
                   <Button
-                    onClick={() => setIsEditingModel(true)}
+                    onClick={() => {
+                      setTempModel(selectedModel);
+                      setIsEditingModel(true);
+                    }}
                     variant="outline"
                     size="sm"
                     disabled={loading}
@@ -288,8 +296,8 @@ export default function GeminiKeyManagement({
                   </label>
                   <select
                     id="modelSelect"
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
+                    value={tempModel}
+                    onChange={(e) => setTempModel(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                     disabled={loading}
                   >
@@ -306,11 +314,7 @@ export default function GeminiKeyManagement({
 
                 <div className="flex gap-3">
                   <Button
-                    onClick={() => {
-                      setIsEditingModel(false);
-                      setSelectedModel(initialModel || DEFAULT_GEMINI_MODEL);
-                      setError("");
-                    }}
+                    onClick={handleCancelModelEdit}
                     variant="outline"
                     className="flex-1"
                     disabled={loading}
