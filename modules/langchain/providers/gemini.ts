@@ -65,11 +65,16 @@ export class GeminiProvider extends AIProvider {
 
       log.info("Post generated successfully with LangChain and Gemini");
 
+      // Validate the result has required fields
+      if (!result || typeof result !== 'object') {
+        throw new Error("Invalid response format from AI model");
+      }
+
       return {
         content: result.content || "",
-        hashtags: result.hashtags || [],
+        hashtags: Array.isArray(result.hashtags) ? result.hashtags : [],
         summary: result.summary || "",
-        wordCount: result.wordCount || 0,
+        wordCount: typeof result.wordCount === 'number' ? result.wordCount : 0,
       };
     } catch (error) {
       const aiError = parseProviderError(
@@ -105,11 +110,16 @@ export class GeminiProvider extends AIProvider {
 
       log.info("Image prompt generated successfully with LangChain and Gemini");
 
+      // Validate the result has required fields
+      if (!result || typeof result !== 'object') {
+        throw new Error("Invalid response format from AI model");
+      }
+
       return {
         imagePrompt: result.imagePrompt || "",
         style: result.style || "professional",
-        suggestedColors: result.suggestedColors || [],
-        keyElements: result.keyElements || [],
+        suggestedColors: Array.isArray(result.suggestedColors) ? result.suggestedColors : [],
+        keyElements: Array.isArray(result.keyElements) ? result.keyElements : [],
         composition: result.composition || "",
         lighting: result.lighting || "",
         mood: result.mood || "",
