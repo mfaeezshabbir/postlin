@@ -73,6 +73,7 @@ export async function validateUserApiKey(userId: string): Promise<boolean> {
   }
 }
 
-// Re-export types for convenience
+// Re-export types and utilities for convenience
 export * from "./types";
 export * from "./factory";
+export * from "./utils";

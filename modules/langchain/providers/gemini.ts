@@ -8,6 +8,7 @@ import { AIProviderConfig, PostGenerationOutput, ImagePromptOutput } from "../ty
 import { POST_GENERATION_TEMPLATE, IMAGE_PROMPT_TEMPLATE, buildSystemPrompt } from "../prompts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { log } from "@/lib/logger";
+import { retryWithBackoff, parseProviderError } from "../utils";
 
 export class GeminiProvider extends AIProvider {
   private chatModel: ChatGoogleGenerativeAI;
@@ -45,13 +46,24 @@ export class GeminiProvider extends AIProvider {
       const parser = new JsonOutputParser<PostGenerationOutput>();
       const chain = POST_GENERATION_TEMPLATE.pipe(this.chatModel).pipe(parser);
 
-      // Generate the post
-      const result = await chain.invoke({
-        systemPrompt,
-        prompt,
-      });
+      // Use retry with exponential backoff
+      const result = await retryWithBackoff(
+        async () => {
+          return await chain.invoke({
+            systemPrompt,
+            prompt,
+          });
+        },
+        {
+          maxRetries: 3,
+          initialDelay: 1000,
+          maxDelay: 10000,
+          backoffMultiplier: 2,
+        },
+        "Gemini post generation"
+      );
 
-      log.info("Post generated successfully with LangChain");
+      log.info("Post generated successfully with LangChain and Gemini");
 
       return {
         content: result.content || "",
@@ -60,8 +72,12 @@ export class GeminiProvider extends AIProvider {
         wordCount: result.wordCount || 0,
       };
     } catch (error) {
-      log.error("Error generating post with Gemini:", error);
-      throw error;
+      const aiError = parseProviderError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Gemini"
+      );
+      log.error("Error generating post with Gemini:", aiError);
+      throw aiError;
     }
   }
 
@@ -71,12 +87,23 @@ export class GeminiProvider extends AIProvider {
       const parser = new JsonOutputParser<ImagePromptOutput>();
       const chain = IMAGE_PROMPT_TEMPLATE.pipe(this.chatModel).pipe(parser);
 
-      // Generate the image prompt
-      const result = await chain.invoke({
-        postContent,
-      });
+      // Use retry with exponential backoff
+      const result = await retryWithBackoff(
+        async () => {
+          return await chain.invoke({
+            postContent,
+          });
+        },
+        {
+          maxRetries: 3,
+          initialDelay: 1000,
+          maxDelay: 10000,
+          backoffMultiplier: 2,
+        },
+        "Gemini image prompt generation"
+      );
 
-      log.info("Image prompt generated successfully with LangChain");
+      log.info("Image prompt generated successfully with LangChain and Gemini");
 
       return {
         imagePrompt: result.imagePrompt || "",
@@ -88,14 +115,18 @@ export class GeminiProvider extends AIProvider {
         mood: result.mood || "",
       };
     } catch (error) {
-      log.error("Error generating image prompt with Gemini:", error);
-      throw error;
+      const aiError = parseProviderError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Gemini"
+      );
+      log.error("Error generating image prompt with Gemini:", aiError);
+      throw aiError;
     }
   }
 
   async validateApiKey(): Promise<boolean> {
     try {
-      // Try a simple generation to validate the API key
+      // Try a simple generation to validate the API key (without retry)
       await this.chatModel.invoke("Test");
       return true;
     } catch (error) {
