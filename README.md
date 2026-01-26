@@ -20,8 +20,9 @@ This repository contains a Next.js + TypeScript app with Prisma (MongoDB), BullM
 - **Google Sign-In**: Primary authentication method for easy onboarding
 - **Onboarding Flow**: Guided setup for LinkedIn connection (optional) and Gemini API key (required for AI features)
 - **Per-User Gemini Keys**: Each user provides their own Gemini API key, stored encrypted with AES-256-GCM
+- **LangChain.js Integration**: Modular AI workflows with support for multiple LLM providers (Gemini, with OpenAI and HuggingFace coming soon)
 - **LinkedIn Connection**: Optional connection for auto-publishing and analytics
-- **AI-Assisted Content Generation**: Uses user's personal Gemini API key
+- **AI-Assisted Content Generation**: Uses user's personal Gemini API key with advanced prompt engineering
 - **Manual Posting**: Create and copy posts without LinkedIn connection
 - **Scheduling**: Worker-based publishing system with BullMQ + Redis
 - **Secure Architecture**: Encrypted secrets, JWT sessions, modular design
@@ -115,6 +116,7 @@ Open http://localhost:3000
 - `app/generated/prisma` — generated Prisma client (output by `prisma generate`)
 - `modules/auth` — NextAuth config and LinkedIn helpers
 - `modules/drafts` — draft creation/update logic
+- `modules/langchain` — LangChain.js integration for AI providers (see `docs/LANGCHAIN_INTEGRATION.md`)
 - `modules/notifications` — Resend email helpers
 - `modules/publisher` — LinkedIn publishing helpers
 - `modules/users` — user and preference helpers
