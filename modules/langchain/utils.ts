@@ -140,6 +140,18 @@ function isRetryableError(error: any): boolean {
     return false;
   }
 
+  // Programming errors - not retryable
+  if (
+    error instanceof TypeError ||
+    error instanceof ReferenceError ||
+    error instanceof SyntaxError ||
+    message.includes("is not a function") ||
+    message.includes("is not defined") ||
+    message.includes("reading '")
+  ) {
+    return false;
+  }
+
   // Default: retry unknown errors
   return true;
 }
@@ -214,9 +226,11 @@ export function parseProviderError(
     return new ModelNotFoundError(provider, "unknown");
   }
 
-  return new AIProviderError(
+  const aiError = new AIProviderError(
     String(originalMessage),
     provider,
     isRetryableError(error),
   );
+
+  return aiError;
 }

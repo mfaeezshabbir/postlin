@@ -13,6 +13,7 @@ jest.mock("@/lib/prisma", () => ({
 }));
 
 jest.mock("@/lib/gemini", () => ({
+  __esModule: true,
   getUserGeminiKey: jest.fn(),
 }));
 
@@ -26,18 +27,31 @@ jest.mock("@/lib/logger", () => ({
 }));
 
 // Mock LangChain modules
-jest.mock("@langchain/google-genai", () => ({
-  ChatGoogleGenerativeAI: jest.fn().mockImplementation(() => ({
-    invoke: jest.fn().mockResolvedValue({
-      content: JSON.stringify({
-        content: "Test LinkedIn post content",
-        hashtags: ["test", "linkedin", "ai"],
-        summary: "A test post",
-        wordCount: 5,
-      }),
+jest.mock("@langchain/google-genai", () => {
+  return {
+    ChatGoogleGenerativeAI: jest.fn().mockImplementation(() => {
+      const mock = {
+        invoke: jest.fn().mockResolvedValue({
+          content: JSON.stringify({
+            content: "Test LinkedIn post content",
+            hashtags: ["test", "linkedin", "ai"],
+            summary: "A test post",
+            wordCount: 5,
+          }),
+        }),
+        pipe: jest.fn().mockImplementation(function (dest: any) {
+          return {
+            invoke: async (input: any) => {
+              const res = await mock.invoke(input);
+              return dest.invoke ? await dest.invoke(res) : await dest(res);
+            },
+          };
+        }),
+      };
+      return mock;
     }),
-  })),
-}));
+  };
+});
 
 const prisma = require("@/lib/prisma").default;
 const { getUserGeminiKey } = require("@/lib/gemini");
