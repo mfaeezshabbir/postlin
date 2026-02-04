@@ -7,6 +7,9 @@ import { AIProvider } from "./providers/base";
 import { GeminiProvider } from "./providers/gemini";
 import { AIProviderConfig } from "./types";
 import { TextEncoder } from "util";
+import prisma from "@/lib/prisma";
+import { getUserGeminiKey } from "@/lib/gemini";
+
 (global as any).TextEncoder = TextEncoder;
 
 /**
@@ -34,9 +37,6 @@ export async function getProviderForUser(
   userId: string,
   provider?: AIProviderType,
 ): Promise<AIProvider> {
-  const prisma = (await import("@/lib/prisma")).default;
-  const { getUserGeminiKey } = await import("@/lib/gemini");
-
   // Get user's configuration
   const user = await prisma.user.findUnique({
     where: { id: userId },

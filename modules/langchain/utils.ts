@@ -30,11 +30,11 @@ function sleep(ms: number): Promise<void> {
  */
 function calculateBackoff(
   attempt: number,
-  config: RetryConfig = DEFAULT_RETRY_CONFIG
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
 ): number {
   const delay = Math.min(
     config.initialDelay * Math.pow(config.backoffMultiplier, attempt),
-    config.maxDelay
+    config.maxDelay,
   );
   // Add jitter (randomization) to prevent thundering herd
   return delay + Math.random() * 1000;
@@ -46,7 +46,7 @@ function calculateBackoff(
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   config: RetryConfig = DEFAULT_RETRY_CONFIG,
-  context: string = "operation"
+  context: string = "operation",
 ): Promise<T> {
   let lastError: Error | undefined;
 
@@ -55,7 +55,7 @@ export async function retryWithBackoff<T>(
       if (attempt > 0) {
         const delay = calculateBackoff(attempt - 1, config);
         log.info(
-          `Retry attempt ${attempt}/${config.maxRetries} for ${context} after ${delay}ms`
+          `Retry attempt ${attempt}/${config.maxRetries} for ${context} after ${delay}ms`,
         );
         await sleep(delay);
       }
@@ -73,14 +73,14 @@ export async function retryWithBackoff<T>(
       if (attempt === config.maxRetries) {
         log.error(
           `Max retries (${config.maxRetries}) exceeded for ${context}:`,
-          lastError
+          lastError,
         );
         break;
       }
 
       log.warn(
         `Retryable error in ${context} (attempt ${attempt + 1}/${config.maxRetries}):`,
-        lastError.message
+        lastError.message,
       );
     }
   }
@@ -91,8 +91,11 @@ export async function retryWithBackoff<T>(
 /**
  * Determine if an error is retryable
  */
-function isRetryableError(error: Error): boolean {
-  const message = error.message.toLowerCase();
+function isRetryableError(error: any): boolean {
+  if (!error || !error.message) {
+    return true; // Default to retryable if no message
+  }
+  const message = String(error.message).toLowerCase();
 
   // Network errors - retryable
   if (
@@ -148,7 +151,7 @@ export class AIProviderError extends Error {
   constructor(
     message: string,
     public provider: string,
-    public isRetryable: boolean = true
+    public isRetryable: boolean = true,
   ) {
     super(message);
     this.name = "AIProviderError";
@@ -160,7 +163,7 @@ export class RateLimitError extends AIProviderError {
     super(
       `Rate limit exceeded for ${provider}${retryAfter ? `. Retry after ${retryAfter}s` : ""}`,
       provider,
-      true
+      true,
     );
     this.name = "RateLimitError";
   }
@@ -168,7 +171,11 @@ export class RateLimitError extends AIProviderError {
 
 export class AuthenticationError extends AIProviderError {
   constructor(provider: string) {
-    super(`Authentication failed for ${provider}. Check API key.`, provider, false);
+    super(
+      `Authentication failed for ${provider}. Check API key.`,
+      provider,
+      false,
+    );
     this.name = "AuthenticationError";
   }
 }
@@ -183,8 +190,12 @@ export class ModelNotFoundError extends AIProviderError {
 /**
  * Parse error and return appropriate error type
  */
-export function parseProviderError(error: Error, provider: string): AIProviderError {
-  const message = error.message.toLowerCase();
+export function parseProviderError(
+  error: any,
+  provider: string,
+): AIProviderError {
+  const originalMessage = error?.message || String(error);
+  const message = String(originalMessage).toLowerCase();
 
   if (message.includes("429") || message.includes("rate limit")) {
     return new RateLimitError(provider);
@@ -203,5 +214,9 @@ export function parseProviderError(error: Error, provider: string): AIProviderEr
     return new ModelNotFoundError(provider, "unknown");
   }
 
-  return new AIProviderError(error.message, provider, isRetryableError(error));
+  return new AIProviderError(
+    String(originalMessage),
+    provider,
+    isRetryableError(error),
+  );
 }
