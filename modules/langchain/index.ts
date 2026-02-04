@@ -3,8 +3,15 @@
  * This module provides high-level functions for LinkedIn post generation
  */
 
+import { TextEncoder } from "util";
+(global as any).TextEncoder = TextEncoder;
+
 import { getProviderForUser } from "./factory";
-import { PostGenerationInput, PostGenerationOutput, ImagePromptOutput } from "./types";
+import {
+  PostGenerationInput,
+  PostGenerationOutput,
+  ImagePromptOutput,
+} from "./types";
 import { log } from "@/lib/logger";
 
 /**
@@ -13,7 +20,7 @@ import { log } from "@/lib/logger";
  */
 export async function generateLinkedInPost(
   userId: string,
-  input: PostGenerationInput
+  input: PostGenerationInput,
 ): Promise<PostGenerationOutput> {
   try {
     log.info(`Generating LinkedIn post for user: ${userId}`);
@@ -25,7 +32,7 @@ export async function generateLinkedInPost(
     const result = await provider.generatePost(
       input.prompt,
       input.tone || "professional",
-      input.length || "medium"
+      input.length || "medium",
     );
 
     log.info("LinkedIn post generated successfully");
@@ -41,7 +48,7 @@ export async function generateLinkedInPost(
  */
 export async function generateImagePromptForPost(
   userId: string,
-  postContent: string
+  postContent: string,
 ): Promise<ImagePromptOutput> {
   try {
     log.info(`Generating image prompt for user: ${userId}`);

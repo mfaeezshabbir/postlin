@@ -35,7 +35,7 @@ function getEncryptionKey(): Buffer {
     const key = Buffer.from(keyEnv, "base64");
     if (key.length !== KEY_LENGTH) {
       throw new Error(
-        `Encryption key must be ${KEY_LENGTH} bytes (base64-encoded)`
+        `Encryption key must be ${KEY_LENGTH} bytes (base64-encoded)`,
       );
     }
     cachedKey = key;
@@ -44,10 +44,10 @@ function getEncryptionKey(): Buffer {
     // Log a generic error to avoid leaking sensitive details
     console.error(
       "Error loading encryption key. Please verify GEMINI_KEYS_ENCRYPTION_KEY is correctly configured.",
-      error instanceof Error ? error.name : "UnknownError"
+      error instanceof Error ? error.name : "UnknownError",
     );
     throw new Error(
-      "Invalid GEMINI_KEYS_ENCRYPTION_KEY format. Must be base64-encoded 32 bytes."
+      "Invalid GEMINI_KEYS_ENCRYPTION_KEY format. Must be base64-encoded 32 bytes.",
     );
   }
 }
@@ -101,12 +101,25 @@ export function decryptApiKey(encryptedData: string): string {
   try {
     const combined = Buffer.from(encryptedData, "base64");
 
+    // Validate that the combined data is at least long enough to contain nonce and auth tag
+    if (combined.length < NONCE_LENGTH + TAG_LENGTH) {
+      throw new Error("Encrypted data is too short or malformed");
+    }
+
     // Extract components
     const nonce = combined.subarray(0, NONCE_LENGTH);
     const authTag = combined.subarray(combined.length - TAG_LENGTH);
+
+    // Explicitly validate auth tag length
+    if (authTag.length !== TAG_LENGTH) {
+      throw new TypeError(
+        `Invalid authentication tag length: ${authTag.length}. Expected ${TAG_LENGTH}.`,
+      );
+    }
+
     const encrypted = combined.subarray(
       NONCE_LENGTH,
-      combined.length - TAG_LENGTH
+      combined.length - TAG_LENGTH,
     );
 
     const decipher = crypto.createDecipheriv(ALGORITHM, key, nonce);
@@ -129,12 +142,12 @@ export function decryptApiKey(encryptedData: string): string {
 
     if (isAuthFailure) {
       throw new Error(
-        "Failed to decrypt API key: authentication failed. The encryption key is likely incorrect or the data has been tampered with."
+        "Failed to decrypt API key: authentication failed. The encryption key is likely incorrect or the data has been tampered with.",
       );
     }
 
     throw new Error(
-      "Failed to decrypt API key: encrypted data is malformed or corrupted."
+      "Failed to decrypt API key: encrypted data is malformed or corrupted.",
     );
   }
 }

@@ -6,6 +6,8 @@ import { AIProvider as AIProviderType } from "./types";
 import { AIProvider } from "./providers/base";
 import { GeminiProvider } from "./providers/gemini";
 import { AIProviderConfig } from "./types";
+import { TextEncoder } from "util";
+(global as any).TextEncoder = TextEncoder;
 
 /**
  * Create an AI provider instance based on the configuration
@@ -30,7 +32,7 @@ export function createProvider(config: AIProviderConfig): AIProvider {
  */
 export async function getProviderForUser(
   userId: string,
-  provider?: AIProviderType
+  provider?: AIProviderType,
 ): Promise<AIProvider> {
   const prisma = (await import("@/lib/prisma")).default;
   const { getUserGeminiKey } = await import("@/lib/gemini");
