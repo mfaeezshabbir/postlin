@@ -8,6 +8,9 @@
 import prisma from '@/lib/prisma';
 import { log } from '@/lib/logger';
 
+/** Maximum number of publish attempts before a post is marked FAILED */
+export const MAX_RETRY_COUNT = 3;
+
 export class ScheduledPostWorker {
   private timeoutId: NodeJS.Timeout | null = null;
   private isRunning = false;
@@ -169,8 +172,10 @@ export class ScheduledPostWorker {
   }
 
   /**
-   * Check for posts that need to be published and publish them
-   * @returns The number of posts that were published
+   * Check for posts that need to be published and publish them.
+   * Uses an atomic claim (SCHEDULED → PUBLISHING) to prevent duplicate processing
+   * in multi-instance deployments.
+   * @returns The number of posts that were successfully published
    */
   private async checkAndPublishScheduledPosts(): Promise<number> {
     try {
@@ -178,29 +183,48 @@ export class ScheduledPostWorker {
       
       log.info(`⏰ Checking for scheduled posts to publish... (current time: ${now.toISOString()})`);
 
-      // Find all posts that are scheduled and past their scheduled time
-      const postsToPublish = await prisma.post.findMany({
+      // Find IDs of all posts that are scheduled and past their scheduled time
+      const duePosts = await prisma.post.findMany({
         where: {
           status: 'SCHEDULED',
           scheduledAt: {
-            lte: now, // Less than or equal to current time
+            lte: now,
           },
         },
-        include: {
-          user: true, // Include user for LinkedIn access token
-        },
+        select: { id: true },
       });
 
-      if (postsToPublish.length === 0) {
+      if (duePosts.length === 0) {
         log.info('📭 No posts to publish at this time');
         return 0;
       }
 
-      log.info(`📬 Found ${postsToPublish.length} post(s) to publish`);
+      log.info(`📬 Found ${duePosts.length} post(s) to process`);
 
-      // Publish each post
       let publishedCount = 0;
-      for (const post of postsToPublish) {
+      for (const { id } of duePosts) {
+        // Atomic claim: only succeeds if no other worker has already claimed this post
+        const claimed = await prisma.post.updateMany({
+          where: { id, status: 'SCHEDULED' },
+          data: { status: 'PUBLISHING' },
+        });
+
+        if (claimed.count === 0) {
+          log.info(`⚠️ Post ${id} already claimed by another worker, skipping`);
+          continue;
+        }
+
+        // Fetch the full post (including user) after a successful claim
+        const post = await prisma.post.findUnique({
+          where: { id },
+          include: { user: true },
+        });
+
+        if (!post) {
+          log.warn(`⚠️ Post ${id} not found after claim, skipping`);
+          continue;
+        }
+
         const success = await this.publishPost(post);
         if (success) {
           publishedCount++;
@@ -221,21 +245,13 @@ export class ScheduledPostWorker {
    */
   private async publishPost(post: any): Promise<boolean> {
     try {
-      log.info(`📤 Publishing post ${post.id} scheduled for ${post.scheduledAt}`);
+      log.info(`📤 Publishing post ${post.id} (prior attempts: ${post.retryCount}/${MAX_RETRY_COUNT}) scheduled for ${post.scheduledAt}`);
       log.info(`👤 User: ${post.user.email}, Has access token: ${!!post.user.accessToken}`);
 
       // Check if user has LinkedIn access token
       if (!post.user.accessToken) {
         log.error(`❌ User ${post.user.email} has no LinkedIn access token`);
-        
-        // Update post status to failed
-        await prisma.post.update({
-          where: { id: post.id },
-          data: {
-            status: 'DRAFT', // Revert to draft
-          },
-        });
-        
+        await this.handlePublishFailure(post, 'No LinkedIn access token');
         return false;
       }
 
@@ -267,17 +283,33 @@ export class ScheduledPostWorker {
       }
     } catch (error) {
       log.error(`❌ Error publishing post ${post.id}:`, error);
-
-      // Update post with error (revert to draft for now)
-      await prisma.post.update({
-        where: { id: post.id },
-        data: {
-          status: 'DRAFT', // Revert to draft so user can retry
-        },
-      });
-      
+      await this.handlePublishFailure(post, error instanceof Error ? error.message : 'Unknown error');
       return false;
     }
+  }
+
+  /**
+   * Handle a failed publish attempt: increment retryCount, persist lastError, and
+   * either revert to SCHEDULED (for retry) or mark as FAILED when max retries exceeded.
+   */
+  private async handlePublishFailure(post: any, errorMessage: string): Promise<void> {
+    const newRetryCount = post.retryCount + 1;
+    const exceeded = newRetryCount >= MAX_RETRY_COUNT;
+
+    if (exceeded) {
+      log.error(`❌ Post ${post.id} exceeded max retries (${MAX_RETRY_COUNT}), marking as FAILED. Last error: ${errorMessage}`);
+    } else {
+      log.warn(`⚠️ Post ${post.id} failed (attempt ${newRetryCount}/${MAX_RETRY_COUNT}), reverting to SCHEDULED for retry. Error: ${errorMessage}`);
+    }
+
+    await prisma.post.update({
+      where: { id: post.id },
+      data: {
+        status: exceeded ? 'FAILED' : 'SCHEDULED',
+        retryCount: newRetryCount,
+        lastError: errorMessage,
+      },
+    });
   }
 
   /**

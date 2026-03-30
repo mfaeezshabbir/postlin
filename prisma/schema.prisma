@@ -20,10 +20,12 @@ datasource db {
 // Enum for post status
 enum PostStatus {
   DRAFT
-  SCHEDULED  // Post is scheduled to be published at a specific time
+  SCHEDULED   // Post is scheduled to be published at a specific time
+  PUBLISHING  // Post is currently being processed by a worker
   APPROVED
   PUBLISHED
   DISCARDED
+  FAILED      // Post failed to publish after maximum retry attempts
 }
 
 // Enum for media type
@@ -86,6 +88,8 @@ model Post {
   
   // Scheduling
   scheduledAt         DateTime?            // When the post is scheduled to be published
+  retryCount          Int                  @default(0) // Number of publish attempts made
+  lastError           String?              // Last error message from a failed publish attempt
   createdAt           DateTime             @default(now())
   publishedAt         DateTime?
 

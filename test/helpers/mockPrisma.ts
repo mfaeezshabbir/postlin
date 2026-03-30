@@ -11,6 +11,7 @@ const makePrismaMock = () => ({
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     delete: jest.fn(),
   },
 });
